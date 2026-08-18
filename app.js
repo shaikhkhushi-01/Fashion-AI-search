@@ -1,3 +1,4 @@
+const API_BASE_URL = "https://fashion-ai-search-lj6s.onrender.com";
 const products = [
   {
     id: 1,
