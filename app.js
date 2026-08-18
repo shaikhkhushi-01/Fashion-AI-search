@@ -353,3 +353,32 @@ document
 
 
 renderProducts(products);
+
+async function searchFashion(query) {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/search`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          query: query
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Search failed");
+    }
+
+    return data.results || [];
+
+  } catch (error) {
+    console.error("Search error:", error);
+    return [];
+  }
+}
