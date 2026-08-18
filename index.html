@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>FINDRA — AI Fashion Search</title>
+
+  <meta
+    name="description"
+    content="Find fashion across brands with AI-powered search."
+  />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+
+  <!-- NAVIGATION -->
+  <header class="navbar">
+
+    <a href="/" class="logo">
+      FINDRA
+    </a>
+
+    <nav class="nav-links">
+      <a href="#discover">Discover</a>
+      <a href="#brands">Brands</a>
+      <a href="#research">AI Research</a>
+    </nav>
+
+    <button class="nav-button">
+      Explore Fashion
+    </button>
+
+  </header>
+
+
+  <!-- HERO -->
+  <main>
+
+    <section class="hero">
+
+      <div class="hero-content">
+
+        <span class="eyebrow">
+          AI FASHION INTELLIGENCE
+        </span>
+
+        <h1>
+          Find exactly what
+          <span>you're looking for.</span>
+        </h1>
+
+        <p class="hero-description">
+          Search fashion across brands and collections
+          from one intelligent platform.
+        </p>
+
+
+        <!-- SEARCH -->
+        <div class="search-box">
+
+          <div class="search-icon">
+            ⌕
+          </div>
+
+          <input
+            id="searchInput"
+            type="text"
+            placeholder="Try “black linen shirt under ₹3000”"
+            autocomplete="off"
+          />
+
+          <button
+            id="imageSearchButton"
+            class="image-button"
+            type="button"
+            title="Search by image"
+          >
+            ＋
+          </button>
+
+          <button
+            id="searchButton"
+            class="search-button"
+            type="button"
+          >
+            Search
+          </button>
+
+        </div>
+
+
+        <div class="search-hints">
+
+          <span>Try:</span>
+
+          <button>
+            Black linen shirt
+          </button>
+
+          <button>
+            Summer dress
+          </button>
+
+          <button>
+            Modest fashion
+          </button>
+
+          <button>
+            Sneakers under ₹5000
+          </button>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- DISCOVERY -->
+    <section
+      id="discover"
+      class="section"
+    >
+
+      <div class="section-heading">
+
+        <div>
+
+          <span class="eyebrow">
+            DISCOVER
+          </span>
+
+          <h2>
+            Search without
+            searching everywhere.
+          </h2>
+
+        </div>
+
+        <p>
+          FINDRA brings products from different
+          fashion sources into one searchable space.
+        </p>
+
+      </div>
+
+
+      <!-- FILTERS -->
+      <div class="filters">
+
+        <button class="filter active">
+          All
+        </button>
+
+        <button class="filter">
+          Women
+        </button>
+
+        <button class="filter">
+          Men
+        </button>
+
+        <button class="filter">
+          Kids
+        </button>
+
+        <button class="filter">
+          Luxury
+        </button>
+
+        <button class="filter">
+          Modest
+        </button>
+
+        <button class="filter">
+          Sportswear
+        </button>
+
+      </div>
+
+
+      <!-- RESULTS -->
+      <div
+        id="results"
+        class="product-grid"
+      >
+
+        <!-- Products will be inserted by app.js -->
+
+      </div>
+
+    </section>
+
+
+    <!-- HOW IT WORKS -->
+    <section class="section process-section">
+
+      <div class="section-heading">
+
+        <div>
+
+          <span class="eyebrow">
+            HOW IT WORKS
+          </span>
+
+          <h2>
+            From intent to
+            the right product.
+          </h2>
+
+        </div>
+
+      </div>
+
+
+      <div class="process-grid">
+
+        <article class="process-card">
+
+          <span>01</span>
+
+          <h3>
+            Describe
+          </h3>
+
+          <p>
+            Tell FINDRA what you want in
+            natural language.
+          </p>
+
+        </article>
+
+
+        <article class="process-card">
+
+          <span>02</span>
+
+          <h3>
+            Understand
+          </h3>
+
+          <p>
+            AI understands category, style,
+            colour, material and intent.
+          </p>
+
+        </article>
+
+
+        <article class="process-card">
+
+          <span>03</span>
+
+          <h3>
+            Compare
+          </h3>
+
+          <p>
+            Products are ranked across
+            different brands and sources.
+          </p>
+
+        </article>
+
+
+        <article class="process-card">
+
+          <span>04</span>
+
+          <h3>
+            Decide
+          </h3>
+
+          <p>
+            Compare your best matches and
+            visit the original seller.
+          </p>
+
+        </article>
+
+      </div>
+
+    </section>
+
+
+    <!-- AI RESEARCH -->
+    <section
+      id="research"
+      class="research-section"
+    >
+
+      <div class="research-content">
+
+        <span class="eyebrow">
+          RESEARCH ENGINE
+        </span>
+
+        <h2>
+          Fashion retrieval,
+          redesigned with AI.
+        </h2>
+
+        <p>
+          FINDRA is being built as a multimodal
+          fashion retrieval system — combining
+          semantic understanding, visual similarity
+          and structured product attributes.
+        </p>
+
+        <div class="research-tags">
+
+          <span>Text Retrieval</span>
+          <span>Visual Search</span>
+          <span>Multimodal AI</span>
+          <span>Hybrid Ranking</span>
+          <span>Price Intelligence</span>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- FOOTER -->
+    <footer>
+
+      <div class="footer-logo">
+        FINDRA
+      </div>
+
+      <p>
+        AI-powered fashion discovery.
+      </p>
+
+      <span>
+        Research Prototype · 2026
+      </span>
+
+    </footer>
+
+  </main>
+
+
+  <script src="app.js"></script>
+
+</body>
+</html>
