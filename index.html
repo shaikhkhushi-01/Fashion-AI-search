@@ -1,119 +1,200 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
+
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0"
-  />
+  >
 
-  <title>FINDRA — AI Fashion Search</title>
+  <title>Fashion AI — Intelligent Fashion Discovery</title>
 
   <meta
     name="description"
-    content="Find fashion across brands with AI-powered search."
-  />
+    content="Search fashion across brands using AI-powered natural language discovery."
+  >
 
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap"
+    rel="stylesheet"
+  >
+
+  <link rel="stylesheet" href="styles.css">
 </head>
+
 
 <body>
 
-  <!-- NAVIGATION -->
+  <!-- ================= NAVIGATION ================= -->
+
   <header class="navbar">
 
-    <a href="/" class="logo">
-      FINDRA
-    </a>
+    <div class="nav-inner">
 
-    <nav class="nav-links">
-      <a href="#discover">Discover</a>
-      <a href="#brands">Brands</a>
-      <a href="#research">AI Research</a>
-    </nav>
+      <a href="#" class="logo">
+        FASHION<span>AI</span>
+      </a>
 
-    <button class="nav-button">
-      Explore Fashion
-    </button>
+      <nav class="nav-links">
+
+        <a href="#discover">
+          Discover
+        </a>
+
+        <a href="#brands">
+          Brands
+        </a>
+
+        <a href="#how-it-works">
+          How it works
+        </a>
+
+      </nav>
+
+      <button
+        class="nav-ai-button"
+        type="button"
+        onclick="document.getElementById('searchInput').focus()"
+      >
+        Try AI Search
+      </button>
+
+    </div>
 
   </header>
 
 
-  <!-- HERO -->
+  <!-- ================= HERO ================= -->
+
   <main>
 
-    <section class="hero">
+    <section class="hero" id="discover">
 
       <div class="hero-content">
 
-        <span class="eyebrow">
-          AI FASHION INTELLIGENCE
-        </span>
+        <div class="eyebrow">
+          <span class="eyebrow-dot"></span>
+          AI-POWERED FASHION DISCOVERY
+        </div>
 
         <h1>
-          Find exactly what
-          <span>you're looking for.</span>
+          Find the fashion
+          <em>you actually want.</em>
         </h1>
 
         <p class="hero-description">
-          Search fashion across brands and collections
-          from one intelligent platform.
+          Search across fashion collections using your own words.
+          Describe the style, occasion, colour, material or budget —
+          Fashion AI finds the closest matches.
         </p>
 
 
-        <!-- SEARCH -->
-        <div class="search-box">
+        <!-- ================= SEARCH ================= -->
 
-          <div class="search-icon">
-            ⌕
+        <div class="search-wrapper">
+
+          <div class="search-box">
+
+            <span class="search-icon">
+              ⌕
+            </span>
+
+            <input
+              id="searchInput"
+              type="text"
+              autocomplete="off"
+              placeholder="Try “black oversized shirt under ₹3000”"
+            >
+
+            <button
+              id="searchButton"
+              type="button"
+            >
+              Search
+              <span>→</span>
+            </button>
+
           </div>
 
-          <input
-            id="searchInput"
-            type="text"
-            placeholder="Try “black linen shirt under ₹3000”"
-            autocomplete="off"
-          />
 
-          <button
-            id="imageSearchButton"
-            class="image-button"
-            type="button"
-            title="Search by image"
-          >
-            ＋
-          </button>
+          <div class="search-hints">
 
-          <button
-            id="searchButton"
-            class="search-button"
-            type="button"
-          >
-            Search
-          </button>
+            <span>Try:</span>
+
+            <button type="button">
+              black shirt
+            </button>
+
+            <button type="button">
+              linen summer dress
+            </button>
+
+            <button type="button">
+              formal blazer
+            </button>
+
+            <button type="button">
+              white sneakers
+            </button>
+
+          </div>
 
         </div>
 
+      </div>
 
-        <div class="search-hints">
 
-          <span>Try:</span>
+      <!-- HERO SIDE CARD -->
 
-          <button>
-            Black linen shirt
-          </button>
+      <div class="hero-intelligence">
 
-          <button>
-            Summer dress
-          </button>
+        <div class="intelligence-card">
 
-          <button>
-            Modest fashion
-          </button>
+          <div class="card-label">
+            <span class="pulse"></span>
+            SEARCH INTELLIGENCE
+          </div>
 
-          <button>
-            Sneakers under ₹5000
-          </button>
+          <div class="query-preview">
+            “minimal black outfit
+            for an evening event”
+          </div>
+
+          <div class="understanding">
+
+            <div class="understanding-title">
+              AI understands
+            </div>
+
+            <div class="understanding-tags">
+
+              <span>Minimal</span>
+              <span>Black</span>
+              <span>Evening</span>
+              <span>Outfit</span>
+
+            </div>
+
+          </div>
+
+          <div class="match-preview">
+
+            <div>
+              <small>Semantic relevance</small>
+              <strong>94%</strong>
+            </div>
+
+            <div class="mini-bar">
+              <span style="width:94%"></span>
+            </div>
+
+          </div>
 
         </div>
 
@@ -122,204 +203,193 @@
     </section>
 
 
-    <!-- DISCOVERY -->
+    <!-- ================= RESULTS ================= -->
+
+    <section class="results-section">
+
+      <div class="section-container">
+
+        <div class="section-heading">
+
+          <div>
+
+            <span class="section-eyebrow">
+              DISCOVERY
+            </span>
+
+            <h2>
+              Fashion matches
+            </h2>
+
+          </div>
+
+          <span class="results-note">
+            Powered by AI search
+          </span>
+
+        </div>
+
+
+        <div
+          id="results"
+          class="results-grid"
+        >
+
+          <div class="search-empty">
+
+            <div class="empty-icon">
+              ✦
+            </div>
+
+            <h3>
+              Start your fashion search
+            </h3>
+
+            <p>
+              Describe what you are looking for
+              and AI will find relevant products.
+            </p>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ================= HOW IT WORKS ================= -->
+
     <section
-      id="discover"
-      class="section"
+      class="how-section"
+      id="how-it-works"
     >
 
-      <div class="section-heading">
+      <div class="section-container">
 
-        <div>
+        <div class="section-heading centered">
 
-          <span class="eyebrow">
-            DISCOVER
+          <span class="section-eyebrow">
+            THE INTELLIGENCE
           </span>
 
           <h2>
-            Search without
-            searching everywhere.
+            Search beyond keywords.
           </h2>
+
+          <p>
+            Fashion AI understands the meaning behind
+            what you type instead of forcing you to
+            search one filter at a time.
+          </p>
 
         </div>
 
-        <p>
-          FINDRA brings products from different
-          fashion sources into one searchable space.
-        </p>
 
-      </div>
+        <div class="steps-grid">
 
+          <article class="step-card">
 
-      <!-- FILTERS -->
-      <div class="filters">
+            <span class="step-number">
+              01
+            </span>
 
-        <button class="filter active">
-          All
-        </button>
+            <div class="step-icon">
+              ◇
+            </div>
 
-        <button class="filter">
-          Women
-        </button>
+            <h3>
+              Describe
+            </h3>
 
-        <button class="filter">
-          Men
-        </button>
+            <p>
+              Tell us what you want naturally —
+              just like you would tell a stylist.
+            </p>
 
-        <button class="filter">
-          Kids
-        </button>
-
-        <button class="filter">
-          Luxury
-        </button>
-
-        <button class="filter">
-          Modest
-        </button>
-
-        <button class="filter">
-          Sportswear
-        </button>
-
-      </div>
+          </article>
 
 
-      <!-- RESULTS -->
-      <div
-        id="results"
-        class="product-grid"
-      >
+          <article class="step-card">
 
-        <!-- Products will be inserted by app.js -->
+            <span class="step-number">
+              02
+            </span>
+
+            <div class="step-icon">
+              ✦
+            </div>
+
+            <h3>
+              Understand
+            </h3>
+
+            <p>
+              Our search engine analyses style,
+              category, colour, material and intent.
+            </p>
+
+          </article>
+
+
+          <article class="step-card">
+
+            <span class="step-number">
+              03
+            </span>
+
+            <div class="step-icon">
+              ◎
+            </div>
+
+            <h3>
+              Discover
+            </h3>
+
+            <p>
+              Explore the products that best match
+              what you actually meant.
+            </p>
+
+          </article>
+
+        </div>
 
       </div>
 
     </section>
 
 
-    <!-- HOW IT WORKS -->
-    <section class="section process-section">
+    <!-- ================= BRANDS ================= -->
 
-      <div class="section-heading">
-
-        <div>
-
-          <span class="eyebrow">
-            HOW IT WORKS
-          </span>
-
-          <h2>
-            From intent to
-            the right product.
-          </h2>
-
-        </div>
-
-      </div>
-
-
-      <div class="process-grid">
-
-        <article class="process-card">
-
-          <span>01</span>
-
-          <h3>
-            Describe
-          </h3>
-
-          <p>
-            Tell FINDRA what you want in
-            natural language.
-          </p>
-
-        </article>
-
-
-        <article class="process-card">
-
-          <span>02</span>
-
-          <h3>
-            Understand
-          </h3>
-
-          <p>
-            AI understands category, style,
-            colour, material and intent.
-          </p>
-
-        </article>
-
-
-        <article class="process-card">
-
-          <span>03</span>
-
-          <h3>
-            Compare
-          </h3>
-
-          <p>
-            Products are ranked across
-            different brands and sources.
-          </p>
-
-        </article>
-
-
-        <article class="process-card">
-
-          <span>04</span>
-
-          <h3>
-            Decide
-          </h3>
-
-          <p>
-            Compare your best matches and
-            visit the original seller.
-          </p>
-
-        </article>
-
-      </div>
-
-    </section>
-
-
-    <!-- AI RESEARCH -->
     <section
-      id="research"
-      class="research-section"
+      class="brands-section"
+      id="brands"
     >
 
-      <div class="research-content">
+      <div class="section-container">
 
-        <span class="eyebrow">
-          RESEARCH ENGINE
-        </span>
+        <div class="brands-inner">
 
-        <h2>
-          Fashion retrieval,
-          redesigned with AI.
-        </h2>
+          <div>
 
-        <p>
-          FINDRA is being built as a multimodal
-          fashion retrieval system — combining
-          semantic understanding, visual similarity
-          and structured product attributes.
-        </p>
+            <span class="section-eyebrow">
+              ONE DISCOVERY LAYER
+            </span>
 
-        <div class="research-tags">
+            <h2>
+              Fashion from many
+              brands. One search.
+            </h2>
 
-          <span>Text Retrieval</span>
-          <span>Visual Search</span>
-          <span>Multimodal AI</span>
-          <span>Hybrid Ranking</span>
-          <span>Price Intelligence</span>
+          </div>
+
+          <p>
+            Our long-term vision is to create a unified
+            discovery layer across fashion brands,
+            collections and marketplaces.
+          </p>
 
         </div>
 
@@ -327,28 +397,34 @@
 
     </section>
 
+  </main>
 
-    <!-- FOOTER -->
-    <footer>
 
-      <div class="footer-logo">
-        FINDRA
+  <!-- ================= FOOTER ================= -->
+
+  <footer class="footer">
+
+    <div class="footer-inner">
+
+      <div class="logo">
+        FASHION<span>AI</span>
       </div>
 
       <p>
-        AI-powered fashion discovery.
+        Intelligent fashion discovery.
       </p>
 
-      <span>
-        Research Prototype · 2026
+      <span class="footer-status">
+        AI SEARCH ONLINE
       </span>
 
-    </footer>
+    </div>
 
-  </main>
+  </footer>
 
 
   <script src="app.js"></script>
 
 </body>
+
 </html>
