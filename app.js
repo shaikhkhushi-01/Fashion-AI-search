@@ -1,84 +1,5 @@
-const API_BASE_URL = "https://fashion-ai-search-lj6s.onrender.com";
-const products = [
-  {
-    id: 1,
-    brand: "ATELIER",
-    name: "Relaxed Linen Shirt",
-    category: "Shirts",
-    color: "White",
-    material: "Linen",
-    price: 2499,
-    currency: "₹",
-    description:
-      "Relaxed-fit lightweight linen shirt for warm weather."
-  },
-
-  {
-    id: 2,
-    brand: "NOVA",
-    name: "Oversized Cotton Shirt",
-    category: "Shirts",
-    color: "Black",
-    material: "Cotton",
-    price: 1999,
-    currency: "₹",
-    description:
-      "Minimal oversized cotton shirt with a clean silhouette."
-  },
-
-  {
-    id: 3,
-    brand: "FORM",
-    name: "Minimal Summer Dress",
-    category: "Dresses",
-    color: "Cream",
-    material: "Cotton",
-    price: 3299,
-    currency: "₹",
-    description:
-      "Lightweight summer dress with a relaxed elegant fit."
-  },
-
-  {
-    id: 4,
-    brand: "STUDIO 09",
-    name: "Relaxed Black Trousers",
-    category: "Trousers",
-    color: "Black",
-    material: "Cotton Blend",
-    price: 2799,
-    currency: "₹",
-    description:
-      "Straight relaxed trousers designed for everyday wear."
-  },
-
-  {
-    id: 5,
-    brand: "MOTION",
-    name: "Performance Sneakers",
-    category: "Sneakers",
-    color: "White",
-    material: "Mesh",
-    price: 4499,
-    currency: "₹",
-    description:
-      "Lightweight performance sneakers for everyday movement."
-  },
-
-  {
-    id: 6,
-    brand: "NOVA",
-    name: "Structured Black Blazer",
-    category: "Blazers",
-    color: "Black",
-    material: "Wool Blend",
-    price: 5999,
-    currency: "₹",
-    description:
-      "Clean structured blazer designed for formal occasions."
-  }
-];
-
+const API_BASE_URL =
+  "https://fashion-ai-search-lj6s.onrender.com";
 
 const resultsContainer =
   document.getElementById("results");
@@ -90,115 +11,95 @@ const searchButton =
   document.getElementById("searchButton");
 
 
-function normalize(text) {
+/* ================= HTML SAFETY ================= */
 
-  return String(text || "")
-    .toLowerCase()
-    .trim();
-
+function escapeHTML(text) {
+  return String(text ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 
-function searchProducts(query) {
+/* ================= BACKEND SEARCH ================= */
 
-  const normalizedQuery =
-    normalize(query);
+async function searchFashion(query) {
 
-  if (!normalizedQuery) {
+  try {
 
-    return products;
+    resultsContainer.innerHTML = `
+      <div class="search-loading">
+        <div class="loading-spinner"></div>
+        <p>Finding the best fashion matches...</p>
+      </div>
+    `;
+
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/search`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+          query: query
+        })
+      }
+    );
+
+
+    const data =
+      await response.json();
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.error || "Search failed"
+      );
+
+    }
+
+
+    return data.results || [];
+
+
+  } catch (error) {
+
+    console.error(
+      "Fashion search error:",
+      error
+    );
+
+
+    resultsContainer.innerHTML = `
+      <div class="no-results">
+
+        <h3>
+          Search temporarily unavailable
+        </h3>
+
+        <p>
+          Please try again in a moment.
+        </p>
+
+      </div>
+    `;
+
+
+    return [];
 
   }
 
-
-  const words =
-    normalizedQuery
-      .split(/\s+/)
-      .filter(Boolean);
-
-
-  return products
-    .map(product => {
-
-      const searchableText =
-        normalize(
-          [
-            product.brand,
-            product.name,
-            product.category,
-            product.color,
-            product.material,
-            product.description
-          ].join(" ")
-        );
-
-
-      let score = 0;
-
-
-      words.forEach(word => {
-
-        if (
-          searchableText.includes(word)
-        ) {
-
-          score += 1;
-
-        }
-
-
-        if (
-          normalize(product.name)
-            .includes(word)
-        ) {
-
-          score += 3;
-
-        }
-
-
-        if (
-          normalize(product.brand)
-            .includes(word)
-        ) {
-
-          score += 2;
-
-        }
-
-
-        if (
-          normalize(product.category)
-            .includes(word)
-        ) {
-
-          score += 2;
-
-        }
-
-      });
-
-
-      return {
-        ...product,
-        searchScore: score
-      };
-
-    })
-
-    .filter(
-      product =>
-        product.searchScore > 0
-    )
-
-    .sort(
-      (a, b) =>
-        b.searchScore -
-        a.searchScore
-    );
-
 }
 
+
+/* ================= RENDER PRODUCTS ================= */
 
 function renderProducts(productList) {
 
@@ -209,11 +110,12 @@ function renderProducts(productList) {
       <div class="no-results">
 
         <h3>
-          No matching products found.
+          No matching products found
         </h3>
 
         <p>
-          Try another fashion description.
+          Try describing the style, color,
+          occasion, material or budget differently.
         </p>
 
       </div>
@@ -229,50 +131,157 @@ function renderProducts(productList) {
     productList
       .map(product => {
 
+        const price =
+          product.price !== undefined &&
+          product.price !== null
+            ? Number(product.price).toLocaleString(
+                "en-IN"
+              )
+            : "Price unavailable";
+
+
+        const currency =
+          product.currency || "₹";
+
+
+        const brand =
+          escapeHTML(
+            product.brand || "Unknown Brand"
+          );
+
+
+        const name =
+          escapeHTML(
+            product.name || "Fashion Product"
+          );
+
+
+        const category =
+          escapeHTML(
+            product.category || ""
+          );
+
+
+        const color =
+          escapeHTML(
+            product.color || ""
+          );
+
+
+        const material =
+          Array.isArray(product.material)
+            ? product.material.join(", ")
+            : product.material || "";
+
+
+        const description =
+          escapeHTML(
+            product.description ||
+            "No description available."
+          );
+
+
         return `
 
           <article class="product-card">
 
             <div class="product-image">
 
-              Product Image
+              <div class="product-placeholder">
+
+                <span>AI</span>
+
+              </div>
 
             </div>
 
 
             <div class="product-content">
 
-              <span class="product-brand">
+              <div class="product-top">
 
-                ${escapeHTML(
-                  product.brand
-                )}
+                <span class="product-brand">
+                  ${brand}
+                </span>
 
-              </span>
+                ${
+                  product.score
+                    ? `
+                      <span class="match-score">
+                        ${Math.min(
+                          99,
+                          Math.max(
+                            70,
+                            70 + product.score * 2
+                          )
+                        )}% Match
+                      </span>
+                    `
+                    : ""
+                }
+
+              </div>
 
 
               <h3>
-
-                ${escapeHTML(
-                  product.name
-                )}
-
+                ${name}
               </h3>
 
 
-              <p>
-
-                ${escapeHTML(
-                  product.description
-                )}
-
+              <p class="product-category">
+                ${category}
               </p>
 
 
-              <div class="product-price">
+              <p class="product-description">
+                ${description}
+              </p>
 
-                ${product.currency}
-                ${product.price.toLocaleString("en-IN")}
+
+              <div class="product-details">
+
+                ${
+                  color
+                    ? `
+                      <span>
+                        Color: ${color}
+                      </span>
+                    `
+                    : ""
+                }
+
+                ${
+                  material
+                    ? `
+                      <span>
+                        Material:
+                        ${escapeHTML(material)}
+                      </span>
+                    `
+                    : ""
+                }
+
+              </div>
+
+
+              <div class="product-bottom">
+
+                <div class="product-price">
+
+                  ${currency}${price}
+
+                </div>
+
+
+                <button
+                  class="view-product"
+                  type="button"
+                  onclick="viewProduct(${product.id})"
+                >
+
+                  View Product
+
+                </button>
 
               </div>
 
@@ -288,53 +297,95 @@ function renderProducts(productList) {
 }
 
 
-function escapeHTML(text) {
+/* ================= SEARCH ================= */
 
-  return String(text ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-
-}
-
-
-function runSearch() {
+async function runSearch() {
 
   const query =
     searchInput.value.trim();
 
+
+  if (!query) {
+
+    searchInput.focus();
+
+    return;
+
+  }
+
+
+  searchButton.disabled = true;
+
+
   const results =
-    searchProducts(query);
+    await searchFashion(query);
+
 
   renderProducts(results);
+
+
+  searchButton.disabled = false;
 
 }
 
 
-searchButton.addEventListener(
-  "click",
-  runSearch
-);
+/* ================= VIEW PRODUCT ================= */
+
+function viewProduct(productId) {
+
+  console.log(
+    "Selected product:",
+    productId
+  );
+
+  /*
+    Later we will connect this
+    to the actual brand/product URL.
+  */
+
+}
 
 
-searchInput.addEventListener(
-  "keydown",
-  event => {
+/* ================= SEARCH BUTTON ================= */
 
-    if (event.key === "Enter") {
+if (searchButton) {
 
-      runSearch();
+  searchButton.addEventListener(
+    "click",
+    runSearch
+  );
+
+}
+
+
+/* ================= ENTER SEARCH ================= */
+
+if (searchInput) {
+
+  searchInput.addEventListener(
+    "keydown",
+    event => {
+
+      if (event.key === "Enter") {
+
+        event.preventDefault();
+
+        runSearch();
+
+      }
 
     }
+  );
 
-  }
-);
+}
 
+
+/* ================= SEARCH HINTS ================= */
 
 document
-  .querySelectorAll(".search-hints button")
+  .querySelectorAll(
+    ".search-hints button"
+  )
   .forEach(button => {
 
     button.addEventListener(
@@ -352,33 +403,25 @@ document
   });
 
 
-renderProducts(products);
+/* ================= INITIAL STATE ================= */
 
-async function searchFashion(query) {
-  try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/search`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          query: query
-        })
-      }
-    );
+resultsContainer.innerHTML = `
 
-    const data = await response.json();
+  <div class="search-empty">
 
-    if (!response.ok) {
-      throw new Error(data.error || "Search failed");
-    }
+    <div class="empty-icon">
+      AI
+    </div>
 
-    return data.results || [];
+    <h3>
+      What are you looking for?
+    </h3>
 
-  } catch (error) {
-    console.error("Search error:", error);
-    return [];
-  }
-}
+    <p>
+      Describe any fashion item, style,
+      color, occasion or budget.
+    </p>
+
+  </div>
+
+`;
