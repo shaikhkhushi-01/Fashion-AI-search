@@ -1,0 +1,50 @@
+[
+  {
+    "id": "zara-001",
+    "brand": "Zara",
+    "name": "Oversized Linen Shirt",
+    "category": "Shirts",
+    "gender": "Women",
+    "price": 49.99,
+    "currency": "USD",
+    "color": "Black",
+    "material": ["Linen"],
+    "style": ["Oversized", "Casual", "Minimal"],
+    "occasion": ["Summer", "Everyday"],
+    "sizes": ["XS", "S", "M", "L", "XL"],
+    "description": "Relaxed oversized linen shirt designed for warm weather.",
+    "image": "",
+    "productUrl": "",
+    "availability": "in-stock",
+    "tags": [
+      "black shirt",
+      "linen shirt",
+      "oversized shirt",
+      "summer clothing"
+    ]
+  },
+  {
+    "id": "uniqlo-001",
+    "brand": "Uniqlo",
+    "name": "Premium Linen Shirt",
+    "category": "Shirts",
+    "gender": "Women",
+    "price": 59.90,
+    "currency": "USD",
+    "color": "Black",
+    "material": ["Linen"],
+    "style": ["Minimal", "Casual"],
+    "occasion": ["Summer", "Everyday"],
+    "sizes": ["XS", "S", "M", "L", "XL"],
+    "description": "Lightweight linen shirt with a clean minimal silhouette.",
+    "image": "",
+    "productUrl": "",
+    "availability": "in-stock",
+    "tags": [
+      "black shirt",
+      "linen",
+      "minimal shirt",
+      "summer"
+    ]
+  }
+]
