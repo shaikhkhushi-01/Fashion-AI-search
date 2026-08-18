@@ -1152,56 +1152,276 @@ app.post(
    AI STYLIST API
 ===================================================== */
 
+/* ================= AI STYLIST ================= */
+
+function calculateStylistScore(product, preferences) {
+
+  let score = 0;
+
+  const occasion = normalize(preferences.occasion);
+  const style = normalize(preferences.style);
+  const comfort = normalize(preferences.comfort);
+  const color = normalize(preferences.color);
+  const coverage = normalize(preferences.coverage);
+  const description = normalize(preferences.description);
+
+  const productOccasions =
+    normalizeArray(product.occasion)
+      .map(normalize);
+
+  const productStyles =
+    normalizeArray(product.style)
+      .map(normalize);
+
+  const productTags =
+    normalizeArray(product.tags)
+      .map(normalize);
+
+  const productMaterial =
+    normalizeArray(product.material)
+      .map(normalize);
+
+  const productColor =
+    normalize(product.color);
+
+  const productDescription =
+    normalize(product.description);
+
+  /* ---------- OCCASION ---------- */
+
+  if (occasion) {
+
+    if (
+      productOccasions.some(item =>
+        item.includes(occasion) ||
+        occasion.includes(item)
+      )
+    ) {
+      score += 25;
+    }
+
+    if (
+      productTags.some(item =>
+        item.includes(occasion)
+      )
+    ) {
+      score += 10;
+    }
+  }
+
+
+  /* ---------- STYLE ---------- */
+
+  if (style) {
+
+    if (
+      productStyles.some(item =>
+        item.includes(style) ||
+        style.includes(item)
+      )
+    ) {
+      score += 25;
+    }
+
+    if (
+      productTags.some(item =>
+        item.includes(style)
+      )
+    ) {
+      score += 10;
+    }
+  }
+
+
+  /* ---------- COLOR ---------- */
+
+  if (color) {
+
+    if (
+      productColor.includes(color) ||
+      color.includes(productColor)
+    ) {
+      score += 20;
+    }
+  }
+
+
+  /* ---------- COMFORT ---------- */
+
+  if (comfort) {
+
+    const comfortText = [
+      productDescription,
+      ...productStyles,
+      ...productTags,
+      ...productMaterial
+    ].join(" ");
+
+    if (
+      comfortText.includes(comfort)
+    ) {
+      score += 15;
+    }
+
+    if (
+      comfort === "comfortable" &&
+      (
+        comfortText.includes("soft") ||
+        comfortText.includes("relaxed") ||
+        comfortText.includes("lightweight") ||
+        comfortText.includes("breathable")
+      )
+    ) {
+      score += 15;
+    }
+  }
+
+
+  /* ---------- COVERAGE ---------- */
+
+  if (coverage) {
+
+    const coverageText = [
+      productDescription,
+      ...productTags
+    ].join(" ");
+
+    if (
+      coverageText.includes(coverage)
+    ) {
+      score += 15;
+    }
+  }
+
+
+  /* ---------- DESCRIPTION ---------- */
+
+  if (description) {
+
+    const descriptionScore =
+      scoreProduct(
+        description,
+        product
+      );
+
+    score += Math.min(
+      descriptionScore * 2,
+      20
+    );
+  }
+
+
+  return Math.min(
+    score,
+    100
+  );
+}
+
+
+/* ================= STYLIST SEARCH ================= */
+
+function stylistSearch(
+  preferences,
+  productList
+) {
+
+  if (
+    !Array.isArray(productList)
+  ) {
+    return [];
+  }
+
+
+  return productList
+
+    .map(product => {
+
+      const matchScore =
+        calculateStylistScore(
+          product,
+          preferences
+        );
+
+
+      return {
+        ...product,
+
+        matchScore,
+
+        stylistScore:
+          matchScore
+      };
+
+    })
+
+    .filter(
+      product =>
+        product.matchScore > 0
+    )
+
+    .sort(
+      (a, b) =>
+        b.matchScore -
+        a.matchScore
+    );
+}
+
+
+/* ================= STYLIST API ================= */
+
 app.post(
   "/api/stylist",
   (req, res) => {
 
     try {
 
-      const {
+      const preferences = {
 
-        occasion = "",
+        occasion:
+          String(
+            req.body?.occasion || ""
+          ).trim(),
 
-        style = "",
+        style:
+          String(
+            req.body?.style || ""
+          ).trim(),
 
-        comfort = "",
+        comfort:
+          String(
+            req.body?.comfort || ""
+          ).trim(),
 
-        color = "",
+        color:
+          String(
+            req.body?.color || ""
+          ).trim(),
 
-        coverage = "",
+        coverage:
+          String(
+            req.body?.coverage || ""
+          ).trim(),
 
-        description = ""
+        description:
+          String(
+            req.body?.description || ""
+          ).trim()
 
-      } = req.body || {};
-
-
-      const query = [
-
-        occasion,
-
-        style,
-
-        comfort,
-
-        color,
-
-        coverage,
-
-        description
-
-      ]
-
-        .filter(Boolean)
-
-        .join(" ");
+      };
 
 
-      if (!query.trim()) {
+      const hasPreferences =
+        Object.values(
+          preferences
+        ).some(Boolean);
+
+
+      if (!hasPreferences) {
 
         return res.status(400).json({
 
           error:
-            "At least one stylist preference is required."
+            "At least one styling preference is required."
 
         });
 
@@ -1209,87 +1429,23 @@ app.post(
 
 
       const results =
-        searchProducts(
-          query,
+        stylistSearch(
+          preferences,
           products
         );
-
-
-      const recommendations =
-        results
-
-          .slice(0, 10)
-
-          .map(product => {
-
-            const maxPossible =
-              Math.max(
-                1,
-                tokenize(query).length * 5
-              );
-
-            const rawScore =
-              product.score;
-
-            const matchScore =
-              Math.max(
-                0,
-                Math.min(
-                  100,
-                  Math.round(
-                    (
-                      rawScore /
-                      (rawScore + maxPossible)
-                    ) * 100
-                  )
-                )
-              );
-
-
-            return {
-
-              ...product,
-
-              matchScore,
-
-              recommendationScore:
-                rawScore,
-
-              explanation:
-                createExplanation(
-                  product,
-                  understandQuery(query)
-                )
-
-            };
-
-          });
 
 
       res.json({
 
         success: true,
 
-        preferences: {
-
-          occasion,
-
-          style,
-
-          comfort,
-
-          color,
-
-          coverage,
-
-          description
-
-        },
+        preferences,
 
         count:
-          recommendations.length,
+          results.length,
 
-        recommendations
+        recommendations:
+          results.slice(0, 10)
 
       });
 
@@ -1304,8 +1460,6 @@ app.post(
 
       res.status(500).json({
 
-        success: false,
-
         error:
           "AI Stylist failed."
 
@@ -1315,7 +1469,6 @@ app.post(
 
   }
 );
-
 
 /* =====================================================
    404
