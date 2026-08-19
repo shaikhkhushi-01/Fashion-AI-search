@@ -270,48 +270,39 @@ async function searchFashion(query) {
 
 async function runSearch() {
 
-  const query =
-    searchInput.value.trim();
-
+  const query = searchInput.value.trim();
 
   if (!query) {
-
-    showNoResults();
-
+    renderProducts(products);
     return;
-
   }
 
-
-  showLoading(
-    "Searching fashion..."
-  );
-
+  searchButton.disabled = true;
+  searchButton.textContent = "Searching...";
 
   try {
 
-    const results =
-      await searchFashion(query);
-
+    const results = await searchFashion(query);
 
     renderProducts(results);
 
+  } catch (error) {
+
+    console.error("Search failed:", error);
+
+    resultsContainer.innerHTML = `
+      <div class="no-results">
+        <h3>Search temporarily unavailable.</h3>
+        <p>Please try again.</p>
+      </div>
+    `;
+
+  } finally {
+
+    searchButton.disabled = false;
+    searchButton.textContent = "Search";
+
   }
-
-  catch (error) {
-
-    console.error(
-      "Search error:",
-      error
-    );
-
-
-    showError(
-      "Unable to connect to the fashion AI backend."
-    );
-
-  }
-
 }
 
 
