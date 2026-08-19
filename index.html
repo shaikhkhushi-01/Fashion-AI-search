@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 
@@ -9,37 +10,38 @@
     content="width=device-width, initial-scale=1.0"
   >
 
-  <title>Fashion AI — Intelligent Fashion Discovery</title>
+  <title>ABAIRA — Global Fashion AI</title>
 
   <meta
     name="description"
-    content="Search fashion across brands using AI-powered natural language discovery."
+    content="AI-powered global fashion discovery platform."
   >
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
   <link
-    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap"
     rel="stylesheet"
+    href="styles.css"
   >
 
-  <link rel="stylesheet" href="styles.css">
 </head>
 
 
 <body>
 
-  <!-- ================= NAVIGATION ================= -->
+  <!-- ==================================================
+       NAVIGATION
+  ================================================== -->
 
   <header class="navbar">
 
-    <div class="nav-inner">
+    <div class="nav-container">
 
-      <a href="#" class="logo">
-        FASHION<span>AI</span>
+      <a
+        href="#"
+        class="logo"
+      >
+        ABAIRA
       </a>
+
 
       <nav class="nav-links">
 
@@ -47,22 +49,26 @@
           Discover
         </a>
 
+        <a href="#stylist">
+          AI Stylist
+        </a>
+
         <a href="#brands">
           Brands
         </a>
 
-        <a href="#how-it-works">
-          How it works
+        <a href="#about">
+          About
         </a>
 
       </nav>
 
+
       <button
         class="nav-ai-button"
-        type="button"
-        onclick="document.getElementById('searchInput').focus()"
+        onclick="document.getElementById('stylist').scrollIntoView({behavior:'smooth'})"
       >
-        Try AI Search
+        Try AI Stylist
       </button>
 
     </div>
@@ -70,129 +76,152 @@
   </header>
 
 
-  <!-- ================= HERO ================= -->
+
+  <!-- ==================================================
+       HERO
+  ================================================== -->
 
   <main>
 
-    <section class="hero" id="discover">
+    <section
+      class="hero"
+      id="discover"
+    >
 
       <div class="hero-content">
 
-        <div class="eyebrow">
-          <span class="eyebrow-dot"></span>
-          AI-POWERED FASHION DISCOVERY
-        </div>
+        <span class="eyebrow">
+          GLOBAL FASHION INTELLIGENCE
+        </span>
+
 
         <h1>
-          Find the fashion
-          <em>you actually want.</em>
+          Find exactly what
+          <span>you want to wear.</span>
         </h1>
 
+
         <p class="hero-description">
-          Search across fashion collections using your own words.
-          Describe the style, occasion, colour, material or budget —
-          Fashion AI finds the closest matches.
+
+          Search fashion across brands, categories,
+          styles and price ranges — all from one
+          intelligent discovery platform.
+
         </p>
 
 
-        <!-- ================= SEARCH ================= -->
+        <!-- SEARCH -->
 
-        <div class="search-wrapper">
+        <div class="main-search">
 
-          <div class="search-box">
-
-            <span class="search-icon">
-              ⌕
-            </span>
-
-            <input
-              id="searchInput"
-              type="text"
-              autocomplete="off"
-              placeholder="Try “black oversized shirt under ₹3000”"
-            >
-
-            <button
-              id="searchButton"
-              type="button"
-            >
-              Search
-              <span>→</span>
-            </button>
-
-          </div>
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Try: black oversized shirt under ₹3000"
+            autocomplete="off"
+          >
 
 
-          <div class="search-hints">
+          <button
+            id="searchButton"
+            type="button"
+          >
+            Search
+          </button>
 
-            <span>Try:</span>
+        </div>
 
-            <button type="button">
-              black shirt
-            </button>
 
-            <button type="button">
-              linen summer dress
-            </button>
+        <!-- SEARCH HINTS -->
 
-            <button type="button">
-              formal blazer
-            </button>
+        <div class="search-hints">
 
-            <button type="button">
-              white sneakers
-            </button>
+          <span>
+            Try:
+          </span>
 
-          </div>
+
+          <button type="button">
+            black oversized shirt
+          </button>
+
+
+          <button type="button">
+            summer dress
+          </button>
+
+
+          <button type="button">
+            formal blazer
+          </button>
+
+
+          <button type="button">
+            white sneakers
+          </button>
 
         </div>
 
       </div>
 
 
-      <!-- HERO SIDE CARD -->
+      <!-- HERO SIDE -->
 
-      <div class="hero-intelligence">
+      <div class="hero-panel">
 
-        <div class="intelligence-card">
+        <div class="hero-panel-inner">
 
-          <div class="card-label">
-            <span class="pulse"></span>
-            SEARCH INTELLIGENCE
-          </div>
+          <span class="panel-label">
+            AI DISCOVERY ENGINE
+          </span>
 
-          <div class="query-preview">
-            “minimal black outfit
-            for an evening event”
-          </div>
 
-          <div class="understanding">
+          <div class="hero-orbit">
 
-            <div class="understanding-title">
-              AI understands
-            </div>
+            <div class="orbit-circle"></div>
 
-            <div class="understanding-tags">
-
-              <span>Minimal</span>
-              <span>Black</span>
-              <span>Evening</span>
-              <span>Outfit</span>
-
+            <div class="orbit-core">
+              AI
             </div>
 
           </div>
 
-          <div class="match-preview">
 
-            <div>
-              <small>Semantic relevance</small>
-              <strong>94%</strong>
-            </div>
+          <div class="hero-stat">
 
-            <div class="mini-bar">
-              <span style="width:94%"></span>
-            </div>
+            <strong>
+              Search
+            </strong>
+
+            <span>
+              Natural language
+            </span>
+
+          </div>
+
+
+          <div class="hero-stat">
+
+            <strong>
+              Discover
+            </strong>
+
+            <span>
+              Across collections
+            </span>
+
+          </div>
+
+
+          <div class="hero-stat">
+
+            <strong>
+              Match
+            </strong>
+
+            <span>
+              Personalised results
+            </span>
 
           </div>
 
@@ -203,156 +232,290 @@
     </section>
 
 
-    <!-- ================= RESULTS ================= -->
+
+    <!-- ==================================================
+         SEARCH RESULTS
+    ================================================== -->
 
     <section class="results-section">
 
-      <div class="section-container">
-
-        <div class="section-heading">
-
-          <div>
-
-            <span class="section-eyebrow">
-              DISCOVERY
-            </span>
-
-            <h2>
-              Fashion matches
-            </h2>
-
-          </div>
-
-          <span class="results-note">
-            Powered by AI search
-          </span>
-
-        </div>
-
-
-        <div
-          id="results"
-          class="results-grid"
-        >
-
-          <div class="search-empty">
-
-            <div class="empty-icon">
-              ✦
-            </div>
-
-            <h3>
-              Start your fashion search
-            </h3>
-
-            <p>
-              Describe what you are looking for
-              and AI will find relevant products.
-            </p>
-
-          </div>
-
-        </div>
+      <div
+        id="results"
+        class="product-grid"
+      >
 
       </div>
 
     </section>
 
 
-    <!-- ================= HOW IT WORKS ================= -->
+
+    <!-- ==================================================
+         AI STYLIST
+    ================================================== -->
 
     <section
-      class="how-section"
-      id="how-it-works"
+      class="stylist-section"
+      id="stylist"
     >
 
-      <div class="section-container">
+      <div class="section-heading">
 
-        <div class="section-heading centered">
+        <span class="eyebrow">
+          PERSONAL FASHION INTELLIGENCE
+        </span>
 
-          <span class="section-eyebrow">
-            THE INTELLIGENCE
-          </span>
 
-          <h2>
-            Search beyond keywords.
-          </h2>
+        <h2>
+          Meet your AI Stylist.
+        </h2>
 
-          <p>
-            Fashion AI understands the meaning behind
-            what you type instead of forcing you to
-            search one filter at a time.
-          </p>
+
+        <p>
+
+          Tell us what you need.
+          ABAIRA will analyse the collection
+          and rank the pieces around your preferences.
+
+        </p>
+
+      </div>
+
+
+      <div class="stylist-layout">
+
+
+        <!-- FORM -->
+
+        <div class="stylist-form-card">
+
+          <div class="form-header">
+
+            <span>
+              YOUR PREFERENCES
+            </span>
+
+            <small>
+              AI-powered matching
+            </small>
+
+          </div>
+
+
+          <div class="form-grid">
+
+
+            <!-- OCCASION -->
+
+            <div class="form-field">
+
+              <label for="stylistOccasion">
+                Occasion
+              </label>
+
+              <input
+                id="stylistOccasion"
+                type="text"
+                placeholder="Wedding, office, casual..."
+              >
+
+            </div>
+
+
+            <!-- STYLE -->
+
+            <div class="form-field">
+
+              <label for="stylistStyle">
+                Style
+              </label>
+
+              <input
+                id="stylistStyle"
+                type="text"
+                placeholder="Minimal, oversized, elegant..."
+              >
+
+            </div>
+
+
+            <!-- COMFORT -->
+
+            <div class="form-field">
+
+              <label for="stylistComfort">
+                Comfort
+              </label>
+
+              <input
+                id="stylistComfort"
+                type="text"
+                placeholder="Relaxed, breathable, soft..."
+              >
+
+            </div>
+
+
+            <!-- COLOUR -->
+
+            <div class="form-field">
+
+              <label for="stylistColor">
+                Colour
+              </label>
+
+              <input
+                id="stylistColor"
+                type="text"
+                placeholder="Black, white, cream..."
+              >
+
+            </div>
+
+
+            <!-- COVERAGE -->
+
+            <div class="form-field">
+
+              <label for="stylistCoverage">
+                Coverage
+              </label>
+
+              <input
+                id="stylistCoverage"
+                type="text"
+                placeholder="Full, relaxed, layered..."
+              >
+
+            </div>
+
+
+            <!-- DESCRIPTION -->
+
+            <div class="form-field full-width">
+
+              <label for="stylistDescription">
+                Describe what you are looking for
+              </label>
+
+              <textarea
+                id="stylistDescription"
+                rows="4"
+                placeholder="Example: I need a sophisticated black outfit for an evening event. I want something comfortable and minimal."
+              ></textarea>
+
+            </div>
+
+          </div>
+
+
+          <button
+            id="stylistButton"
+            class="stylist-button"
+            type="button"
+          >
+
+            <span>
+              ✦
+            </span>
+
+            Find My Style
+
+          </button>
 
         </div>
 
 
-        <div class="steps-grid">
+        <!-- INFO -->
 
-          <article class="step-card">
+        <div class="stylist-info">
 
-            <span class="step-number">
-              01
-            </span>
+          <span class="eyebrow">
+            HOW IT WORKS
+          </span>
 
-            <div class="step-icon">
-              ◇
+
+          <h3>
+            One request.
+            <br>
+            Hundreds of possibilities.
+          </h3>
+
+
+          <p>
+
+            ABAIRA converts your preferences into
+            structured signals and compares them
+            against the fashion collection.
+
+          </p>
+
+
+          <div class="workflow">
+
+            <div class="workflow-item">
+
+              <span>
+                01
+              </span>
+
+              <div>
+
+                <strong>
+                  Describe
+                </strong>
+
+                <p>
+                  Tell the AI what you need.
+                </p>
+
+              </div>
+
             </div>
 
-            <h3>
-              Describe
-            </h3>
 
-            <p>
-              Tell us what you want naturally —
-              just like you would tell a stylist.
-            </p>
+            <div class="workflow-item">
 
-          </article>
+              <span>
+                02
+              </span>
 
+              <div>
 
-          <article class="step-card">
+                <strong>
+                  Analyse
+                </strong>
 
-            <span class="step-number">
-              02
-            </span>
+                <p>
+                  Your preferences are matched.
+                </p>
 
-            <div class="step-icon">
-              ✦
+              </div>
+
             </div>
 
-            <h3>
-              Understand
-            </h3>
 
-            <p>
-              Our search engine analyses style,
-              category, colour, material and intent.
-            </p>
+            <div class="workflow-item">
 
-          </article>
+              <span>
+                03
+              </span>
 
+              <div>
 
-          <article class="step-card">
+                <strong>
+                  Discover
+                </strong>
 
-            <span class="step-number">
-              03
-            </span>
+                <p>
+                  See your highest-ranked pieces.
+                </p>
 
-            <div class="step-icon">
-              ◎
+              </div>
+
             </div>
 
-            <h3>
-              Discover
-            </h3>
-
-            <p>
-              Explore the products that best match
-              what you actually meant.
-            </p>
-
-          </article>
+          </div>
 
         </div>
 
@@ -361,67 +524,140 @@
     </section>
 
 
-    <!-- ================= BRANDS ================= -->
+
+    <!-- ==================================================
+         BRANDS
+    ================================================== -->
 
     <section
       class="brands-section"
       id="brands"
     >
 
-      <div class="section-container">
+      <div class="section-heading centered">
 
-        <div class="brands-inner">
+        <span class="eyebrow">
+          ONE DISCOVERY LAYER
+        </span>
 
-          <div>
 
-            <span class="section-eyebrow">
-              ONE DISCOVERY LAYER
-            </span>
+        <h2>
+          Fashion without the tabs.
+        </h2>
 
-            <h2>
-              Fashion from many
-              brands. One search.
-            </h2>
 
-          </div>
+        <p>
 
-          <p>
-            Our long-term vision is to create a unified
-            discovery layer across fashion brands,
-            collections and marketplaces.
-          </p>
+          The long-term vision of ABAIRA is to bring
+          fashion discovery from multiple brands into
+          one intelligent search layer.
 
+        </p>
+
+      </div>
+
+
+      <div class="brand-grid">
+
+        <div class="brand-placeholder">
+          BRAND 01
+        </div>
+
+        <div class="brand-placeholder">
+          BRAND 02
+        </div>
+
+        <div class="brand-placeholder">
+          BRAND 03
+        </div>
+
+        <div class="brand-placeholder">
+          BRAND 04
+        </div>
+
+        <div class="brand-placeholder">
+          BRAND 05
+        </div>
+
+        <div class="brand-placeholder">
+          BRAND 06
         </div>
 
       </div>
 
     </section>
 
+
+
+    <!-- ==================================================
+         ABOUT
+    ================================================== -->
+
+    <section
+      class="about-section"
+      id="about"
+    >
+
+      <div>
+
+        <span class="eyebrow">
+          THE VISION
+        </span>
+
+
+        <h2>
+          A search engine
+          for fashion.
+        </h2>
+
+      </div>
+
+
+      <p>
+
+        ABAIRA is being built as an intelligent
+        fashion discovery layer — allowing people
+        to describe what they want instead of
+        navigating endless categories and websites.
+
+      </p>
+
+    </section>
+
   </main>
 
 
-  <!-- ================= FOOTER ================= -->
+
+  <!-- ==================================================
+       FOOTER
+  ================================================== -->
 
   <footer class="footer">
 
-    <div class="footer-inner">
+    <div>
 
-      <div class="logo">
-        FASHION<span>AI</span>
-      </div>
+      <strong>
+        ABAIRA
+      </strong>
 
-      <p>
-        Intelligent fashion discovery.
-      </p>
-
-      <span class="footer-status">
-        AI SEARCH ONLINE
+      <span>
+        Global Fashion AI
       </span>
 
     </div>
 
+
+    <p>
+      Intelligent fashion discovery.
+    </p>
+
   </footer>
 
+
+
+  <!-- ==================================================
+       JAVASCRIPT
+  ================================================== -->
 
   <script src="app.js"></script>
 
