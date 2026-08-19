@@ -26,76 +26,51 @@ function escapeHTML(text) {
 /* ================= BACKEND SEARCH ================= */
 
 async function searchFashion(query) {
-
   try {
-
-    resultsContainer.innerHTML = `
-      <div class="search-loading">
-        <div class="loading-spinner"></div>
-        <p>Finding the best fashion matches...</p>
-      </div>
-    `;
-
-
     const response = await fetch(
       `${API_BASE_URL}/api/search`,
       {
         method: "POST",
-
         headers: {
           "Content-Type": "application/json"
         },
-
         body: JSON.stringify({
           query: query
         })
       }
     );
 
-
-    const data =
-      await response.json();
-
+    const data = await response.json();
 
     if (!response.ok) {
-
       throw new Error(
         data.error || "Search failed"
       );
-
     }
 
+    console.log("AI Search Results:", data);
 
-    return data.results || [];
-
+    return Array.isArray(data.results)
+      ? data.results
+      : [];
 
   } catch (error) {
-
     console.error(
-      "Fashion search error:",
+      "Fashion AI search error:",
       error
     );
 
-
     resultsContainer.innerHTML = `
       <div class="no-results">
-
-        <h3>
-          Search temporarily unavailable
-        </h3>
-
+        <h3>Search service unavailable.</h3>
         <p>
           Please try again in a moment.
         </p>
-
       </div>
     `;
 
-
     return [];
-
   }
-
 }
 
 /* =====================================================
@@ -804,32 +779,37 @@ function renderProducts(productList) {
 /* ================= SEARCH ================= */
 
 async function runSearch() {
-
-  const query =
-    searchInput.value.trim();
-
+  const query = searchInput.value.trim();
 
   if (!query) {
-
-    searchInput.focus();
-
+    renderProducts(products);
     return;
-
   }
 
+  resultsContainer.innerHTML = `
+    <div class="no-results">
+      <h3>Searching...</h3>
+      <p>Fashion AI is finding the best matches for you.</p>
+    </div>
+  `;
 
-  searchButton.disabled = true;
+  const results = await searchFashion(query);
 
+  if (!results.length) {
+    resultsContainer.innerHTML = `
+      <div class="no-results">
+        <h3>No matching products found.</h3>
+        <p>
+          Try describing a product, brand, colour,
+          material or style.
+        </p>
+      </div>
+    `;
 
-  const results =
-    await searchFashion(query);
-
+    return;
+  }
 
   renderProducts(results);
-
-
-  searchButton.disabled = false;
-
 }
 
 
