@@ -909,3 +909,304 @@ resultsContainer.innerHTML = `
   </div>
 
 `;
+
+/* =====================================================
+   AI STYLIST — BACKEND CONNECTION
+===================================================== */
+
+async function getStylistRecommendations(preferences) {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/stylist`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+          occasion: preferences.occasion || "",
+          style: preferences.style || "",
+          comfort: preferences.comfort || "",
+          color: preferences.color || "",
+          coverage: preferences.coverage || "",
+          description: preferences.description || ""
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || "AI Stylist request failed"
+      );
+    }
+
+    return data;
+
+  } catch (error) {
+
+    console.error(
+      "AI Stylist error:",
+      error
+    );
+
+    return {
+      success: false,
+      error: error.message,
+      recommendations: []
+    };
+  }
+}
+
+
+/* =====================================================
+   AI STYLIST UI
+===================================================== */
+
+function renderStylistResults(results) {
+
+  const container =
+    document.getElementById("stylistResults");
+
+  if (!container) {
+    console.warn(
+      "stylistResults container not found."
+    );
+    return;
+  }
+
+
+  if (!results || !results.length) {
+
+    container.innerHTML = `
+      <div class="no-results">
+        <h3>No strong matches found.</h3>
+
+        <p>
+          Try changing your style, occasion,
+          colour or description.
+        </p>
+      </div>
+    `;
+
+    return;
+  }
+
+
+  container.innerHTML = results
+    .map(product => {
+
+      return `
+        <article class="product-card stylist-card">
+
+          <div class="product-image">
+            <span>AI MATCH</span>
+          </div>
+
+          <div class="product-content">
+
+            <span class="product-brand">
+              ${escapeHTML(product.brand || "")}
+            </span>
+
+            <h3>
+              ${escapeHTML(product.name || "")}
+            </h3>
+
+            <p>
+              ${escapeHTML(product.description || "")}
+            </p>
+
+            <div class="product-meta">
+
+              <span>
+                ${escapeHTML(product.category || "")}
+              </span>
+
+              <span>
+                ${escapeHTML(product.color || "")}
+              </span>
+
+            </div>
+
+            <div class="product-price">
+              ${product.currency || "₹"}
+              ${Number(product.price || 0)
+                .toLocaleString("en-IN")}
+            </div>
+
+            <div class="ai-match-score">
+              AI Match:
+              ${product.matchScore || product.stylistScore || 0}%
+            </div>
+
+          </div>
+
+        </article>
+      `;
+
+    })
+    .join("");
+}
+
+
+/* =====================================================
+   RUN AI STYLIST
+===================================================== */
+
+async function runAIStylist() {
+
+  const occasion =
+    document.getElementById("stylistOccasion")?.value || "";
+
+  const style =
+    document.getElementById("stylistStyle")?.value || "";
+
+  const comfort =
+    document.getElementById("stylistComfort")?.value || "";
+
+  const color =
+    document.getElementById("stylistColor")?.value || "";
+
+  const coverage =
+    document.getElementById("stylistCoverage")?.value || "";
+
+  const description =
+    document.getElementById("stylistDescription")?.value || "";
+
+
+  const button =
+    document.getElementById("stylistButton");
+
+
+  if (button) {
+
+    button.disabled = true;
+
+    button.textContent =
+      "Finding your style...";
+
+  }
+
+
+  const result =
+    await getStylistRecommendations({
+
+      occasion,
+
+      style,
+
+      comfort,
+
+      color,
+
+      coverage,
+
+      description
+
+    });
+
+
+  if (result.success) {
+
+    renderStylistResults(
+      result.recommendations || []
+    );
+
+  } else {
+
+    const container =
+      document.getElementById(
+        "stylistResults"
+      );
+
+    if (container) {
+
+      container.innerHTML = `
+        <div class="no-results">
+
+          <h3>
+            AI Stylist couldn't complete the search.
+          </h3>
+
+          <p>
+            ${escapeHTML(
+              result.error ||
+              "Please try again."
+            )}
+          </p>
+
+        </div>
+      `;
+
+    }
+
+  }
+
+
+  if (button) {
+
+    button.disabled = false;
+
+    button.textContent =
+      "Find My Style";
+
+  }
+
+}
+
+
+/* =====================================================
+   STYLIST BUTTON
+===================================================== */
+
+const stylistButton =
+  document.getElementById(
+    "stylistButton"
+  );
+
+
+if (stylistButton) {
+
+  stylistButton.addEventListener(
+    "click",
+    runAIStylist
+  );
+
+}
+
+
+/* =====================================================
+   ENTER KEY FOR DESCRIPTION
+===================================================== */
+
+const stylistDescription =
+  document.getElementById(
+    "stylistDescription"
+  );
+
+
+if (stylistDescription) {
+
+  stylistDescription.addEventListener(
+    "keydown",
+    event => {
+
+      if (
+        event.key === "Enter" &&
+        !event.shiftKey
+      ) {
+
+        event.preventDefault();
+
+        runAIStylist();
+
+      }
+
+    }
+  );
+
+}
