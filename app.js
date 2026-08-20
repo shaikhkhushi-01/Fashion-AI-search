@@ -195,6 +195,12 @@ function renderProducts(productList) {
 
               </div>
 
+              ${product.explanation ? `
+  <p class="product-explanation">
+    ${escapeHTML(product.explanation)}
+  </p>
+` : ""}
+
 
               ${
                 product.explanation
@@ -277,14 +283,31 @@ async function runSearch() {
     return;
   }
 
-  searchButton.disabled = true;
-  searchButton.textContent = "Searching...";
+  // Loading state
+  resultsContainer.innerHTML = `
+    <div class="no-results">
+      <h3>Finding your style...</h3>
+      <p>ABAIRA is searching the fashion collection.</p>
+    </div>
+  `;
 
   try {
 
-    const results = await searchFashion(query);
+    const apiResults = await searchFashion(query);
 
-    renderProducts(results);
+    if (!apiResults.length) {
+
+      resultsContainer.innerHTML = `
+        <div class="no-results">
+          <h3>No matching products found.</h3>
+          <p>Try another fashion description.</p>
+        </div>
+      `;
+
+      return;
+    }
+
+    renderProducts(apiResults);
 
   } catch (error) {
 
@@ -297,12 +320,8 @@ async function runSearch() {
       </div>
     `;
 
-  } finally {
-
-    searchButton.disabled = false;
-    searchButton.textContent = "Search";
-
   }
+
 }
 
 
