@@ -550,3 +550,268 @@ resultsContainer.innerHTML = `
   </div>
 
 `;
+
+```javascript
+/* =====================================================
+   AI STYLIST FRONTEND
+===================================================== */
+
+const stylistButton =
+  document.getElementById("stylistButton");
+
+
+async function runAIStylist() {
+
+  const occasion =
+    document.getElementById("stylistOccasion").value.trim();
+
+  const style =
+    document.getElementById("stylistStyle").value.trim();
+
+  const comfort =
+    document.getElementById("stylistComfort").value.trim();
+
+  const color =
+    document.getElementById("stylistColor").value.trim();
+
+  const coverage =
+    document.getElementById("stylistCoverage").value.trim();
+
+  const description =
+    document.getElementById("stylistDescription").value.trim();
+
+
+  const hasPreferences =
+    occasion ||
+    style ||
+    comfort ||
+    color ||
+    coverage ||
+    description;
+
+
+  if (!hasPreferences) {
+
+    alert(
+      "Please tell me at least one thing about your style."
+    );
+
+    return;
+
+  }
+
+
+  stylistButton.disabled = true;
+
+  stylistButton.innerHTML =
+    "Finding Your Style...";
+
+
+  try {
+
+    const response =
+      await fetch(
+        `${API_BASE_URL}/api/stylist`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json"
+          },
+
+          body: JSON.stringify({
+
+            occasion,
+            style,
+            comfort,
+            color,
+            coverage,
+            description
+
+          })
+
+        }
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.error ||
+        "AI Stylist request failed."
+      );
+
+    }
+
+
+    console.log(
+      "AI Stylist Results:",
+      data
+    );
+
+
+    renderStylistResults(
+      data.recommendations || []
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "AI Stylist error:",
+      error
+    );
+
+
+    alert(
+      "AI Stylist could not connect to the server. Please try again."
+    );
+
+  }
+
+
+  stylistButton.disabled = false;
+
+  stylistButton.innerHTML =
+    "<span>✦</span> Find My Style";
+
+}
+
+
+/* =====================================================
+   RENDER STYLIST RESULTS
+===================================================== */
+
+function renderStylistResults(
+  recommendationList
+) {
+
+  if (!recommendationList.length) {
+
+    resultsContainer.innerHTML = `
+
+      <div class="no-results">
+
+        <h3>
+          No style matches found.
+        </h3>
+
+        <p>
+          Try changing your preferences.
+        </p>
+
+      </div>
+
+    `;
+
+    document
+      .getElementById("discover")
+      .scrollIntoView({
+        behavior: "smooth"
+      });
+
+    return;
+
+  }
+
+
+  resultsContainer.innerHTML =
+    recommendationList
+      .map(product => {
+
+        return `
+
+          <article class="product-card">
+
+            <div class="product-image">
+
+              ${escapeHTML(
+                product.category || "FASHION"
+              )}
+
+            </div>
+
+
+            <div class="product-content">
+
+              <span class="product-brand">
+
+                ${escapeHTML(
+                  product.brand || ""
+                )}
+
+              </span>
+
+
+              <h3>
+
+                ${escapeHTML(
+                  product.name || ""
+                )}
+
+              </h3>
+
+
+              <p>
+
+                ${escapeHTML(
+                  product.description || ""
+                )}
+
+              </p>
+
+
+              <div class="product-price">
+
+                ${product.currency || "₹"}
+                ${Number(
+                  product.price || 0
+                ).toLocaleString("en-IN")}
+
+              </div>
+
+
+              <div class="stylist-match">
+
+                AI Match:
+                ${product.matchScore || 0}%
+
+              </div>
+
+            </div>
+
+          </article>
+
+        `;
+
+      })
+      .join("");
+
+
+  document
+    .getElementById("discover")
+    .scrollIntoView({
+      behavior: "smooth"
+    });
+
+}
+
+
+/* =====================================================
+   STYLIST BUTTON
+===================================================== */
+
+if (stylistButton) {
+
+  stylistButton.addEventListener(
+    "click",
+    runAIStylist
+  );
+
+}
+```
+
