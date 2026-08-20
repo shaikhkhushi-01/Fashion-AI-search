@@ -3,22 +3,14 @@
    FRONTEND APP.JS
 ===================================================== */
 
-
-/* =====================================================
-   API CONFIG
-===================================================== */
-
-const API_BASE_URL =
-  "https://fashion-ai-search-lj6s.onrender.com";
+const API_BASE_URL = "https://fashion-ai-search-lj6s.onrender.com";
 
 
 /* =====================================================
-   FALLBACK PRODUCTS
-   Used if backend is temporarily unavailable.
+   LOCAL FALLBACK PRODUCTS
 ===================================================== */
 
-const fallbackProducts = [
-
+const products = [
   {
     id: 1,
     brand: "ATELIER",
@@ -28,10 +20,8 @@ const fallbackProducts = [
     material: "Linen",
     price: 2499,
     currency: "₹",
-    description:
-      "Relaxed-fit lightweight linen shirt for warm weather and everyday comfort."
+    description: "Relaxed-fit lightweight linen shirt designed for warm weather and everyday comfort."
   },
-
   {
     id: 2,
     brand: "NOVA",
@@ -41,10 +31,8 @@ const fallbackProducts = [
     material: "Cotton",
     price: 1999,
     currency: "₹",
-    description:
-      "Minimal oversized cotton shirt with a clean silhouette for casual everyday styling."
+    description: "Minimal oversized cotton shirt with a clean silhouette for casual everyday styling."
   },
-
   {
     id: 3,
     brand: "FORM",
@@ -54,10 +42,8 @@ const fallbackProducts = [
     material: "Cotton",
     price: 3299,
     currency: "₹",
-    description:
-      "Lightweight summer dress with a relaxed elegant fit."
+    description: "Lightweight summer dress with a relaxed elegant fit."
   },
-
   {
     id: 4,
     brand: "STUDIO 09",
@@ -67,10 +53,8 @@ const fallbackProducts = [
     material: "Cotton Blend",
     price: 2799,
     currency: "₹",
-    description:
-      "Straight relaxed trousers designed for everyday wear."
+    description: "Straight relaxed trousers designed for everyday wear."
   },
-
   {
     id: 5,
     brand: "MOTION",
@@ -80,10 +64,8 @@ const fallbackProducts = [
     material: "Mesh",
     price: 4499,
     currency: "₹",
-    description:
-      "Lightweight performance sneakers for everyday movement."
+    description: "Lightweight performance sneakers for everyday movement."
   },
-
   {
     id: 6,
     brand: "NOVA",
@@ -93,289 +75,47 @@ const fallbackProducts = [
     material: "Wool Blend",
     price: 5999,
     currency: "₹",
-    description:
-      "Clean structured blazer designed for formal occasions."
+    description: "Clean structured blazer designed for formal occasions."
   }
-
 ];
-
-
-/* =====================================================
-   PRODUCT STORE
-===================================================== */
-
-let products = [...fallbackProducts];
 
 
 /* =====================================================
    DOM ELEMENTS
 ===================================================== */
 
-const resultsContainer =
-  document.getElementById("results");
+const resultsContainer = document.getElementById("results");
+const searchInput = document.getElementById("searchInput");
+const searchButton = document.getElementById("searchButton");
 
-const searchInput =
-  document.getElementById("searchInput");
+const stylistButton = document.getElementById("stylistButton");
 
-const searchButton =
-  document.getElementById("searchButton");
-
-const stylistButton =
-  document.getElementById("stylistButton");
+const stylistOccasion = document.getElementById("stylistOccasion");
+const stylistStyle = document.getElementById("stylistStyle");
+const stylistComfort = document.getElementById("stylistComfort");
+const stylistColor = document.getElementById("stylistColor");
+const stylistCoverage = document.getElementById("stylistCoverage");
+const stylistDescription = document.getElementById("stylistDescription");
 
 
 /* =====================================================
-   HTML ESCAPE
+   BASIC HELPERS
 ===================================================== */
 
-function escapeHTML(text) {
+function normalize(text) {
+  return String(text || "")
+    .toLowerCase()
+    .trim();
+}
 
-  return String(text ?? "")
+
+function escapeHTML(text) {
+  return String(text || "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
-
-}
-
-
-/* =====================================================
-   NORMALIZE
-===================================================== */
-
-function normalize(text) {
-
-  return String(text || "")
-    .toLowerCase()
-    .trim();
-
-}
-
-
-/* =====================================================
-   LOADING
-===================================================== */
-
-function showLoading(
-  message = "Finding the best matches..."
-) {
-
-  if (!resultsContainer) return;
-
-  resultsContainer.innerHTML = `
-
-    <div class="no-results">
-
-      <h3>
-        ${escapeHTML(message)}
-      </h3>
-
-      <p>
-        ABAIRA AI is analysing the collection.
-      </p>
-
-    </div>
-
-  `;
-
-}
-
-
-/* =====================================================
-   NO RESULTS
-===================================================== */
-
-function showNoResults() {
-
-  if (!resultsContainer) return;
-
-  resultsContainer.innerHTML = `
-
-    <div class="no-results">
-
-      <h3>
-        No matching products found.
-      </h3>
-
-      <p>
-        Try another fashion description.
-      </p>
-
-    </div>
-
-  `;
-
-}
-
-
-/* =====================================================
-   ERROR
-===================================================== */
-
-function showError(message) {
-
-  if (!resultsContainer) return;
-
-  resultsContainer.innerHTML = `
-
-    <div class="no-results">
-
-      <h3>
-        Something went wrong.
-      </h3>
-
-      <p>
-        ${escapeHTML(message)}
-      </p>
-
-    </div>
-
-  `;
-
-}
-
-
-/* =====================================================
-   PRODUCT RENDER
-===================================================== */
-
-function renderProducts(productList) {
-
-  if (
-    !Array.isArray(productList) ||
-    productList.length === 0
-  ) {
-
-    showNoResults();
-
-    return;
-
-  }
-
-
-  resultsContainer.innerHTML =
-
-    productList
-      .map(product => {
-
-        const price =
-          Number(product.price);
-
-        const formattedPrice =
-          Number.isNaN(price)
-            ? String(product.price || "")
-            : price.toLocaleString("en-IN");
-
-
-        const explanation =
-          product.explanation ||
-          "";
-
-
-        const matchScore =
-          product.matchScore ??
-          product.stylistScore ??
-          null;
-
-
-        return `
-
-          <article class="product-card">
-
-            <div class="product-image">
-
-              <span>
-                ${escapeHTML(
-                  product.category ||
-                  "FASHION"
-                )}
-              </span>
-
-            </div>
-
-
-            <div class="product-content">
-
-              <span class="product-brand">
-
-                ${escapeHTML(
-                  product.brand || ""
-                )}
-
-              </span>
-
-
-              <h3>
-
-                ${escapeHTML(
-                  product.name || ""
-                )}
-
-              </h3>
-
-
-              <p>
-
-                ${escapeHTML(
-                  product.description || ""
-                )}
-
-              </p>
-
-
-              <div class="product-price">
-
-                ${escapeHTML(
-                  product.currency || "₹"
-                )}
-
-                ${formattedPrice}
-
-              </div>
-
-
-              ${
-                explanation
-                  ? `
-
-                    <div class="product-match">
-
-                      ${escapeHTML(
-                        explanation
-                      )}
-
-                    </div>
-
-                  `
-                  : ""
-              }
-
-
-              ${
-                matchScore !== null
-                  ? `
-
-                    <div class="stylist-match">
-
-                      AI Match:
-                      ${escapeHTML(matchScore)}%
-
-                    </div>
-
-                  `
-                  : ""
-              }
-
-            </div>
-
-          </article>
-
-        `;
-
-      })
-      .join("");
-
 }
 
 
@@ -383,270 +123,185 @@ function renderProducts(productList) {
    LOCAL SEARCH FALLBACK
 ===================================================== */
 
-function localSearch(query) {
+function localSearchProducts(query) {
 
-  const normalizedQuery =
-    normalize(query);
-
+  const normalizedQuery = normalize(query);
 
   if (!normalizedQuery) {
-
     return products;
-
   }
 
-
-  const words =
-    normalizedQuery
-      .split(/\s+/)
-      .filter(Boolean);
-
+  const words = normalizedQuery
+    .split(/\s+/)
+    .filter(Boolean);
 
   return products
+    .map(function(product) {
 
-    .map(product => {
-
-      const searchableText =
-        normalize(
-
-          [
-
-            product.brand,
-
-            product.name,
-
-            product.category,
-
-            product.color,
-
-            product.material,
-
-            product.description,
-
-            ...(Array.isArray(product.tags)
-              ? product.tags
-              : [])
-
-          ]
-
-            .filter(Boolean)
-
-            .join(" ")
-
-        );
-
-
-      const name =
-        normalize(product.name);
-
-      const brand =
-        normalize(product.brand);
-
-      const category =
-        normalize(product.category);
-
-      const color =
-        normalize(product.color);
-
+      const searchableText = normalize([
+        product.brand,
+        product.name,
+        product.category,
+        product.color,
+        product.material,
+        product.description
+      ].join(" "));
 
       let score = 0;
 
+      words.forEach(function(word) {
 
-      words.forEach(word => {
-
-        if (
-          searchableText.includes(word)
-        ) {
-
+        if (searchableText.includes(word)) {
           score += 1;
-
         }
 
-
-        if (
-          name.includes(word)
-        ) {
-
+        if (normalize(product.name).includes(word)) {
           score += 5;
-
         }
 
-
-        if (
-          brand.includes(word)
-        ) {
-
+        if (normalize(product.brand).includes(word)) {
           score += 3;
-
         }
 
-
-        if (
-          category.includes(word)
-        ) {
-
+        if (normalize(product.category).includes(word)) {
           score += 3;
-
         }
 
-
-        if (
-          color.includes(word)
-        ) {
-
+        if (normalize(product.color).includes(word)) {
           score += 3;
+        }
 
+        if (normalize(product.material).includes(word)) {
+          score += 2;
         }
 
       });
 
-
       return {
-
         ...product,
-
-        score
-
+        score: score
       };
 
     })
-
-    .filter(
-      product =>
-        product.score > 0
-    )
-
-    .sort(
-      (a, b) =>
-        b.score - a.score
-    );
-
+    .filter(function(product) {
+      return product.score > 0;
+    })
+    .sort(function(a, b) {
+      return b.score - a.score;
+    });
 }
 
 
 /* =====================================================
-   API REQUEST HELPER
+   RENDER PRODUCTS
 ===================================================== */
 
-async function fetchJSON(
-  url,
-  options = {}
-) {
+function renderProducts(productList) {
 
-  const response =
-    await fetch(
-      url,
-      {
-        ...options,
-        mode: "cors"
+  if (!resultsContainer) {
+    console.error("Results container not found.");
+    return;
+  }
+
+  if (!Array.isArray(productList) || productList.length === 0) {
+
+    resultsContainer.innerHTML =
+      '<div class="no-results">' +
+        '<h3>No matching products found.</h3>' +
+        '<p>Try another fashion description.</p>' +
+      '</div>';
+
+    return;
+  }
+
+
+  resultsContainer.innerHTML = productList
+    .map(function(product) {
+
+      const brand = escapeHTML(product.brand || "BRAND");
+      const name = escapeHTML(product.name || "Fashion Product");
+      const description = escapeHTML(
+        product.description || "Fashion product"
+      );
+
+      const category = escapeHTML(
+        product.category || "FASHION"
+      );
+
+      const currency = product.currency || "₹";
+
+      const price = Number(product.price || 0)
+        .toLocaleString("en-IN");
+
+
+      let explanation = "";
+
+      if (product.explanation) {
+        explanation =
+          '<div class="product-explanation">' +
+          escapeHTML(product.explanation) +
+          '</div>';
       }
-    );
 
 
-  const text =
-    await response.text();
+      return (
+        '<article class="product-card">' +
 
+          '<div class="product-image">' +
+            '<span>' +
+              category +
+            '</span>' +
+          '</div>' +
 
-  let data = null;
+          '<div class="product-content">' +
 
+            '<span class="product-brand">' +
+              brand +
+            '</span>' +
 
-  try {
+            '<h3>' +
+              name +
+            '</h3>' +
 
-    data =
-      text
-        ? JSON.parse(text)
-        : {};
+            '<p>' +
+              description +
+            '</p>' +
 
-  }
+            '<div class="product-price">' +
+              currency +
+              ' ' +
+              price +
+            '</div>' +
 
-  catch {
+            explanation +
 
-    data = {
-      raw: text
-    };
+          '</div>' +
 
-  }
+        '</article>'
+      );
 
-
-  if (!response.ok) {
-
-    throw new Error(
-
-      data?.error ||
-
-      data?.message ||
-
-      `HTTP ${response.status}`
-
-    );
-
-  }
-
-
-  return data;
-
+    })
+    .join("");
 }
 
 
 /* =====================================================
-   LOAD PRODUCTS FROM BACKEND
+   LOADING STATE
 ===================================================== */
 
-async function loadProducts() {
+function showLoading(message) {
 
-  try {
-
-    console.log(
-      "Loading products from:",
-      `${API_BASE_URL}/api/products`
-    );
-
-
-    const data =
-      await fetchJSON(
-        `${API_BASE_URL}/api/products`,
-        {
-          method: "GET"
-        }
-      );
-
-
-    if (
-      Array.isArray(data.products) &&
-      data.products.length > 0
-    ) {
-
-      products =
-        data.products;
-
-      console.log(
-        `Loaded ${products.length} products from API.`
-      );
-
-      return;
-
-    }
-
-
-    console.warn(
-      "API returned no products. Using fallback products."
-    );
-
+  if (!resultsContainer) {
+    return;
   }
 
-  catch (error) {
-
-    console.warn(
-      "Could not load products from backend.",
-      error
-    );
-
-    console.warn(
-      "Using fallback products."
-    );
-
-  }
-
+  resultsContainer.innerHTML =
+    '<div class="no-results">' +
+      '<h3>' +
+        escapeHTML(message || "Finding your style...") +
+      '</h3>' +
+      '<p>Please wait a moment.</p>' +
+    '</div>';
 }
 
 
@@ -656,101 +311,64 @@ async function loadProducts() {
 
 async function searchFashion(query) {
 
-  console.log(
-    "ABAIRA SEARCH:",
-    query
-  );
-
-
   try {
 
-    const data =
-      await fetchJSON(
+    const response = await fetch(
+      API_BASE_URL + "/api/search",
+      {
+        method: "POST",
 
-        `${API_BASE_URL}/api/search`,
+        headers: {
+          "Content-Type": "application/json"
+        },
 
-        {
-
-          method: "POST",
-
-          headers: {
-
-            "Content-Type":
-              "application/json"
-
-          },
-
-          body:
-            JSON.stringify({
-              query: query
-            })
-
-        }
-
-      );
-
-
-    console.log(
-      "SEARCH API RESPONSE:",
-      data
+        body: JSON.stringify({
+          query: query
+        })
+      }
     );
 
 
-    if (
-      Array.isArray(data.results)
-    ) {
+    const data = await response.json();
 
-      return data.results;
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.error || "Search failed"
+      );
 
     }
 
 
-    return [];
+    console.log("ABAIRA API SEARCH:", data);
+
+    return Array.isArray(data.results)
+      ? data.results
+      : [];
 
   }
 
   catch (error) {
 
     console.error(
-      "SEARCH API ERROR:",
+      "Backend search error:",
       error
     );
 
-
-    /*
-      IMPORTANT:
-
-      If Render temporarily fails,
-      frontend will still search
-      loaded products locally.
-    */
-
-    console.log(
-      "Using local search fallback..."
-    );
-
-
-    return localSearch(query);
-
+    return null;
   }
-
 }
 
 
 /* =====================================================
-   RUN SEARCH
+   MAIN SEARCH
 ===================================================== */
 
 async function runSearch() {
 
   if (!searchInput) {
-
-    console.error(
-      "searchInput not found."
-    );
-
     return;
-
   }
 
 
@@ -763,254 +381,47 @@ async function runSearch() {
     renderProducts(products);
 
     return;
-
   }
 
 
   showLoading(
-    "Finding your style..."
+    "Searching ABAIRA fashion intelligence..."
   );
 
 
-  try {
-
-    const results =
-      await searchFashion(query);
+  const apiResults =
+    await searchFashion(query);
 
 
-    console.log(
-      "FINAL SEARCH RESULTS:",
-      results
-    );
+  /*
+    If backend works:
+    use backend results.
 
+    If backend fails:
+    use local search.
+  */
 
-    if (
-      !Array.isArray(results) ||
-      results.length === 0
-    ) {
+  if (
+    Array.isArray(apiResults) &&
+    apiResults.length > 0
+  ) {
 
-      showNoResults();
-
-      return;
-
-    }
-
-
-    renderProducts(results);
-
-
-  }
-
-  catch (error) {
-
-    console.error(
-      "Search failed:",
-      error
-    );
-
-
-    showError(
-      "Search could not be completed. Please try again."
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   AI STYLIST
-===================================================== */
-
-async function runAIStylist() {
-
-  const occasion =
-    document
-      .getElementById("stylistOccasion")
-      ?.value
-      .trim() || "";
-
-
-  const style =
-    document
-      .getElementById("stylistStyle")
-      ?.value
-      .trim() || "";
-
-
-  const comfort =
-    document
-      .getElementById("stylistComfort")
-      ?.value
-      .trim() || "";
-
-
-  const color =
-    document
-      .getElementById("stylistColor")
-      ?.value
-      .trim() || "";
-
-
-  const coverage =
-    document
-      .getElementById("stylistCoverage")
-      ?.value
-      .trim() || "";
-
-
-  const description =
-    document
-      .getElementById("stylistDescription")
-      ?.value
-      .trim() || "";
-
-
-  const hasPreferences =
-
-    occasion ||
-    style ||
-    comfort ||
-    color ||
-    coverage ||
-    description;
-
-
-  if (!hasPreferences) {
-
-    alert(
-      "Please tell ABAIRA what kind of style you are looking for."
-    );
+    renderProducts(apiResults);
 
     return;
-
   }
 
 
-  if (stylistButton) {
+  /*
+    Backend returned no results.
+    Try local fallback.
+  */
 
-    stylistButton.disabled = true;
-
-    stylistButton.innerHTML =
-      "Finding Your Style...";
-
-  }
-
-
-  showLoading(
-    "Your AI Stylist is creating your recommendations..."
-  );
+  const localResults =
+    localSearchProducts(query);
 
 
-  try {
-
-    const data =
-
-      await fetchJSON(
-
-        `${API_BASE_URL}/api/stylist`,
-
-        {
-
-          method: "POST",
-
-          headers: {
-
-            "Content-Type":
-              "application/json"
-
-          },
-
-          body:
-
-            JSON.stringify({
-
-              occasion,
-
-              style,
-
-              comfort,
-
-              color,
-
-              coverage,
-
-              description
-
-            })
-
-        }
-
-      );
-
-
-    console.log(
-      "AI STYLIST RESPONSE:",
-      data
-    );
-
-
-    const recommendations =
-      Array.isArray(
-        data.recommendations
-      )
-        ? data.recommendations
-        : [];
-
-
-    if (
-      !recommendations.length
-    ) {
-
-      showNoResults();
-
-      return;
-
-    }
-
-
-    renderProducts(
-      recommendations
-    );
-
-
-    document
-      .getElementById("discover")
-      ?.scrollIntoView({
-        behavior: "smooth"
-      });
-
-
-  }
-
-  catch (error) {
-
-    console.error(
-      "AI Stylist error:",
-      error
-    );
-
-
-    showError(
-      "AI Stylist could not connect to the server."
-    );
-
-  }
-
-  finally {
-
-    if (stylistButton) {
-
-      stylistButton.disabled =
-        false;
-
-      stylistButton.innerHTML =
-        "<span>✦</span> Find My Style";
-
-    }
-
-  }
-
+  renderProducts(localResults);
 }
 
 
@@ -1036,11 +447,9 @@ if (searchInput) {
 
   searchInput.addEventListener(
     "keydown",
-    event => {
+    function(event) {
 
-      if (
-        event.key === "Enter"
-      ) {
+      if (event.key === "Enter") {
 
         event.preventDefault();
 
@@ -1055,39 +464,23 @@ if (searchInput) {
 
 
 /* =====================================================
-   AI STYLIST BUTTON
-===================================================== */
-
-if (stylistButton) {
-
-  stylistButton.addEventListener(
-    "click",
-    runAIStylist
-  );
-
-}
-
-
-/* =====================================================
    SEARCH HINT BUTTONS
 ===================================================== */
 
 document
-  .querySelectorAll(
-    ".search-hints button"
-  )
-  .forEach(button => {
+  .querySelectorAll(".search-hints button")
+  .forEach(function(button) {
 
     button.addEventListener(
       "click",
-      () => {
+      function() {
 
-        if (!searchInput) return;
-
+        if (!searchInput) {
+          return;
+        }
 
         searchInput.value =
           button.textContent.trim();
-
 
         runSearch();
 
@@ -1098,60 +491,243 @@ document
 
 
 /* =====================================================
-   INITIALIZE APP
+   AI STYLIST API
 ===================================================== */
 
-async function initializeApp() {
+async function searchStylist(preferences) {
 
-  console.log(
-    "ABAIRA frontend starting..."
-  );
+  try {
 
+    const response = await fetch(
+      API_BASE_URL + "/api/stylist",
+      {
+        method: "POST",
 
-  if (resultsContainer) {
+        headers: {
+          "Content-Type": "application/json"
+        },
 
-    showLoading(
-      "Loading fashion collection..."
+        body: JSON.stringify(preferences)
+      }
     );
 
+
+    const data =
+      await response.json();
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.error || "AI Stylist failed"
+      );
+
+    }
+
+
+    console.log(
+      "ABAIRA AI STYLIST:",
+      data
+    );
+
+
+    return Array.isArray(
+      data.recommendations
+    )
+      ? data.recommendations
+      : [];
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "AI Stylist error:",
+      error
+    );
+
+    return null;
+  }
+}
+
+
+/* =====================================================
+   AI STYLIST LOCAL FALLBACK
+===================================================== */
+
+function localStylistSearch(preferences) {
+
+  const query = normalize([
+    preferences.occasion,
+    preferences.style,
+    preferences.comfort,
+    preferences.color,
+    preferences.coverage,
+    preferences.description
+  ].join(" "));
+
+
+  if (!query) {
+    return [];
   }
 
 
-  await loadProducts();
+  return localSearchProducts(query)
+    .slice(0, 10);
+}
 
+
+/* =====================================================
+   RUN AI STYLIST
+===================================================== */
+
+async function runStylist() {
+
+  const preferences = {
+
+    occasion:
+      stylistOccasion
+        ? stylistOccasion.value.trim()
+        : "",
+
+    style:
+      stylistStyle
+        ? stylistStyle.value.trim()
+        : "",
+
+    comfort:
+      stylistComfort
+        ? stylistComfort.value.trim()
+        : "",
+
+    color:
+      stylistColor
+        ? stylistColor.value.trim()
+        : "",
+
+    coverage:
+      stylistCoverage
+        ? stylistCoverage.value.trim()
+        : "",
+
+    description:
+      stylistDescription
+        ? stylistDescription.value.trim()
+        : ""
+
+  };
+
+
+  const hasPreferences =
+    Object.values(preferences)
+      .some(function(value) {
+        return value.length > 0;
+      });
+
+
+  if (!hasPreferences) {
+
+    alert(
+      "Please tell me at least one thing about the style you are looking for."
+    );
+
+    return;
+  }
+
+
+  if (stylistButton) {
+
+    stylistButton.disabled = true;
+
+    stylistButton.innerHTML =
+      "<span>✦</span> Finding Your Style...";
+
+  }
+
+
+  /*
+    Scroll to results area.
+  */
 
   if (resultsContainer) {
 
-    resultsContainer.innerHTML = `
-
-      <div class="no-results">
-
-        <h3>
-          Start discovering fashion.
-        </h3>
-
-        <p>
-          Search for a style, occasion,
-          colour, material or budget above.
-        </p>
-
-      </div>
-
-    `;
+    resultsContainer.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
 
   }
 
 
-  console.log(
-    "ABAIRA frontend ready."
+  showLoading(
+    "Your AI stylist is analysing your preferences..."
   );
 
 
-  console.log(
-    `Products available: ${products.length}`
+  const apiResults =
+    await searchStylist(preferences);
+
+
+  if (
+    Array.isArray(apiResults) &&
+    apiResults.length > 0
+  ) {
+
+    renderProducts(apiResults);
+
+  }
+  else {
+
+    const localResults =
+      localStylistSearch(preferences);
+
+    renderProducts(localResults);
+
+  }
+
+
+  if (stylistButton) {
+
+    stylistButton.disabled = false;
+
+    stylistButton.innerHTML =
+      "<span>✦</span> Find My Style";
+
+  }
+
+}
+
+
+/* =====================================================
+   STYLIST BUTTON
+===================================================== */
+
+if (stylistButton) {
+
+  stylistButton.addEventListener(
+    "click",
+    runStylist
   );
 
 }
 
 
-initializeApp();
+/* =====================================================
+   INITIAL PRODUCTS
+===================================================== */
+
+renderProducts(products);
+
+
+/* =====================================================
+   DEBUG MESSAGE
+===================================================== */
+
+console.log(
+  "ABAIRA app.js loaded successfully."
+);
+
+console.log(
+  "Backend:",
+  API_BASE_URL
+);
