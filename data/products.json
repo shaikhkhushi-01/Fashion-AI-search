@@ -11,12 +11,13 @@
     "material": ["Linen"],
     "occasion": ["Summer", "Casual", "Travel"],
     "style": ["Minimal", "Relaxed", "Comfortable"],
+    "comfort": "high",
+    "coverage": "full",
     "sizes": ["XS", "S", "M", "L", "XL"],
     "tags": ["breathable", "lightweight", "everyday"],
     "availability": "In Stock",
-    "description": "Relaxed-fit lightweight linen shirt designed for warm weather and everyday comfort.",
-    "image": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=900&q=85",
-    "productUrl": "#"
+    "image": "https://images.unsplash.com/photo-1605763240000-7e93b172d754?auto=format&fit=crop&w=800&q=85",
+    "description": "Relaxed-fit lightweight linen shirt designed for warm weather and everyday comfort."
   },
   {
     "id": 2,
@@ -30,12 +31,13 @@
     "material": ["Cotton"],
     "occasion": ["Casual", "College", "Everyday"],
     "style": ["Oversized", "Minimal", "Streetwear"],
+    "comfort": "very-high",
+    "coverage": "full",
     "sizes": ["S", "M", "L", "XL", "XXL"],
     "tags": ["comfortable", "soft", "street"],
     "availability": "In Stock",
-    "description": "Minimal oversized cotton shirt with a clean silhouette for casual everyday styling.",
-    "image": "https://images.unsplash.com/photo-1596755389378-c31d21fd1273?auto=format&fit=crop&w=900&q=85",
-    "productUrl": "#"
+    "image": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=85",
+    "description": "Minimal oversized cotton shirt with a clean silhouette for casual everyday styling."
   },
   {
     "id": 3,
@@ -47,14 +49,15 @@
     "currency": "INR",
     "color": "Cream",
     "material": ["Cotton"],
-    "occasion": ["Summer", "Casual", "Travel"],
-    "style": ["Minimal", "Elegant", "Comfortable"],
+    "occasion": ["Summer", "Casual", "Date"],
+    "style": ["Minimal", "Elegant", "Relaxed"],
+    "comfort": "high",
+    "coverage": "full",
     "sizes": ["XS", "S", "M", "L"],
-    "tags": ["lightweight", "soft", "summer"],
+    "tags": ["summer", "breathable", "elegant"],
     "availability": "In Stock",
-    "description": "Lightweight cream summer dress with a relaxed elegant fit and breathable cotton fabric.",
-    "image": "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?auto=format&fit=crop&w=900&q=85",
-    "productUrl": "#"
+    "image": "https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=800&q=85",
+    "description": "Light cream summer dress with a relaxed elegant fit and breathable cotton fabric."
   },
   {
     "id": 4,
@@ -68,12 +71,13 @@
     "material": ["Cotton Blend"],
     "occasion": ["Office", "Casual", "Everyday"],
     "style": ["Relaxed", "Minimal", "Modern"],
+    "comfort": "high",
+    "coverage": "full",
     "sizes": ["S", "M", "L", "XL"],
     "tags": ["comfortable", "straight fit", "everyday"],
     "availability": "In Stock",
-    "description": "Straight relaxed black trousers designed for everyday wear and modern minimal outfits.",
-    "image": "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=900&q=85",
-    "productUrl": "#"
+    "image": "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=800&q=85",
+    "description": "Straight relaxed black trousers designed for everyday wear and modern minimal outfits."
   },
   {
     "id": 5,
@@ -87,12 +91,13 @@
     "material": ["Mesh"],
     "occasion": ["Casual", "Travel", "College", "Everyday"],
     "style": ["Modern", "Comfortable", "Minimal"],
+    "comfort": "very-high",
+    "coverage": "full",
     "sizes": ["6", "7", "8", "9", "10", "11"],
     "tags": ["lightweight", "running", "comfortable", "breathable"],
     "availability": "In Stock",
-    "description": "Lightweight white performance sneakers with breathable mesh construction for everyday movement.",
-    "image": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=85",
-    "productUrl": "#"
+    "image": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=85",
+    "description": "Lightweight white performance sneakers with breathable mesh construction for everyday movement."
   },
   {
     "id": 6,
@@ -106,12 +111,13 @@
     "material": ["Wool Blend"],
     "occasion": ["Formal", "Office", "Evening"],
     "style": ["Elegant", "Minimal", "Modern"],
+    "comfort": "medium",
+    "coverage": "full",
     "sizes": ["XS", "S", "M", "L", "XL"],
     "tags": ["formal", "structured", "professional"],
     "availability": "In Stock",
-    "description": "Clean structured black blazer designed for formal occasions, office wear and evening looks.",
-    "image": "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=900&q=85",
-    "productUrl": "#"
+    "image": "https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=800&q=85",
+    "description": "Clean structured black blazer designed for formal occasions, office wear and evening looks."
   },
   {
     "id": 7,
@@ -125,12 +131,13 @@
     "material": ["Silk"],
     "occasion": ["Wedding", "Party", "Evening", "Date"],
     "style": ["Elegant", "Luxury", "Classic"],
+    "comfort": "medium",
+    "coverage": "full",
     "sizes": ["XS", "S", "M", "L"],
     "tags": ["premium", "evening", "occasion wear"],
     "availability": "In Stock",
-    "description": "Elegant maroon silk evening dress designed for weddings, parties and sophisticated evening events.",
-    "image": "https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&w=900&q=85",
-    "productUrl": "#"
+    "image": "https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&w=800&q=85",
+    "description": "Elegant maroon silk evening dress designed for weddings, parties and sophisticated evening events."
   },
   {
     "id": 8,
@@ -144,12 +151,13 @@
     "material": ["Denim"],
     "occasion": ["Casual", "College", "Everyday"],
     "style": ["Classic", "Modern", "Comfortable"],
+    "comfort": "high",
+    "coverage": "full",
     "sizes": ["28", "30", "32", "34", "36"],
     "tags": ["denim", "everyday", "casual"],
     "availability": "In Stock",
-    "description": "Classic blue denim jeans designed for everyday casual outfits with a comfortable modern fit.",
-    "image": "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=900&q=85",
-    "productUrl": "#"
+    "image": "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=800&q=85",
+    "description": "Classic blue denim jeans designed for everyday casual outfits with a comfortable modern fit."
   },
   {
     "id": 9,
@@ -163,12 +171,13 @@
     "material": ["Chiffon"],
     "occasion": ["Festive", "Wedding", "Evening", "Religious"],
     "style": ["Modest", "Elegant", "Traditional"],
+    "comfort": "high",
+    "coverage": "full",
     "sizes": ["S", "M", "L", "XL"],
     "tags": ["modest", "embroidered", "full coverage"],
     "availability": "In Stock",
-    "description": "Elegant black modest abaya with subtle embroidery and flowing chiffon fabric for special occasions.",
-    "image": "https://images.unsplash.com/photo-1583391733956-6c78276477e2?auto=format&fit=crop&w=900&q=85",
-    "productUrl": "#"
+    "image": "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?auto=format&fit=crop&w=800&q=85",
+    "description": "Elegant black modest abaya with subtle embroidery and flowing chiffon fabric for special occasions."
   },
   {
     "id": 10,
@@ -182,12 +191,13 @@
     "material": ["Silk"],
     "occasion": ["Wedding", "Festive", "Festival"],
     "style": ["Traditional", "Elegant", "Luxury"],
+    "comfort": "medium",
+    "coverage": "full",
     "sizes": ["Free Size"],
     "tags": ["silk", "traditional", "wedding", "festive"],
     "availability": "In Stock",
-    "description": "Traditional red silk saree designed for weddings, festivals and elegant cultural celebrations.",
-    "image": "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=900&q=85",
-    "productUrl": "#"
+    "image": "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=85",
+    "description": "Traditional red silk saree designed for weddings, festivals and elegant cultural celebrations."
   },
   {
     "id": 11,
@@ -201,12 +211,13 @@
     "material": ["Wool"],
     "occasion": ["Winter", "Travel", "Office"],
     "style": ["Classic", "Elegant", "Minimal"],
+    "comfort": "high",
+    "coverage": "full",
     "sizes": ["S", "M", "L", "XL"],
     "tags": ["warm", "winter", "premium"],
     "availability": "In Stock",
-    "description": "Warm camel wool coat with a classic silhouette suitable for winter travel and office dressing.",
-    "image": "https://images.unsplash.com/photo-1539533018447-63fcce2678e3?auto=format&fit=crop&w=900&q=85",
-    "productUrl": "#"
+    "image": "https://images.unsplash.com/photo-1539533018447-63fcce2678e3?auto=format&fit=crop&w=800&q=85",
+    "description": "Warm camel wool coat with a classic silhouette suitable for winter travel and office dressing."
   },
   {
     "id": 12,
@@ -220,12 +231,13 @@
     "material": ["Cotton"],
     "occasion": ["Casual", "College", "Travel"],
     "style": ["Minimal", "Oversized", "Streetwear"],
+    "comfort": "very-high",
+    "coverage": "full",
     "sizes": ["S", "M", "L", "XL", "XXL"],
     "tags": ["soft", "comfortable", "everyday", "streetwear"],
     "availability": "In Stock",
-    "description": "Soft cotton white hoodie with an oversized minimal silhouette for casual everyday styling.",
-    "image": "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=900&q=85",
-    "productUrl": "#"
+    "image": "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=800&q=85",
+    "description": "Soft cotton white hoodie with an oversized minimal silhouette for casual everyday styling."
   },
   {
     "id": 13,
@@ -239,12 +251,13 @@
     "material": ["Velvet"],
     "occasion": ["Party", "Festive", "Wedding"],
     "style": ["Elegant", "Traditional", "Luxury"],
+    "comfort": "medium",
+    "coverage": "full",
     "sizes": ["S", "M", "L", "XL"],
     "tags": ["party", "festive", "velvet", "occasion wear"],
     "availability": "In Stock",
-    "description": "Rich purple velvet kurti designed for festive celebrations, parties and wedding occasions.",
-    "image": "https://images.unsplash.com/photo-1583391733981-849840e5c3b4?auto=format&fit=crop&w=900&q=85",
-    "productUrl": "#"
+    "image": "https://images.unsplash.com/photo-1583391733956-6c78276477e2?auto=format&fit=crop&w=800&q=85",
+    "description": "Rich purple velvet kurti designed for festive celebrations, parties and wedding occasions."
   },
   {
     "id": 14,
@@ -258,12 +271,13 @@
     "material": ["Cotton"],
     "occasion": ["Casual", "College", "Everyday"],
     "style": ["Simple", "Minimal", "Comfortable"],
+    "comfort": "very-high",
+    "coverage": "full",
     "sizes": ["XS", "S", "M", "L", "XL", "XXL"],
     "tags": ["basic", "soft", "affordable", "everyday"],
     "availability": "In Stock",
-    "description": "Soft grey cotton basic t-shirt designed for simple comfortable everyday outfits.",
-    "image": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=900&q=85",
-    "productUrl": "#"
+    "image": "https://images.unsplash.com/photo-1503341504253-dff4815485f1?auto=format&fit=crop&w=800&q=85",
+    "description": "Soft grey cotton basic t-shirt designed for simple comfortable everyday outfits."
   },
   {
     "id": 15,
@@ -277,12 +291,13 @@
     "material": ["Wool Blend"],
     "occasion": ["Formal", "Wedding", "Office"],
     "style": ["Classic", "Elegant", "Modern"],
+    "comfort": "medium",
+    "coverage": "full",
     "sizes": ["38", "40", "42", "44", "46"],
     "tags": ["formal", "business", "wedding", "premium"],
     "availability": "In Stock",
-    "description": "Classic navy suit crafted in a wool blend for weddings, business meetings and formal events.",
-    "image": "https://images.unsplash.com/photo-1598808503746-f34c53b9323e?auto=format&fit=crop&w=900&q=85",
-    "productUrl": "#"
+    "image": "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=800&q=85",
+    "description": "Classic navy suit crafted in a wool blend for weddings, business meetings and formal events."
   },
   {
     "id": 16,
@@ -296,12 +311,13 @@
     "material": ["Cotton"],
     "occasion": ["Summer", "Casual", "Date"],
     "style": ["Simple", "Modern", "Comfortable"],
+    "comfort": "high",
+    "coverage": "full",
     "sizes": ["XS", "S", "M", "L"],
     "tags": ["lightweight", "breathable", "summer"],
     "availability": "In Stock",
-    "description": "Lightweight pink cotton top designed for comfortable summer days and casual outings.",
-    "image": "https://images.unsplash.com/photo-1564257577054-1f8e0d4f9f6b?auto=format&fit=crop&w=900&q=85",
-    "productUrl": "#"
+    "image": "https://images.unsplash.com/photo-1564257577054-8e0e1e5a0c0c?auto=format&fit=crop&w=800&q=85",
+    "description": "Lightweight pink cotton top designed for comfortable summer days and casual outings."
   },
   {
     "id": 17,
@@ -315,12 +331,13 @@
     "material": ["Satin"],
     "occasion": ["Evening", "Party", "Date"],
     "style": ["Elegant", "Minimal", "Modern"],
+    "comfort": "medium",
+    "coverage": "full",
     "sizes": ["XS", "S", "M", "L"],
     "tags": ["satin", "evening", "party"],
     "availability": "In Stock",
-    "description": "Elegant black satin skirt with a clean modern silhouette for evening events and parties.",
-    "image": "https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?auto=format&fit=crop&w=900&q=85",
-    "productUrl": "#"
+    "image": "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?auto=format&fit=crop&w=800&q=85",
+    "description": "Elegant black satin skirt with a clean modern silhouette for evening events and parties."
   },
   {
     "id": 18,
@@ -334,12 +351,13 @@
     "material": ["Cotton"],
     "occasion": ["Festive", "Festival", "Casual"],
     "style": ["Traditional", "Classic", "Comfortable"],
+    "comfort": "high",
+    "coverage": "full",
     "sizes": ["S", "M", "L", "XL", "XXL"],
     "tags": ["traditional", "festive", "breathable"],
     "availability": "In Stock",
-    "description": "Breathable beige cotton kurta combining traditional design with comfortable everyday wear.",
-    "image": "https://images.unsplash.com/photo-1610652492500-ded49ceeb378?auto=format&fit=crop&w=900&q=85",
-    "productUrl": "#"
+    "image": "https://images.unsplash.com/photo-1610189012906-1f2c8d7f8f6b?auto=format&fit=crop&w=800&q=85",
+    "description": "Breathable beige cotton kurta combining traditional design with comfortable everyday wear."
   },
   {
     "id": 19,
@@ -353,12 +371,13 @@
     "material": ["Polyester"],
     "occasion": ["Travel", "Casual", "Everyday"],
     "style": ["Modern", "Comfortable", "Streetwear"],
+    "comfort": "very-high",
+    "coverage": "full",
     "sizes": ["S", "M", "L", "XL"],
     "tags": ["sports", "lightweight", "performance", "travel"],
     "availability": "In Stock",
-    "description": "Lightweight olive performance jacket designed for movement, travel and everyday outdoor use.",
-    "image": "https://images.unsplash.com/photo-1548883354-7622d03aca27?auto=format&fit=crop&w=900&q=85",
-    "productUrl": "#"
+    "image": "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?auto=format&fit=crop&w=800&q=85",
+    "description": "Lightweight olive performance jacket designed for movement, travel and everyday outdoor use."
   },
   {
     "id": 20,
@@ -372,11 +391,12 @@
     "material": ["Chiffon"],
     "occasion": ["Wedding", "Party", "Evening"],
     "style": ["Luxury", "Elegant", "Classic"],
+    "comfort": "medium",
+    "coverage": "full",
     "sizes": ["XS", "S", "M", "L"],
     "tags": ["luxury", "gown", "wedding", "evening"],
     "availability": "In Stock",
-    "description": "Flowing blue chiffon evening gown designed for weddings, formal celebrations and luxury events.",
-    "image": "https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&w=900&q=85",
-    "productUrl": "#"
+    "image": "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?auto=format&fit=crop&w=800&q=85",
+    "description": "Flowing blue chiffon evening gown designed for weddings, formal celebrations and luxury events."
   }
 ]
