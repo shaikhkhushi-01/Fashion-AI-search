@@ -1,5 +1,5 @@
 const API_BASE_URL =
-  "https://YOUR-RENDER-BACKEND.onrender.com";
+  "https://fashion-ai-search-lj6s.onrender.com";
 
 const resultsContainer =
   document.getElementById("results");
