@@ -1,518 +1,435 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
 
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0"
-  >
-
-  <title>Fashion AI search</title>
+  />
 
   <meta
     name="description"
-    content="AI-powered global fashion discovery platform."
-  >
+    content="Fashion AI Discovery — intelligent fashion search and product discovery."
+  />
 
-  <link
-    rel="stylesheet"
-    href="styles.css"
-  >
+  <title>Fashion AI Discovery</title>
 
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 
 <body>
 
-  <!-- ==================================================
+  <!-- =========================
        NAVIGATION
-  ================================================== -->
+  ========================== -->
 
   <header class="navbar">
-
     <div class="nav-container">
 
-      <a
-        href="#"
-        class="logo"
-      >
+      <a href="#" class="brand">
         FASHION AI
+        <span>DISCOVERY</span>
       </a>
 
-
       <nav class="nav-links">
-
-        <a href="#discover">
-          Discover
-        </a>
-
-        <a href="#stylist">
-          AI Stylist
-        </a>
-
-        <a href="#brands">
-          Brands
-        </a>
-
-        <a href="#about">
-          About
-        </a>
-
+        <a href="#discover">Discover</a>
+        <a href="#results">Results</a>
+        <a href="#about">About</a>
       </nav>
 
-
       <button
-        class="nav-ai-button"
-        onclick="document.getElementById('stylist').scrollIntoView({behavior:'smooth'})"
+        class="nav-button"
+        id="aiStatusButton"
+        type="button"
       >
-        Try AI Stylist
+        AI ONLINE
       </button>
 
     </div>
-
   </header>
 
 
-
-  <!-- ==================================================
-       HERO
-  ================================================== -->
+  <!-- =========================
+       HERO / SEARCH
+  ========================== -->
 
   <main>
 
-    <section
-      class="hero"
-      id="discover"
-    >
+    <section class="hero" id="discover">
 
       <div class="hero-content">
 
-        <span class="eyebrow">
-          GLOBAL FASHION INTELLIGENCE
-        </span>
-
+        <div class="eyebrow">
+          AI-POWERED FASHION DISCOVERY
+        </div>
 
         <h1>
-          Find exactly what
-          <span>you want to wear.</span>
+          Find fashion
+          <span>that understands you.</span>
         </h1>
 
-
         <p class="hero-description">
-
-          Search fashion across brands, categories,
-          styles and price ranges — all from one
-          intelligent discovery platform.
-
+          Search fashion naturally. Our AI analyzes your request,
+          understands style preferences, and ranks the most relevant
+          products for you.
         </p>
 
 
         <!-- SEARCH -->
 
-        <div class="main-search">
+        <form
+          class="search-box"
+          id="searchForm"
+        >
 
-          <input
-            type="text"
-            id="searchInput"
-            placeholder="Try: black oversized shirt under ₹3000"
-            autocomplete="off"
-          >
+          <div class="search-input-wrapper">
 
+            <span class="search-icon">⌕</span>
+
+            <input
+              id="searchInput"
+              type="text"
+              autocomplete="off"
+              placeholder="Try: black oversized shirt for a casual evening"
+              aria-label="Fashion search"
+            />
+
+          </div>
 
           <button
             id="searchButton"
-            type="button"
+            type="submit"
           >
             Search
           </button>
 
-        </div>
+        </form>
 
 
-        <!-- SEARCH HINTS -->
+        <!-- SEARCH SUGGESTIONS -->
 
-        <div class="search-hints">
+        <div class="suggestions">
 
-          <span>
-            Try:
-          </span>
+          <span>Try:</span>
 
-
-          <button type="button">
+          <button
+            type="button"
+            class="suggestion"
+            data-query="black oversized shirt"
+          >
             black oversized shirt
           </button>
 
-
-          <button type="button">
-            summer dress
+          <button
+            type="button"
+            class="suggestion"
+            data-query="minimal summer dress"
+          >
+            minimal summer dress
           </button>
 
-
-          <button type="button">
-            formal blazer
-          </button>
-
-
-          <button type="button">
+          <button
+            type="button"
+            class="suggestion"
+            data-query="white sneakers"
+          >
             white sneakers
           </button>
 
-        </div>
-
-      </div>
-
-
-      <!-- HERO SIDE -->
-
-      <div class="hero-panel">
-
-        <div class="hero-panel-inner">
-
-          <span class="panel-label">
-            AI DISCOVERY ENGINE
-          </span>
-
-
-          <div class="hero-orbit">
-
-            <div class="orbit-circle"></div>
-
-            <div class="orbit-core">
-              AI
-            </div>
-
-          </div>
-
-
-          <div class="hero-stat">
-
-            <strong>
-              Search
-            </strong>
-
-            <span>
-              Natural language
-            </span>
-
-          </div>
-
-
-          <div class="hero-stat">
-
-            <strong>
-              Discover
-            </strong>
-
-            <span>
-              Across collections
-            </span>
-
-          </div>
-
-
-          <div class="hero-stat">
-
-            <strong>
-              Match
-            </strong>
-
-            <span>
-              Personalised results
-            </span>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </section>
-
-
-
-    <!-- ==================================================
-         SEARCH RESULTS
-    ================================================== -->
-
-    <section class="results-section">
-
-      <div
-        id="results"
-        class="product-grid"
-      >
-
-      </div>
-
-    </section>
-
-
-
-    <!-- ==================================================
-         AI STYLIST
-    ================================================== -->
-
-    <section
-      class="stylist-section"
-      id="stylist"
-    >
-
-      <div class="section-heading">
-
-        <span class="eyebrow">
-          PERSONAL FASHION INTELLIGENCE
-        </span>
-
-
-        <h2>
-          Meet your AI Stylist.
-        </h2>
-
-
-        <p>
-
-          Tell us what you need.
-          ABAIRA will analyse the collection
-          and rank the pieces around your preferences.
-
-        </p>
-
-      </div>
-
-
-      <div class="stylist-layout">
-
-
-        <!-- FORM -->
-
-        <div class="stylist-form-card">
-
-          <div class="form-header">
-
-            <span>
-              YOUR PREFERENCES
-            </span>
-
-            <small>
-              AI-powered matching
-            </small>
-
-          </div>
-
-
-          <div class="form-grid">
-
-
-            <!-- OCCASION -->
-
-            <div class="form-field">
-
-              <label for="stylistOccasion">
-                Occasion
-              </label>
-
-              <input
-                id="stylistOccasion"
-                type="text"
-                placeholder="Wedding, office, casual..."
-              >
-
-            </div>
-
-
-            <!-- STYLE -->
-
-            <div class="form-field">
-
-              <label for="stylistStyle">
-                Style
-              </label>
-
-              <input
-                id="stylistStyle"
-                type="text"
-                placeholder="Minimal, oversized, elegant..."
-              >
-
-            </div>
-
-
-            <!-- COMFORT -->
-
-            <div class="form-field">
-
-              <label for="stylistComfort">
-                Comfort
-              </label>
-
-              <input
-                id="stylistComfort"
-                type="text"
-                placeholder="Relaxed, breathable, soft..."
-              >
-
-            </div>
-
-
-            <!-- COLOUR -->
-
-            <div class="form-field">
-
-              <label for="stylistColor">
-                Colour
-              </label>
-
-              <input
-                id="stylistColor"
-                type="text"
-                placeholder="Black, white, cream..."
-              >
-
-            </div>
-
-
-            <!-- COVERAGE -->
-
-            <div class="form-field">
-
-              <label for="stylistCoverage">
-                Coverage
-              </label>
-
-              <input
-                id="stylistCoverage"
-                type="text"
-                placeholder="Full, relaxed, layered..."
-              >
-
-            </div>
-
-
-            <!-- DESCRIPTION -->
-
-            <div class="form-field full-width">
-
-              <label for="stylistDescription">
-                Describe what you are looking for
-              </label>
-
-              <textarea
-                id="stylistDescription"
-                rows="4"
-                placeholder="Example: I need a sophisticated black outfit for an evening event. I want something comfortable and minimal."
-              ></textarea>
-
-            </div>
-
-          </div>
-
-
           <button
-            id="stylistButton"
-            class="stylist-button"
             type="button"
+            class="suggestion"
+            data-query="formal blazer"
           >
-
-            <span>
-              ✦
-            </span>
-
-            Find My Style
-
+            formal blazer
           </button>
 
         </div>
 
 
-        <!-- INFO -->
+        <!-- SEARCH STATUS -->
 
-        <div class="stylist-info">
+        <div
+          id="searchStatus"
+          class="search-status"
+          aria-live="polite"
+        ></div>
 
-          <span class="eyebrow">
-            HOW IT WORKS
+      </div>
+
+
+      <!-- HERO AI PANEL -->
+
+      <div class="ai-panel">
+
+        <div class="panel-top">
+          <span>FASHION AI ENGINE</span>
+
+          <span
+            id="engineStatus"
+            class="status-dot"
+          >
+            ●
           </span>
+        </div>
 
+        <div class="ai-core">
 
-          <h3>
-            One request.
-            <br>
-            Hundreds of possibilities.
-          </h3>
+          <div class="orbit orbit-one"></div>
+          <div class="orbit orbit-two"></div>
 
+          <div class="core-circle">
+            AI
+          </div>
+
+        </div>
+
+        <div class="ai-panel-text">
+
+          <strong>
+            Semantic Fashion Search
+          </strong>
 
           <p>
-
-            FASHION AI converts your preferences into
-            structured signals and compares them
-            against the fashion collection.
-
+            Natural language → semantic understanding →
+            intelligent product ranking.
           </p>
 
+        </div>
 
-          <div class="workflow">
+        <div class="engine-stats">
 
-            <div class="workflow-item">
+          <div>
+            <strong id="productCount">—</strong>
+            <span>Products</span>
+          </div>
 
-              <span>
-                01
-              </span>
+          <div>
+            <strong>AI</strong>
+            <span>Ranking</span>
+          </div>
 
-              <div>
+          <div>
+            <strong>24/7</strong>
+            <span>Discovery</span>
+          </div>
 
-                <strong>
-                  Describe
-                </strong>
+        </div>
 
-                <p>
-                  Tell the AI what you need.
-                </p>
+      </div>
 
-              </div>
+    </section>
 
+
+    <!-- =========================
+         RESULTS
+    ========================== -->
+
+    <section
+      class="results-section"
+      id="results"
+    >
+
+      <div class="results-header">
+
+        <div>
+
+          <div class="eyebrow">
+            AI DISCOVERY
+          </div>
+
+          <h2 id="resultsTitle">
+            Fashion matches
+          </h2>
+
+          <p id="resultsSubtitle">
+            Search for something to discover relevant products.
+          </p>
+
+        </div>
+
+        <div
+          class="result-count"
+          id="resultCount"
+        >
+          0 results
+        </div>
+
+      </div>
+
+
+      <!-- FILTERS -->
+
+      <div class="filters">
+
+        <button
+          type="button"
+          class="filter active"
+          data-filter="all"
+        >
+          All
+        </button>
+
+        <button
+          type="button"
+          class="filter"
+          data-filter="low"
+        >
+          Under ₹2,000
+        </button>
+
+        <button
+          type="button"
+          class="filter"
+          data-filter="high"
+        >
+          ₹2,000+
+        </button>
+
+      </div>
+
+
+      <!-- LOADING -->
+
+      <div
+        id="loadingState"
+        class="loading-state hidden"
+      >
+
+        <div class="loader"></div>
+
+        <h3>
+          AI is analyzing your request
+        </h3>
+
+        <p>
+          Finding and ranking the best fashion matches...
+        </p>
+
+      </div>
+
+
+      <!-- ERROR -->
+
+      <div
+        id="errorState"
+        class="error-state hidden"
+      >
+
+        <div class="error-icon">
+          !
+        </div>
+
+        <h3>
+          Search temporarily unavailable
+        </h3>
+
+        <p id="errorMessage">
+          Please try again.
+        </p>
+
+        <button
+          type="button"
+          id="retryButton"
+          class="retry-button"
+        >
+          Try Again
+        </button>
+
+      </div>
+
+
+      <!-- EMPTY -->
+
+      <div
+        id="emptyState"
+        class="empty-state"
+      >
+
+        <div class="empty-icon">
+          ✦
+        </div>
+
+        <h3>
+          Your fashion search starts here
+        </h3>
+
+        <p>
+          Describe what you want and let the AI discover
+          the closest fashion matches.
+        </p>
+
+      </div>
+
+
+      <!-- PRODUCT GRID -->
+
+      <div
+        id="productGrid"
+        class="product-grid"
+      ></div>
+
+    </section>
+
+
+    <!-- =========================
+         AI EXPLANATION
+    ========================== -->
+
+    <section class="ai-explanation">
+
+      <div class="section-inner">
+
+        <div>
+
+          <div class="eyebrow">
+            HOW IT WORKS
+          </div>
+
+          <h2>
+            Search beyond keywords.
+          </h2>
+
+        </div>
+
+        <div class="steps">
+
+          <div class="step">
+
+            <span>01</span>
+
+            <div>
+              <strong>Understand</strong>
+              <p>
+                AI interprets your natural language request.
+              </p>
             </div>
 
+          </div>
 
-            <div class="workflow-item">
+          <div class="step">
 
-              <span>
-                02
-              </span>
+            <span>02</span>
 
-              <div>
-
-                <strong>
-                  Analyse
-                </strong>
-
-                <p>
-                  Your preferences are matched.
-                </p>
-
-              </div>
-
+            <div>
+              <strong>Match</strong>
+              <p>
+                Your request is compared against fashion products.
+              </p>
             </div>
 
+          </div>
 
-            <div class="workflow-item">
+          <div class="step">
 
-              <span>
-                03
-              </span>
+            <span>03</span>
 
-              <div>
-
-                <strong>
-                  Discover
-                </strong>
-
-                <p>
-                  See your highest-ranked pieces.
-                </p>
-
-              </div>
-
+            <div>
+              <strong>Rank</strong>
+              <p>
+                Products are ranked according to relevance.
+              </p>
             </div>
 
           </div>
@@ -524,74 +441,9 @@
     </section>
 
 
-
-    <!-- ==================================================
-         BRANDS
-    ================================================== -->
-
-    <section
-      class="brands-section"
-      id="brands"
-    >
-
-      <div class="section-heading centered">
-
-        <span class="eyebrow">
-          ONE DISCOVERY LAYER
-        </span>
-
-
-        <h2>
-          Fashion without the tabs.
-        </h2>
-
-
-        <p>
-
-          The long-term vision of FASHION AI is to bring
-          fashion discovery from multiple brands into
-          one intelligent search layer.
-
-        </p>
-
-      </div>
-
-
-      <div class="brand-grid">
-
-        <div class="brand-placeholder">
-          BRAND 01
-        </div>
-
-        <div class="brand-placeholder">
-          BRAND 02
-        </div>
-
-        <div class="brand-placeholder">
-          BRAND 03
-        </div>
-
-        <div class="brand-placeholder">
-          BRAND 04
-        </div>
-
-        <div class="brand-placeholder">
-          BRAND 05
-        </div>
-
-        <div class="brand-placeholder">
-          BRAND 06
-        </div>
-
-      </div>
-
-    </section>
-
-
-
-    <!-- ==================================================
+    <!-- =========================
          ABOUT
-    ================================================== -->
+    ========================== -->
 
     <section
       class="about-section"
@@ -600,26 +452,22 @@
 
       <div>
 
-        <span class="eyebrow">
-          THE VISION
-        </span>
-
+        <div class="eyebrow">
+          FASHION AI DISCOVERY
+        </div>
 
         <h2>
-          A search engine
-          for fashion.
+          Intelligence
+          for everyday style.
         </h2>
 
       </div>
 
-
       <p>
-
-        FASHION AI is being built as an intelligent
-        fashion discovery layer — allowing people
-        to describe what they want instead of
-        navigating endless categories and websites.
-
+        Fashion AI Discovery is an intelligent fashion search
+        platform designed to connect natural language preferences
+        with relevant fashion products using AI-powered semantic
+        matching and ranking.
       </p>
 
     </section>
@@ -627,40 +475,32 @@
   </main>
 
 
-
-  <!-- ==================================================
+  <!-- =========================
        FOOTER
-  ================================================== -->
+  ========================== -->
 
   <footer class="footer">
 
     <div>
 
       <strong>
-        FASHION AI
+        FASHION AI DISCOVERY
       </strong>
 
       <span>
-        Global Fashion AI
+        AI-powered fashion search
       </span>
 
     </div>
 
-
     <p>
-      Intelligent fashion discovery.
+      Built for intelligent fashion discovery.
     </p>
 
   </footer>
 
 
-
-  <!-- ==================================================
-       JAVASCRIPT
-  ================================================== -->
-
   <script src="app.js"></script>
 
 </body>
-
 </html>
