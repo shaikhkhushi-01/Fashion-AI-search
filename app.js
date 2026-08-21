@@ -1,20 +1,16 @@
-/* =====================================================
-   ABAIRA — GLOBAL FASHION AI
-   COMPLETE FRONTEND APP.JS
-===================================================== */
-
-
-/* =====================================================
-   CONFIGURATION
-===================================================== */
+```javascript
+/* =========================================================
+   ABAIRA — FRONTEND
+   Semantic Search + AI Stylist
+========================================================= */
 
 const API_BASE_URL =
   "https://fashion-ai-search-lj6s.onrender.com";
 
 
-/* =====================================================
-   DOM ELEMENTS
-===================================================== */
+/* =========================================================
+   DOM
+========================================================= */
 
 const resultsContainer =
   document.getElementById("results");
@@ -29,9 +25,9 @@ const stylistButton =
   document.getElementById("stylistButton");
 
 
-/* =====================================================
+/* =========================================================
    HTML SAFETY
-===================================================== */
+========================================================= */
 
 function escapeHTML(value) {
   return String(value ?? "")
@@ -43,332 +39,165 @@ function escapeHTML(value) {
 }
 
 
-/* =====================================================
-   FORMAT PRICE
-===================================================== */
-
-function formatPrice(product) {
-
-  const price =
-    Number(product?.price);
-
-  if (Number.isNaN(price)) {
-    return "Price unavailable";
-  }
-
-  const currency =
-    product?.currency || "₹";
-
-  return (
-    escapeHTML(currency) +
-    price.toLocaleString("en-IN")
-  );
-}
-
-
-/* =====================================================
-   MATCH SCORE
-===================================================== */
-
-function getMatchScore(product) {
-
-  let score =
-    product?.matchScore ??
-    product?.similarity ??
-    product?.score ??
-    0;
-
-  score =
-    Number(score);
-
-  if (score <= 1) {
-    score = score * 100;
-  }
-
-  score =
-    Math.round(score);
-
-  score =
-    Math.max(
-      0,
-      Math.min(100, score)
-    );
-
-  return score;
-}
-
-
-/* =====================================================
-   LOADING UI
-===================================================== */
-
-function showLoading(message) {
-
-  resultsContainer.innerHTML = `
-    <div class="no-results">
-
-      <h3>
-        ${escapeHTML(
-          message ||
-          "Finding your fashion matches..."
-        )}
-      </h3>
-
-      <p>
-        ABAIRA AI is analysing the fashion collection.
-      </p>
-
-    </div>
-  `;
-}
-
-
-/* =====================================================
-   ERROR UI
-===================================================== */
-
-function showError(message) {
-
-  resultsContainer.innerHTML = `
-    <div class="no-results">
-
-      <h3>
-        Something went wrong.
-      </h3>
-
-      <p>
-        ${escapeHTML(
-          message ||
-          "Please try again."
-        )}
-      </p>
-
-    </div>
-  `;
-}
-
-
-/* =====================================================
-   NO RESULTS
-===================================================== */
-
-function showNoResults() {
-
-  resultsContainer.innerHTML = `
-    <div class="no-results">
-
-      <h3>
-        No matching products found.
-      </h3>
-
-      <p>
-        Try another colour, style, occasion,
-        material or fashion description.
-      </p>
-
-    </div>
-  `;
-}
-
-
-/* =====================================================
-   PRODUCT IMAGE
-===================================================== */
+/* =========================================================
+   IMAGE URL
+========================================================= */
 
 function getProductImage(product) {
-
-  if (
-    product &&
-    typeof product.image === "string" &&
-    product.image.trim() !== ""
-  ) {
-    return product.image.trim();
+  if (product && product.image) {
+    return product.image;
   }
 
   return "";
 }
 
 
-/* =====================================================
+/* =========================================================
+   LOADING
+========================================================= */
+
+function showLoading(message) {
+
+  resultsContainer.innerHTML = `
+    <div class="no-results">
+      <h3>${escapeHTML(message)}</h3>
+      <p>ABAIRA is analysing the fashion collection.</p>
+    </div>
+  `;
+
+}
+
+
+/* =========================================================
+   NO RESULTS
+========================================================= */
+
+function showNoResults() {
+
+  resultsContainer.innerHTML = `
+    <div class="no-results">
+      <h3>No matching products found.</h3>
+      <p>Try another fashion description.</p>
+    </div>
+  `;
+
+}
+
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+function showError(message) {
+
+  resultsContainer.innerHTML = `
+    <div class="no-results">
+      <h3>Something went wrong.</h3>
+      <p>${escapeHTML(message)}</p>
+    </div>
+  `;
+
+}
+
+
+/* =========================================================
    PRODUCT CARD
-===================================================== */
+========================================================= */
 
 function createProductCard(product) {
+
+  const priceNumber =
+    Number(product.price);
+
+  const formattedPrice =
+    Number.isFinite(priceNumber)
+      ? priceNumber.toLocaleString("en-IN")
+      : escapeHTML(product.price || "");
+
 
   const image =
     getProductImage(product);
 
+
+  const explanation =
+    product.explanation ||
+    (
+      Array.isArray(product.reasons)
+        ? product.reasons.join(". ")
+        : ""
+    );
+
+
   const matchScore =
-    getMatchScore(product);
-
-  const brand =
-    escapeHTML(
-      product?.brand ||
-      "ABAIRA"
-    );
-
-  const name =
-    escapeHTML(
-      product?.name ||
-      "Fashion Product"
-    );
-
-  const category =
-    escapeHTML(
-      product?.category ||
-      "Fashion"
-    );
-
-  const description =
-    escapeHTML(
-      product?.description ||
-      "Discover this fashion piece with ABAIRA."
-    );
-
-  const color =
-    escapeHTML(
-      product?.color ||
-      ""
-    );
-
-  const style =
-    escapeHTML(
-      product?.style ||
-      ""
-    );
-
-  const occasion =
-    escapeHTML(
-      product?.occasion ||
-      ""
-    );
-
-  const materialValue =
-    Array.isArray(product?.material)
-      ? product.material.join(", ")
-      : product?.material || "";
-
-  const material =
-    escapeHTML(materialValue);
-
-  const hasImage =
-    image !== "";
-
-  const imageHTML =
-    hasImage
-      ? `
-        <img
-          src="${escapeHTML(image)}"
-          alt="${name}"
-          loading="lazy"
-          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-        >
-
-        <div
-          class="product-image-fallback"
-          style="display:none;"
-        >
-          <span>
-            ${category}
-          </span>
-        </div>
-      `
-      : `
-        <div class="product-image-fallback">
-          <span>
-            ${category}
-          </span>
-        </div>
-      `;
+    Number.isFinite(Number(product.matchScore))
+      ? Number(product.matchScore)
+      : null;
 
 
   return `
-    <article
-      class="product-card"
-      data-product-id="${escapeHTML(
-        product?.id ?? ""
-      )}"
-    >
+    <article class="product-card">
 
       <div class="product-image">
 
-        ${imageHTML}
-
         ${
-          matchScore > 0
+          image
             ? `
-              <div class="match-score">
-                ${matchScore}% Match
+              <img
+                src="${escapeHTML(image)}"
+                alt="${escapeHTML(product.name || "Fashion product")}"
+                loading="lazy"
+                onerror="this.style.display='none'; this.parentElement.classList.add('image-failed');"
+              >
+            `
+            : `
+              <div class="image-placeholder">
+                ${escapeHTML(product.category || "FASHION")}
               </div>
             `
-            : ""
         }
+
+        <span class="product-category">
+          ${escapeHTML(product.category || "FASHION")}
+        </span>
 
       </div>
 
 
       <div class="product-content">
 
-        <div class="product-top">
-
-          <span class="product-brand">
-            ${brand}
-          </span>
-
-          <span class="product-category">
-            ${category}
-          </span>
-
-        </div>
+        <span class="product-brand">
+          ${escapeHTML(product.brand || "")}
+        </span>
 
 
-        <h3>
-          ${name}
+        <h3 class="product-title">
+          ${escapeHTML(product.name || "")}
         </h3>
 
 
         <p class="product-description">
-          ${description}
+          ${escapeHTML(product.description || "")}
         </p>
 
 
         <div class="product-details">
 
           ${
-            color
+            product.color
               ? `
                 <span>
-                  Colour: ${color}
+                  Colour: ${escapeHTML(product.color)}
                 </span>
               `
               : ""
           }
 
           ${
-            style
+            product.style &&
+            Array.isArray(product.style)
               ? `
                 <span>
-                  Style: ${style}
-                </span>
-              `
-              : ""
-          }
-
-          ${
-            occasion
-              ? `
-                <span>
-                  Occasion: ${occasion}
-                </span>
-              `
-              : ""
-          }
-
-          ${
-            material
-              ? `
-                <span>
-                  Material: ${material}
+                  Style: ${escapeHTML(product.style.join(", "))}
                 </span>
               `
               : ""
@@ -377,103 +206,67 @@ function createProductCard(product) {
         </div>
 
 
+        <div class="product-price">
+          ${escapeHTML(product.currency || "INR")}
+          ${formattedPrice}
+        </div>
+
+
         ${
-          matchScore > 0
+          matchScore !== null
             ? `
-              <div class="match-bar">
-
-                <div
-                  class="match-bar-fill"
-                  style="width:${matchScore}%"
-                ></div>
-
+              <div class="product-match">
+                AI Match: ${matchScore}%
               </div>
             `
             : ""
         }
 
 
-        <div class="product-bottom">
-
-          <div class="product-price">
-            ${formatPrice(product)}
-          </div>
-
-
-          ${
-            product?.url
-              ? `
-                <a
-                  class="view-product"
-                  href="${escapeHTML(product.url)}"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  View Product
-                </a>
-              `
-              : ""
-          }
-
-        </div>
+        ${
+          explanation
+            ? `
+              <p class="product-explanation">
+                ${escapeHTML(explanation)}
+              </p>
+            `
+            : ""
+        }
 
       </div>
 
     </article>
   `;
+
 }
 
 
-/* =====================================================
+/* =========================================================
    RENDER PRODUCTS
-===================================================== */
+========================================================= */
 
-function renderProducts(productList) {
+function renderProducts(products) {
 
   if (
-    !Array.isArray(productList) ||
-    productList.length === 0
+    !Array.isArray(products) ||
+    products.length === 0
   ) {
     showNoResults();
     return;
   }
 
 
-  resultsContainer.innerHTML = `
+  resultsContainer.innerHTML =
+    products
+      .map(createProductCard)
+      .join("");
 
-    <div class="results-header">
-
-      <div>
-
-        <span class="eyebrow">
-          ABAIRA AI DISCOVERY
-        </span>
-
-        <h2>
-          ${productList.length}
-          fashion matches
-        </h2>
-
-      </div>
-
-    </div>
-
-
-    <div class="product-grid">
-
-      ${productList
-        .map(createProductCard)
-        .join("")}
-
-    </div>
-
-  `;
 }
 
 
-/* =====================================================
+/* =========================================================
    SEARCH API
-===================================================== */
+========================================================= */
 
 async function searchFashion(query) {
 
@@ -484,8 +277,7 @@ async function searchFashion(query) {
         method: "POST",
 
         headers: {
-          "Content-Type":
-            "application/json"
+          "Content-Type": "application/json"
         },
 
         body: JSON.stringify({
@@ -495,76 +287,68 @@ async function searchFashion(query) {
     );
 
 
-  let data = {};
-
-  try {
-
-    data =
-      await response.json();
-
-  } catch (error) {
-
-    throw new Error(
-      "Server returned an invalid response."
-    );
-  }
+  const data =
+    await response.json();
 
 
   if (!response.ok) {
 
     throw new Error(
       data.error ||
-      "Search request failed."
+      "Search failed."
     );
+
   }
 
 
-  if (
-    !Array.isArray(data.results)
-  ) {
+  /*
+     IMPORTANT:
+     Backend returns:
 
-    throw new Error(
-      "No valid search results were returned."
-    );
-  }
+     {
+       success: true,
+       results: [...]
+     }
+  */
 
+  return Array.isArray(data.results)
+    ? data.results
+    : [];
 
-  return data.results;
 }
 
 
-/* =====================================================
+/* =========================================================
    RUN SEARCH
-===================================================== */
+========================================================= */
 
 async function runSearch() {
 
   const query =
     searchInput
-      ?.value
-      ?.trim() || "";
+      ? searchInput.value.trim()
+      : "";
 
 
   if (!query) {
 
-    showNoResults();
+    showError(
+      "Please enter something to search."
+    );
 
     return;
+
   }
 
 
   showLoading(
-    "Finding the best fashion matches..."
+    "Finding your fashion matches..."
   );
 
 
   if (searchButton) {
-
-    searchButton.disabled =
-      true;
-
-    searchButton.textContent =
-      "Searching...";
+    searchButton.disabled = true;
+    searchButton.textContent = "Searching...";
   }
 
 
@@ -574,169 +358,112 @@ async function runSearch() {
       await searchFashion(query);
 
 
-    console.log(
-      "ABAIRA Search Results:",
-      results
-    );
-
-
     renderProducts(results);
 
-
-    const discover =
-      document.getElementById(
-        "discover"
-      );
-
-
-    if (discover) {
-
-      discover.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-      });
-
-    }
 
   } catch (error) {
 
     console.error(
-      "ABAIRA Search Error:",
+      "ABAIRA search error:",
       error
     );
 
 
     showError(
       error.message ||
-      "Search service unavailable."
+      "Unable to connect to ABAIRA AI."
     );
 
-  } finally {
-
-    if (searchButton) {
-
-      searchButton.disabled =
-        false;
-
-      searchButton.textContent =
-        "Search";
-    }
-
   }
+
+
+  if (searchButton) {
+    searchButton.disabled = false;
+    searchButton.textContent = "Search";
+  }
+
 }
 
 
-/* =====================================================
+/* =========================================================
    AI STYLIST
-===================================================== */
+========================================================= */
 
 async function runAIStylist() {
 
   const occasion =
     document
-      .getElementById(
-        "stylistOccasion"
-      )
+      .getElementById("stylistOccasion")
       ?.value
-      ?.trim() || "";
+      .trim() || "";
 
 
   const style =
     document
-      .getElementById(
-        "stylistStyle"
-      )
+      .getElementById("stylistStyle")
       ?.value
-      ?.trim() || "";
+      .trim() || "";
 
 
   const comfort =
     document
-      .getElementById(
-        "stylistComfort"
-      )
+      .getElementById("stylistComfort")
       ?.value
-      ?.trim() || "";
+      .trim() || "";
 
 
   const color =
     document
-      .getElementById(
-        "stylistColor"
-      )
+      .getElementById("stylistColor")
       ?.value
-      ?.trim() || "";
+      .trim() || "";
 
 
   const coverage =
     document
-      .getElementById(
-        "stylistCoverage"
-      )
+      .getElementById("stylistCoverage")
       ?.value
-      ?.trim() || "";
+      .trim() || "";
 
 
   const description =
     document
-      .getElementById(
-        "stylistDescription"
-      )
+      .getElementById("stylistDescription")
       ?.value
-      ?.trim() || "";
+      .trim() || "";
 
 
   const hasPreferences =
-    Boolean(
-      occasion ||
-      style ||
-      comfort ||
-      color ||
-      coverage ||
+    [
+      occasion,
+      style,
+      comfort,
+      color,
+      coverage,
       description
-    );
+    ].some(Boolean);
 
 
   if (!hasPreferences) {
 
-    showError(
-      "Please tell ABAIRA at least one thing about your style."
+    alert(
+      "Please tell ABAIRA what kind of style you are looking for."
     );
 
     return;
-  }
 
-
-  if (stylistButton) {
-
-    stylistButton.disabled =
-      true;
-
-    stylistButton.innerHTML =
-      "<span>✦</span> Finding Your Style...";
   }
 
 
   showLoading(
-    "AI Stylist is creating your recommendations..."
+    "Your AI Stylist is creating your recommendations..."
   );
 
 
-  const preferences = {
-
-    occasion: occasion,
-
-    style: style,
-
-    comfort: comfort,
-
-    color: color,
-
-    coverage: coverage,
-
-    description: description
-
-  };
+  if (stylistButton) {
+    stylistButton.disabled = true;
+    stylistButton.innerHTML = "Finding Your Style...";
+  }
 
 
   try {
@@ -748,31 +475,25 @@ async function runAIStylist() {
           method: "POST",
 
           headers: {
-            "Content-Type":
-              "application/json"
+            "Content-Type": "application/json"
           },
 
-          body:
-            JSON.stringify(
-              preferences
-            )
+          body: JSON.stringify({
+
+            occasion,
+            style,
+            comfort,
+            color,
+            coverage,
+            description
+
+          })
         }
       );
 
 
-    let data = {};
-
-    try {
-
-      data =
-        await response.json();
-
-    } catch (error) {
-
-      throw new Error(
-        "AI Stylist returned an invalid server response."
-      );
-    }
+    const data =
+      await response.json();
 
 
     if (!response.ok) {
@@ -781,330 +502,53 @@ async function runAIStylist() {
         data.error ||
         "AI Stylist request failed."
       );
+
     }
 
 
-    console.log(
-      "ABAIRA AI Stylist Results:",
-      data
+    renderProducts(
+      data.recommendations || []
     );
 
 
-    const recommendations =
-      Array.isArray(
-        data.recommendations
-      )
-        ? data.recommendations
-        : [];
-
-
-    if (
-      recommendations.length === 0
-    ) {
-
-      showNoResults();
-
-      return;
-    }
-
-
-    renderStylistResults(
-      recommendations
-    );
-
-
-    const discover =
-      document.getElementById(
-        "discover"
-      );
-
-
-    if (discover) {
-
-      discover.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
+    document
+      .getElementById("discover")
+      ?.scrollIntoView({
+        behavior: "smooth"
       });
 
-    }
 
   } catch (error) {
 
     console.error(
-      "ABAIRA AI Stylist Error:",
+      "AI Stylist error:",
       error
     );
 
 
     showError(
       error.message ||
-      "AI Stylist could not connect to the server."
+      "Unable to connect to the AI Stylist."
     );
 
-  } finally {
-
-    if (stylistButton) {
-
-      stylistButton.disabled =
-        false;
-
-      stylistButton.innerHTML =
-        "<span>✦</span> Find My Style";
-    }
-
-  }
-}
-
-
-/* =====================================================
-   STYLIST RESULTS
-===================================================== */
-
-function renderStylistResults(
-  recommendationList
-) {
-
-  if (
-    !Array.isArray(
-      recommendationList
-    ) ||
-    recommendationList.length === 0
-  ) {
-
-    showNoResults();
-
-    return;
   }
 
 
-  resultsContainer.innerHTML = `
+  if (stylistButton) {
 
-    <div class="results-header">
+    stylistButton.disabled = false;
 
-      <div>
+    stylistButton.innerHTML =
+      "<span>✦</span> Find My Style";
 
-        <span class="eyebrow">
-          PERSONAL AI STYLIST
-        </span>
+  }
 
-        <h2>
-          Your recommended pieces
-        </h2>
-
-        <p>
-          Ranked according to your preferences.
-        </p>
-
-      </div>
-
-    </div>
-
-
-    <div class="product-grid">
-
-      ${recommendationList
-        .map(createStylistCard)
-        .join("")}
-
-    </div>
-
-  `;
 }
 
 
-/* =====================================================
-   STYLIST PRODUCT CARD
-===================================================== */
-
-function createStylistCard(product) {
-
-  const image =
-    getProductImage(product);
-
-  const score =
-    getMatchScore(product);
-
-
-  const brand =
-    escapeHTML(
-      product?.brand ||
-      "ABAIRA"
-    );
-
-
-  const name =
-    escapeHTML(
-      product?.name ||
-      "Fashion Product"
-    );
-
-
-  const category =
-    escapeHTML(
-      product?.category ||
-      "Fashion"
-    );
-
-
-  const description =
-    escapeHTML(
-      product?.description ||
-      ""
-    );
-
-
-  const color =
-    escapeHTML(
-      product?.color ||
-      ""
-    );
-
-
-  const materialValue =
-    Array.isArray(
-      product?.material
-    )
-      ? product.material.join(", ")
-      : product?.material || "";
-
-
-  const material =
-    escapeHTML(
-      materialValue
-    );
-
-
-  const imageHTML =
-    image
-      ? `
-        <img
-          src="${escapeHTML(image)}"
-          alt="${name}"
-          loading="lazy"
-          onerror="this.style.display='none';"
-        >
-      `
-      : `
-        <div class="product-image-fallback">
-          <span>
-            ${category}
-          </span>
-        </div>
-      `;
-
-
-  return `
-    <article
-      class="product-card stylist-card"
-    >
-
-      <div class="product-image">
-
-        ${imageHTML}
-
-        <div class="match-score">
-          ${score}% Match
-        </div>
-
-      </div>
-
-
-      <div class="product-content">
-
-        <span class="product-brand">
-          ${brand}
-        </span>
-
-
-        <h3>
-          ${name}
-        </h3>
-
-
-        <p class="product-description">
-          ${description}
-        </p>
-
-
-        <div class="product-details">
-
-          ${
-            category
-              ? `
-                <span>
-                  ${category}
-                </span>
-              `
-              : ""
-          }
-
-          ${
-            color
-              ? `
-                <span>
-                  ${color}
-                </span>
-              `
-              : ""
-          }
-
-          ${
-            material
-              ? `
-                <span>
-                  ${material}
-                </span>
-              `
-              : ""
-          }
-
-        </div>
-
-
-        <div class="match-bar">
-
-          <div
-            class="match-bar-fill"
-            style="width:${score}%"
-          ></div>
-
-        </div>
-
-
-        <div class="product-bottom">
-
-          <div class="product-price">
-            ${formatPrice(product)}
-          </div>
-
-
-          ${
-            product?.url
-              ? `
-                <a
-                  class="view-product"
-                  href="${escapeHTML(product.url)}"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  View Product
-                </a>
-              `
-              : ""
-          }
-
-        </div>
-
-      </div>
-
-    </article>
-  `;
-}
-
-
-/* =====================================================
+/* =========================================================
    SEARCH BUTTON
-===================================================== */
+========================================================= */
 
 if (searchButton) {
 
@@ -1116,9 +560,9 @@ if (searchButton) {
 }
 
 
-/* =====================================================
-   ENTER KEY SEARCH
-===================================================== */
+/* =========================================================
+   ENTER KEY
+========================================================= */
 
 if (searchInput) {
 
@@ -1126,12 +570,7 @@ if (searchInput) {
     "keydown",
     function(event) {
 
-      if (
-        event.key === "Enter"
-      ) {
-
-        event.preventDefault();
-
+      if (event.key === "Enter") {
         runSearch();
       }
 
@@ -1141,9 +580,9 @@ if (searchInput) {
 }
 
 
-/* =====================================================
-   AI STYLIST BUTTON
-===================================================== */
+/* =========================================================
+   STYLIST BUTTON
+========================================================= */
 
 if (stylistButton) {
 
@@ -1155,121 +594,55 @@ if (stylistButton) {
 }
 
 
-/* =====================================================
-   SEARCH HINT BUTTONS
-===================================================== */
+/* =========================================================
+   SEARCH HINTS
+========================================================= */
 
 document
-  .querySelectorAll(
-    ".search-hints button"
-  )
-  .forEach(
-    function(button) {
+  .querySelectorAll(".search-hints button")
+  .forEach(button => {
 
-      button.addEventListener(
-        "click",
-        function() {
+    button.addEventListener(
+      "click",
+      function() {
 
-          const query =
-            button.textContent
-              .trim();
+        const query =
+          button.textContent.trim();
 
 
-          if (searchInput) {
-
-            searchInput.value =
-              query;
-
-          }
-
-
-          runSearch();
-
+        if (searchInput) {
+          searchInput.value = query;
         }
-      );
-
-    }
-  );
 
 
-/* =====================================================
-   INITIAL STATE
-===================================================== */
+        runSearch();
+
+      }
+    );
+
+  });
+
+
+/* =========================================================
+   INITIAL MESSAGE
+========================================================= */
 
 if (resultsContainer) {
 
   resultsContainer.innerHTML = `
-
     <div class="no-results">
-
-      <h3>
-        Start discovering fashion.
-      </h3>
-
+      <h3>Start discovering fashion.</h3>
       <p>
-        Search for a style, occasion,
-        colour, material or budget above.
+        Search for a style, occasion, colour,
+        material or budget above.
       </p>
-
     </div>
-
   `;
 
 }
 
 
-/* =====================================================
-   BACKEND HEALTH CHECK
-===================================================== */
-
-async function checkBackend() {
-
-  try {
-
-    const response =
-      await fetch(
-        `${API_BASE_URL}/api/health`
-      );
-
-
-    if (!response.ok) {
-
-      console.warn(
-        "ABAIRA backend health check failed."
-      );
-
-      return false;
-    }
-
-
-    const data =
-      await response.json();
-
-
-    console.log(
-      "ABAIRA Backend:",
-      data
-    );
-
-
-    return true;
-
-  } catch (error) {
-
-    console.warn(
-      "ABAIRA backend is unreachable:",
-      error
-    );
-
-
-    return false;
-  }
-
-}
-
-
-/* =====================================================
-   START
-===================================================== */
-
-checkBackend();
+console.log(
+  "ABAIRA frontend loaded successfully."
+);
+```
