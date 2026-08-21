@@ -1,125 +1,1046 @@
+/* =========================================================
+   FASHION AI DISCOVERY
+   DAY 2 APPLICATION ENGINE
+========================================================= */
+
+"use strict";
+
+
+/* =========================================================
+   CONFIGURATION
+========================================================= */
+
 const API_BASE_URL =
-  "https://fashion-ai-search-lj6s.onrender.com";
+  "https://fashion-ai-search-j6s.onrender.com";
+
+
+const API_ENDPOINTS = {
+  health: `${API_BASE_URL}/api/health`,
+  products: `${API_BASE_URL}/api/products`,
+  search: `${API_BASE_URL}/api/search`
+};
 
 
 /* =========================================================
    DOM
 ========================================================= */
 
+const searchForm =
+  document.getElementById("searchForm");
+
 const searchInput =
-  document.getElementById(
-    "searchInput"
-  );
+  document.getElementById("searchInput");
 
 const searchButton =
-  document.getElementById(
-    "searchButton"
-  );
+  document.getElementById("searchButton");
 
-const resultsContainer =
-  document.getElementById(
-    "results"
-  );
+const searchStatus =
+  document.getElementById("searchStatus");
+
+const productGrid =
+  document.getElementById("productGrid");
+
+const loadingState =
+  document.getElementById("loadingState");
+
+const errorState =
+  document.getElementById("errorState");
+
+const errorMessage =
+  document.getElementById("errorMessage");
+
+const emptyState =
+  document.getElementById("emptyState");
+
+const retryButton =
+  document.getElementById("retryButton");
+
+const resultCount =
+  document.getElementById("resultCount");
+
+const resultsTitle =
+  document.getElementById("resultsTitle");
+
+const resultsSubtitle =
+  document.getElementById("resultsSubtitle");
+
+const productCount =
+  document.getElementById("productCount");
+
+const aiStatusButton =
+  document.getElementById("aiStatusButton");
+
+const engineStatus =
+  document.getElementById("engineStatus");
 
 
 /* =========================================================
-   HTML ESCAPE
+   APPLICATION STATE
 ========================================================= */
+
+const state = {
+
+  products: [],
+
+  results: [],
+
+  currentQuery: "",
+
+  activeFilter: "all",
+
+  loading: false,
+
+  apiOnline: false
+
+};
+
+
+/* =========================================================
+   UTILITY
+========================================================= */
+
+function safeText(value, fallback = "") {
+
+  if (
+    value === null ||
+    value === undefined
+  ) {
+    return fallback;
+  }
+
+  return String(value);
+}
+
 
 function escapeHTML(value) {
 
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(
-      /</g,
-      "&lt;"
+  return safeText(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+
+function formatPrice(value) {
+
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return "Price unavailable";
+  }
+
+  if (typeof value === "number") {
+
+    return new Intl.NumberFormat(
+      "en-IN",
+      {
+        style: "currency",
+        currency: "INR",
+        maximumFractionDigits: 0
+      }
+    ).format(value);
+
+  }
+
+  const stringValue =
+    String(value);
+
+  if (
+    stringValue.includes("₹") ||
+    stringValue.includes("$")
+  ) {
+    return stringValue;
+  }
+
+  return `₹${stringValue}`;
+}
+
+
+function getNumericPrice(value) {
+
+  if (
+    typeof value === "number"
+  ) {
+    return value;
+  }
+
+  const cleaned =
+    String(value || "")
+      .replace(/[^\d.]/g, "");
+
+  const number =
+    Number(cleaned);
+
+  return Number.isFinite(number)
+    ? number
+    : 0;
+}
+
+
+/* =========================================================
+   IMAGE HELPERS
+========================================================= */
+
+function getProductImage(product) {
+
+  const possibleImages = [
+
+    product.image,
+
+    product.imageUrl,
+
+    product.image_url,
+
+    product.thumbnail,
+
+    product.photo,
+
+    product.photoUrl,
+
+    product.photo_url,
+
+    product.img,
+
+    product.images?.[0],
+
+    product.media?.[0]?.url,
+
+    product.media?.[0]
+
+  ];
+
+
+  for (const image of possibleImages) {
+
+    if (
+      typeof image === "string" &&
+      image.trim() !== ""
+    ) {
+      return image;
+    }
+
+  }
+
+
+  return "";
+}
+
+
+/* =========================================================
+   PRODUCT NORMALIZATION
+========================================================= */
+
+function normalizeProduct(product, index = 0) {
+
+  if (!product || typeof product !== "object") {
+
+    return {
+      id: index,
+      title: "Fashion Product",
+      brand: "Fashion",
+      description: "",
+      price: 0,
+      image: "",
+      color: "",
+      style: "",
+      occasion: "",
+      material: "",
+      score: null,
+      reason: ""
+    };
+
+  }
+
+
+  const title =
+    product.title ||
+    product.name ||
+    product.productName ||
+    product.product_name ||
+    "Fashion Product";
+
+
+  const brand =
+    product.brand ||
+    product.brandName ||
+    product.brand_name ||
+    "Fashion";
+
+
+  const description =
+    product.description ||
+    product.desc ||
+    product.summary ||
+    "";
+
+
+  const price =
+    product.price ??
+    product.cost ??
+    product.amount ??
+    0;
+
+
+  const score =
+    product.score ??
+    product.similarity ??
+    product.similarity_score ??
+    product.relevance ??
+    product.matchScore ??
+    product.match_score ??
+    null;
+
+
+  const reason =
+    product.reason ||
+    product.explanation ||
+    product.matchReason ||
+    product.match_reason ||
+    "";
+
+
+  return {
+
+    ...product,
+
+    id:
+      product.id ??
+      product._id ??
+      product.product_id ??
+      index,
+
+    title,
+
+    brand,
+
+    description,
+
+    price,
+
+    image:
+      getProductImage(product),
+
+    color:
+      product.color ||
+      product.colour ||
+      "",
+
+    style:
+      product.style ||
+      product.category ||
+      "",
+
+    occasion:
+      product.occasion ||
+      "",
+
+    material:
+      product.material ||
+      "",
+
+    score,
+
+    reason
+
+  };
+
+}
+
+
+/* =========================================================
+   API RESPONSE EXTRACTION
+========================================================= */
+
+function extractProducts(data) {
+
+  if (!data) {
+    return [];
+  }
+
+
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+
+  const possibleArrays = [
+
+    data.products,
+
+    data.results,
+
+    data.items,
+
+    data.data,
+
+    data.matches,
+
+    data.recommendations,
+
+    data.data?.products,
+
+    data.data?.results,
+
+    data.data?.items,
+
+    data.data?.matches
+
+  ];
+
+
+  for (
+    const candidate
+    of possibleArrays
+  ) {
+
+    if (Array.isArray(candidate)) {
+      return candidate;
+    }
+
+  }
+
+
+  return [];
+}
+
+
+/* =========================================================
+   API REQUEST
+========================================================= */
+
+async function apiRequest(
+  url,
+  options = {}
+) {
+
+  const response =
+    await fetch(
+      url,
+      {
+        ...options,
+
+        headers: {
+          Accept:
+            "application/json",
+
+          "Content-Type":
+            "application/json",
+
+          ...(options.headers || {})
+        }
+      }
+    );
+
+
+  const contentType =
+    response.headers.get(
+      "content-type"
+    ) || "";
+
+
+  let data;
+
+
+  if (
+    contentType.includes(
+      "application/json"
     )
-    .replace(
-      />/g,
-      "&gt;"
+  ) {
+
+    data =
+      await response.json();
+
+  } else {
+
+    const text =
+      await response.text();
+
+    try {
+
+      data =
+        JSON.parse(text);
+
+    } catch {
+
+      data = {
+        message: text
+      };
+
+    }
+
+  }
+
+
+  if (!response.ok) {
+
+    const message =
+      data?.message ||
+      data?.error ||
+      `Request failed with status ${response.status}`;
+
+    throw new Error(message);
+  }
+
+
+  return data;
+}
+
+
+/* =========================================================
+   HEALTH CHECK
+========================================================= */
+
+async function checkAPIHealth() {
+
+  try {
+
+    const data =
+      await apiRequest(
+        API_ENDPOINTS.health
+      );
+
+
+    state.apiOnline = true;
+
+
+    aiStatusButton.textContent =
+      "AI ONLINE";
+
+    aiStatusButton.classList.add(
+      "online"
+    );
+
+
+    engineStatus.classList.add(
+      "online"
+    );
+
+
+    const products =
+      extractProducts(data);
+
+
+    const reportedCount =
+      data?.productCount ??
+      data?.products ??
+      data?.indexedProducts ??
+      null;
+
+
+    if (
+      typeof reportedCount === "number"
+    ) {
+
+      productCount.textContent =
+        reportedCount;
+
+    }
+
+
+    return data;
+
+  } catch (error) {
+
+    console.warn(
+      "API health check failed:",
+      error
+    );
+
+
+    state.apiOnline = false;
+
+
+    aiStatusButton.textContent =
+      "API OFFLINE";
+
+
+    engineStatus.classList.remove(
+      "online"
+    );
+
+
+    return null;
+
+  }
+
+}
+
+
+/* =========================================================
+   LOAD PRODUCTS
+========================================================= */
+
+async function loadProducts() {
+
+  try {
+
+    const data =
+      await apiRequest(
+        API_ENDPOINTS.products
+      );
+
+
+    const rawProducts =
+      extractProducts(data);
+
+
+    state.products =
+      rawProducts.map(
+        normalizeProduct
+      );
+
+
+    productCount.textContent =
+      state.products.length;
+
+
+    return state.products;
+
+  } catch (error) {
+
+    console.error(
+      "Product loading failed:",
+      error
+    );
+
+    return [];
+
+  }
+
+}
+
+
+/* =========================================================
+   SEARCH API
+========================================================= */
+
+async function searchProducts(query) {
+
+  const trimmedQuery =
+    query.trim();
+
+
+  if (!trimmedQuery) {
+
+    showSearchMessage(
+      "Type something like “black oversized shirt”."
+    );
+
+    return;
+
+  }
+
+
+  state.currentQuery =
+    trimmedQuery;
+
+
+  setLoading(true);
+
+
+  hideError();
+
+  hideEmpty();
+
+
+  resultsTitle.textContent =
+    "AI fashion matches";
+
+
+  resultsSubtitle.textContent =
+    `Results for “${trimmedQuery}”`;
+
+
+  try {
+
+    /*
+      Main request.
+
+      The backend may accept different
+      parameter names. We send the
+      standard "query" format first.
+    */
+
+    let data;
+
+
+    try {
+
+      data =
+        await apiRequest(
+          API_ENDPOINTS.search,
+          {
+            method: "POST",
+
+            body: JSON.stringify({
+              query: trimmedQuery
+            })
+          }
+        );
+
+    } catch (postError) {
+
+      /*
+        Fallback for APIs using GET.
+      */
+
+      console.warn(
+        "POST search failed. Trying GET fallback.",
+        postError
+      );
+
+
+      const encoded =
+        encodeURIComponent(
+          trimmedQuery
+        );
+
+
+      data =
+        await apiRequest(
+          `${API_ENDPOINTS.search}?query=${encoded}`
+        );
+
+    }
+
+
+    const rawResults =
+      extractProducts(data);
+
+
+    state.results =
+      rawResults.map(
+        normalizeProduct
+      );
+
+
+    /*
+      If search endpoint returns
+      no results, perform local fallback
+      against already loaded products.
+    */
+
+    if (
+      state.results.length === 0 &&
+      state.products.length > 0
+    ) {
+
+      state.results =
+        localSearch(
+          trimmedQuery,
+          state.products
+        );
+
+    }
+
+
+    renderResults();
+
+
+    showSearchMessage(
+      `${state.results.length} AI matches found.`
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "Search failed:",
+      error
+    );
+
+
+    /*
+      Local fallback keeps the UI
+      usable even if the search endpoint
+      is temporarily unavailable.
+    */
+
+    if (
+      state.products.length > 0
+    ) {
+
+      state.results =
+        localSearch(
+          trimmedQuery,
+          state.products
+        );
+
+
+      renderResults();
+
+
+      if (
+        state.results.length > 0
+      ) {
+
+        showSearchMessage(
+          "Showing locally ranked matches."
+        );
+
+      } else {
+
+        showError(
+          error.message ||
+          "Unable to search products."
+        );
+
+      }
+
+    } else {
+
+      showError(
+        error.message ||
+        "Unable to connect to the Fashion AI API."
+      );
+
+    }
+
+  } finally {
+
+    setLoading(false);
+
+  }
+
+}
+
+
+/* =========================================================
+   LOCAL SEMANTIC-LIKE FALLBACK
+========================================================= */
+
+function localSearch(
+  query,
+  products
+) {
+
+  const words =
+    query
+      .toLowerCase()
+      .split(/\s+/)
+      .filter(
+        word => word.length > 1
+      );
+
+
+  const scored =
+    products.map(
+      product => {
+
+        const searchable = [
+
+          product.title,
+
+          product.brand,
+
+          product.description,
+
+          product.color,
+
+          product.style,
+
+          product.occasion,
+
+          product.material
+
+        ]
+          .join(" ")
+          .toLowerCase();
+
+
+        let score = 0;
+
+
+        for (
+          const word
+          of words
+        ) {
+
+          if (
+            searchable.includes(word)
+          ) {
+
+            score += 1;
+
+          }
+
+        }
+
+
+        return {
+          ...product,
+          localScore: score
+        };
+
+      }
+    );
+
+
+  return scored
+    .filter(
+      product =>
+        product.localScore > 0
     )
-    .replace(
-      /"/g,
-      "&quot;"
-    )
-    .replace(
-      /'/g,
-      "&#039;"
+    .sort(
+      (a, b) =>
+        b.localScore -
+        a.localScore
     );
 
 }
 
 
 /* =========================================================
-   LOADING
+   SCORE
 ========================================================= */
 
-function showLoading() {
+function getScore(product) {
 
-  resultsContainer.innerHTML = `
+  const value =
+    product.score ??
+    product.localScore ??
+    null;
 
-    <div class="no-results">
 
-      <h3>
-        AI is searching fashion...
-      </h3>
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
 
-      <p>
-        Understanding your request and ranking relevant products.
-      </p>
+    return null;
 
-    </div>
+  }
 
-  `;
+
+  let number =
+    Number(value);
+
+
+  if (
+    !Number.isFinite(number)
+  ) {
+
+    return null;
+
+  }
+
+
+  /*
+    Convert 0–1 similarity
+    to percentage.
+  */
+
+  if (
+    number > 0 &&
+    number <= 1
+  ) {
+
+    number *= 100;
+
+  }
+
+
+  /*
+    If backend already returns
+    percentage.
+  */
+
+  number =
+    Math.max(
+      0,
+      Math.min(
+        100,
+        number
+      )
+    );
+
+
+  return Math.round(number);
 
 }
 
 
 /* =========================================================
-   EMPTY
+   AI REASON
 ========================================================= */
 
-function showEmpty() {
+function getReason(
+  product,
+  score
+) {
 
-  resultsContainer.innerHTML = `
+  if (
+    product.reason
+  ) {
 
-    <div class="no-results">
+    return product.reason;
 
-      <h3>
-        Start your fashion search.
-      </h3>
+  }
 
-      <p>
-        Try something like "minimal black shirt for summer under ₹3000".
-      </p>
 
-    </div>
+  if (
+    score !== null
+  ) {
 
-  `;
+    if (score >= 90) {
 
+      return "Excellent semantic match for your fashion request.";
+
+    }
+
+
+    if (score >= 75) {
+
+      return "Strong match based on your requested style.";
+
+    }
+
+
+    if (score >= 60) {
+
+      return "Relevant match with several matching attributes.";
+
+    }
+
+  }
+
+
+  return "Relevant fashion discovery based on your search.";
 }
 
 
 /* =========================================================
-   ERROR
+   IMAGE HTML
 ========================================================= */
 
-function showError(message) {
+function createImageHTML(
+  product
+) {
 
-  resultsContainer.innerHTML = `
+  if (!product.image) {
 
-    <div class="no-results">
+    return `
+      <div class="image-fallback">
+        FASHION IMAGE
+      </div>
+    `;
 
-      <h3>
-        Search temporarily unavailable.
-      </h3>
+  }
 
-      <p>
-        ${escapeHTML(message)}
-      </p>
 
-    </div>
-
+  return `
+    <img
+      class="product-image"
+      src="${escapeHTML(product.image)}"
+      alt="${escapeHTML(product.title)}"
+      loading="lazy"
+      onerror="this.parentElement.innerHTML='<div class=&quot;image-fallback&quot;>FASHION IMAGE</div>'"
+    />
   `;
 
 }
@@ -129,227 +1050,140 @@ function showError(message) {
    PRODUCT CARD
 ========================================================= */
 
-function renderProduct(product) {
+function createProductCard(
+  product
+) {
 
   const score =
-    Number(
-      product.relevanceScore || 0
-    );
-
-
-  const percentage =
-    Math.max(
-      0,
-      Math.min(
-        100,
-        Math.round(
-          score * 100
-        )
-      )
-    );
+    getScore(product);
 
 
   const price =
-    Number(product.price);
+    formatPrice(
+      product.price
+    );
 
 
-  const formattedPrice =
-    Number.isFinite(price)
-      ? price.toLocaleString(
-          "en-IN"
-        )
-      : product.price;
+  const reason =
+    getReason(
+      product,
+      score
+    );
 
 
-  const matchedFields =
-    Array.isArray(
-      product.matchedFields
-    )
-      ? product.matchedFields
-      : [];
+  const color =
+    product.color ||
+    "—";
+
+
+  const style =
+    product.style ||
+    "—";
+
+
+  const occasion =
+    product.occasion ||
+    "—";
+
+
+  const material =
+    product.material ||
+    "—";
 
 
   return `
 
-    <article class="product-card">
+    <article
+      class="product-card"
+      data-price="${getNumericPrice(product.price)}"
+    >
 
-      <div class="product-image">
+      ${
+        score !== null
+          ? `
+            <div class="ai-score">
+              ${score}% AI MATCH
+            </div>
+          `
+          : ""
+      }
 
-        <span
-          style="
-            display:flex;
-            width:100%;
-            height:100%;
-            align-items:center;
-            justify-content:center;
-            color:#777;
-            font-size:13px;
-          "
-        >
-          Fashion Product
-        </span>
+
+      <div class="product-image-wrapper">
+
+        ${createImageHTML(product)}
 
       </div>
 
 
       <div class="product-content">
 
-        <span class="product-brand">
-
-          ${escapeHTML(
-            product.brand
-          )}
-
-        </span>
+        <div class="product-brand">
+          ${escapeHTML(product.brand)}
+        </div>
 
 
         <h3 class="product-title">
-
-          ${escapeHTML(
-            product.name
-          )}
-
+          ${escapeHTML(product.title)}
         </h3>
 
 
-        <p class="product-description">
-
-          ${escapeHTML(
-            product.description
-          )}
-
-        </p>
-
-
-        <div class="product-price">
-
-          ${escapeHTML(
-            product.currency || "₹"
-          )}
-
-          ${escapeHTML(
-            formattedPrice
-          )}
-
-        </div>
-
-
-        <div class="product-meta">
-
-          <div class="product-meta-item">
-
-            <span class="product-meta-label">
-              Category
-            </span>
-
-            ${escapeHTML(
-              product.category
-            )}
-
-          </div>
-
-
-          <div class="product-meta-item">
-
-            <span class="product-meta-label">
-              Colour
-            </span>
-
-            ${escapeHTML(
-              product.color
-            )}
-
-          </div>
-
-
-          <div class="product-meta-item">
-
-            <span class="product-meta-label">
-              Material
-            </span>
-
-            ${escapeHTML(
-              Array.isArray(
-                product.material
-              )
-                ? product.material.join(", ")
-                : product.material || "—"
-            )}
-
-          </div>
-
-
-          <div class="product-meta-item">
-
-            <span class="product-meta-label">
-              AI Score
-            </span>
-
-            ${percentage}%
-
-          </div>
-
-        </div>
-
-
         ${
-          matchedFields.length
+          product.description
             ? `
-
-              <div class="product-reason">
-
-                <strong>
-                  AI Match
-                </strong>
-
-                <br>
-
+              <p class="product-description">
                 ${escapeHTML(
-                  matchedFields.join(
-                    " • "
-                  )
+                  product.description
                 )}
-
-              </div>
-
+              </p>
             `
             : ""
         }
 
 
-        <div class="stylist-score">
+        <div class="product-price">
+          ${escapeHTML(price)}
+        </div>
 
-          <div class="stylist-score-header">
 
-            <span>
-              AI relevance
-            </span>
+        <div class="product-meta">
 
-            <strong>
-              ${percentage}%
-            </strong>
-
+          <div class="meta-item">
+            <span>Colour</span>
+            ${escapeHTML(color)}
           </div>
 
+          <div class="meta-item">
+            <span>Style</span>
+            ${escapeHTML(style)}
+          </div>
 
-          <div class="stylist-score-bar">
+          <div class="meta-item">
+            <span>Occasion</span>
+            ${escapeHTML(occasion)}
+          </div>
 
-            <div
-              class="stylist-score-fill"
-              style="
-                width:${percentage}%;
-              "
-            ></div>
-
+          <div class="meta-item">
+            <span>Material</span>
+            ${escapeHTML(material)}
           </div>
 
         </div>
 
 
+        <div class="ai-reason">
+
+          <strong>AI insight:</strong>
+
+          ${escapeHTML(reason)}
+
+        </div>
+
+
         <button
-          class="product-button"
           type="button"
-          onclick="selectProduct(${Number(product.id)})"
+          class="product-button"
+          data-product-id="${escapeHTML(product.id)}"
         >
           View Product
         </button>
@@ -364,32 +1198,103 @@ function renderProduct(product) {
 
 
 /* =========================================================
-   RENDER
+   FILTER RESULTS
 ========================================================= */
 
-function renderProducts(
-  products
-) {
+function getFilteredResults() {
 
   if (
-    !Array.isArray(products) ||
-    !products.length
+    state.activeFilter === "all"
   ) {
 
-    resultsContainer.innerHTML = `
+    return state.results;
 
-      <div class="no-results">
+  }
 
-        <h3>
-          No matching fashion found.
-        </h3>
 
+  if (
+    state.activeFilter === "low"
+  ) {
+
+    return state.results.filter(
+      product =>
+        getNumericPrice(
+          product.price
+        ) < 2000
+    );
+
+  }
+
+
+  if (
+    state.activeFilter === "high"
+  ) {
+
+    return state.results.filter(
+      product =>
+        getNumericPrice(
+          product.price
+        ) >= 2000
+    );
+
+  }
+
+
+  return state.results;
+
+}
+
+
+/* =========================================================
+   RENDER RESULTS
+========================================================= */
+
+function renderResults() {
+
+  const results =
+    getFilteredResults();
+
+
+  productGrid.innerHTML = "";
+
+
+  resultCount.textContent =
+    `${results.length} ${
+      results.length === 1
+        ? "result"
+        : "results"
+    }`;
+
+
+  if (
+    state.results.length === 0
+  ) {
+
+    showEmpty(
+      "No fashion matches found.",
+      "Try a broader search such as black shirt, summer dress, or sneakers."
+    );
+
+    return;
+
+  }
+
+
+  hideEmpty();
+
+
+  if (
+    results.length === 0
+  ) {
+
+    productGrid.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">✦</div>
+        <h3>No products in this filter</h3>
         <p>
-          Try describing the style, colour, occasion or budget differently.
+          Try another filter or return to All.
         </p>
-
       </div>
-
     `;
 
     return;
@@ -397,165 +1302,327 @@ function renderProducts(
   }
 
 
-  resultsContainer.innerHTML =
-    products
-      .map(
-        product =>
-          renderProduct(
-            product
-          )
-      )
+  productGrid.innerHTML =
+    results
+      .map(createProductCard)
       .join("");
 
-}
 
-
-/* =========================================================
-   AI SEARCH REQUEST
-========================================================= */
-
-async function searchFashion(
-  query
-) {
-
-  const response =
-    await fetch(
-      `${API_BASE_URL}/api/search`,
-      {
-
-        method: "POST",
-
-        headers: {
-          "Content-Type":
-            "application/json"
-        },
-
-        body:
-          JSON.stringify({
-            query
-          })
-
-      }
-    );
-
-
-  const data =
-    await response.json();
-
-
-  if (!response.ok) {
-
-    throw new Error(
-      data.error ||
-      "AI search failed."
-    );
-
-  }
-
-
-  return data;
+  attachProductButtons();
 
 }
 
 
 /* =========================================================
-   RUN SEARCH
+   PRODUCT BUTTONS
 ========================================================= */
 
-async function runSearch() {
+function attachProductButtons() {
 
-  const query =
-    searchInput.value.trim();
+  const buttons =
+    document.querySelectorAll(
+      ".product-button"
+    );
 
 
-  if (!query) {
+  buttons.forEach(
+    button => {
 
-    showEmpty();
+      button.addEventListener(
+        "click",
+        () => {
+
+          const id =
+            button.dataset.productId;
+
+
+          const product =
+            state.results.find(
+              item =>
+                String(item.id) ===
+                String(id)
+            );
+
+
+          if (!product) {
+            return;
+          }
+
+
+          if (
+            product.url ||
+            product.link
+          ) {
+
+            window.open(
+              product.url ||
+              product.link,
+              "_blank",
+              "noopener,noreferrer"
+            );
+
+            return;
+
+          }
+
+
+          alert(
+            `${product.title}\n\n${formatPrice(product.price)}`
+          );
+
+        }
+      );
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   UI STATES
+========================================================= */
+
+function setLoading(isLoading) {
+
+  state.loading =
+    isLoading;
+
+
+  if (isLoading) {
+
+    loadingState.classList.remove(
+      "hidden"
+    );
+
+    productGrid.innerHTML = "";
+
+    emptyState.classList.add(
+      "hidden"
+    );
+
+    errorState.classList.add(
+      "hidden"
+    );
+
+    searchButton.classList.add(
+      "loading"
+    );
+
+    searchButton.textContent =
+      "Searching...";
 
     return;
 
   }
 
 
-  showLoading();
+  loadingState.classList.add(
+    "hidden"
+  );
+
+  searchButton.classList.remove(
+    "loading"
+  );
+
+  searchButton.textContent =
+    "Search";
+
+}
 
 
-  try {
+function showEmpty(
+  title,
+  description
+) {
 
-    const data =
-      await searchFashion(
-        query
-      );
-
-
-    renderProducts(
-      data.results
-    );
+  emptyState.classList.remove(
+    "hidden"
+  );
 
 
-    console.log(
-      "AI understood query:",
-      data.understoodQuery
-    );
+  const heading =
+    emptyState.querySelector("h3");
 
 
-    console.log(
-      "AI search response:",
-      data
-    );
-
-  } catch (error) {
-
-    console.error(
-      "Search error:",
-      error
-    );
+  const paragraph =
+    emptyState.querySelector("p");
 
 
-    showError(
-      error.message
-    );
+  if (heading) {
+    heading.textContent =
+      title;
+  }
 
+
+  if (paragraph) {
+    paragraph.textContent =
+      description;
   }
 
 }
 
 
-/* =========================================================
-   PRODUCT
-========================================================= */
+function hideEmpty() {
 
-function selectProduct(
-  productId
+  emptyState.classList.add(
+    "hidden"
+  );
+
+}
+
+
+function showError(
+  message
 ) {
 
-  console.log(
-    "Selected product:",
-    productId
+  errorMessage.textContent =
+    message;
+
+
+  errorState.classList.remove(
+    "hidden"
+  );
+
+
+  productGrid.innerHTML = "";
+
+}
+
+
+function hideError() {
+
+  errorState.classList.add(
+    "hidden"
+  );
+
+}
+
+
+function showSearchMessage(
+  message
+) {
+
+  searchStatus.textContent =
+    message;
+
+}
+
+
+/* =========================================================
+   FILTER EVENTS
+========================================================= */
+
+function setupFilters() {
+
+  const filters =
+    document.querySelectorAll(
+      ".filter"
+    );
+
+
+  filters.forEach(
+    filter => {
+
+      filter.addEventListener(
+        "click",
+        () => {
+
+          filters.forEach(
+            item =>
+              item.classList.remove(
+                "active"
+              )
+          );
+
+
+          filter.classList.add(
+            "active"
+          );
+
+
+          state.activeFilter =
+            filter.dataset.filter;
+
+
+          renderResults();
+
+        }
+      );
+
+    }
   );
 
 }
 
 
 /* =========================================================
-   SEARCH BUTTON
+   SUGGESTION EVENTS
 ========================================================= */
 
-if (searchButton) {
+function setupSuggestions() {
 
-  searchButton.addEventListener(
-    "click",
-    runSearch
+  const suggestions =
+    document.querySelectorAll(
+      ".suggestion"
+    );
+
+
+  suggestions.forEach(
+    suggestion => {
+
+      suggestion.addEventListener(
+        "click",
+        () => {
+
+          const query =
+            suggestion.dataset.query;
+
+
+          searchInput.value =
+            query;
+
+
+          searchProducts(
+            query
+          );
+
+
+          document
+            .getElementById("results")
+            .scrollIntoView({
+              behavior: "smooth"
+            });
+
+        }
+      );
+
+    }
   );
 
 }
 
 
 /* =========================================================
-   ENTER KEY
+   SEARCH FORM
 ========================================================= */
 
-if (searchInput) {
+function setupSearch() {
+
+  searchForm.addEventListener(
+    "submit",
+    event => {
+
+      event.preventDefault();
+
+
+      searchProducts(
+        searchInput.value
+      );
+
+    }
+  );
+
 
   searchInput.addEventListener(
     "keydown",
@@ -565,7 +1632,11 @@ if (searchInput) {
         event.key === "Enter"
       ) {
 
-        runSearch();
+        event.preventDefault();
+
+        searchProducts(
+          searchInput.value
+        );
 
       }
 
@@ -576,32 +1647,110 @@ if (searchInput) {
 
 
 /* =========================================================
-   SEARCH HINTS
+   RETRY
 ========================================================= */
 
-document
-  .querySelectorAll(
-    ".search-hints button"
-  )
-  .forEach(button => {
+function setupRetry() {
 
-    button.addEventListener(
-      "click",
-      () => {
+  retryButton.addEventListener(
+    "click",
+    async () => {
 
-        searchInput.value =
-          button.textContent.trim();
+      hideError();
 
-        runSearch();
+      await checkAPIHealth();
+
+      await loadProducts();
+
+
+      if (
+        state.currentQuery
+      ) {
+
+        await searchProducts(
+          state.currentQuery
+        );
 
       }
-    );
 
-  });
+    }
+  );
+
+}
 
 
 /* =========================================================
-   INITIAL STATE
+   INITIALIZATION
 ========================================================= */
 
-showEmpty();
+async function initializeApp() {
+
+  console.log(
+    "Fashion AI Discovery initializing..."
+  );
+
+
+  console.log(
+    "API:",
+    API_BASE_URL
+  );
+
+
+  setupSearch();
+
+  setupSuggestions();
+
+  setupFilters();
+
+  setupRetry();
+
+
+  /*
+    Check backend first.
+  */
+
+  await checkAPIHealth();
+
+
+  /*
+    Load available products.
+  */
+
+  const products =
+    await loadProducts();
+
+
+  /*
+    Show initial products if
+    backend returned products.
+  */
+
+  if (
+    products.length > 0
+  ) {
+
+    state.results =
+      products;
+
+
+    productCount.textContent =
+      products.length;
+
+  }
+
+
+  console.log(
+    "Fashion AI Discovery ready."
+  );
+
+}
+
+
+/* =========================================================
+   START APPLICATION
+========================================================= */
+
+document.addEventListener(
+  "DOMContentLoaded",
+  initializeApp
+);
