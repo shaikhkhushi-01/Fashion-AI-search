@@ -1,16 +1,5 @@
-```javascript
-/* =========================================================
-   ABAIRA — FRONTEND
-   Semantic Search + AI Stylist
-========================================================= */
-
 const API_BASE_URL =
-  "https://fashion-ai-search-lj6s.onrender.com";
-
-
-/* =========================================================
-   DOM
-========================================================= */
+  "https://YOUR-RENDER-BACKEND.onrender.com";
 
 const resultsContainer =
   document.getElementById("results");
@@ -21,229 +10,78 @@ const searchInput =
 const searchButton =
   document.getElementById("searchButton");
 
-const stylistButton =
-  document.getElementById("stylistButton");
 
-
-/* =========================================================
-   HTML SAFETY
-========================================================= */
+// =========================================================
+// HTML ESCAPE
+// =========================================================
 
 function escapeHTML(value) {
+
   return String(value ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+
 }
 
 
-/* =========================================================
-   IMAGE URL
-========================================================= */
+// =========================================================
+// LOADING
+// =========================================================
 
-function getProductImage(product) {
-  if (product && product.image) {
-    return product.image;
-  }
-
-  return "";
-}
-
-
-/* =========================================================
-   LOADING
-========================================================= */
-
-function showLoading(message) {
+function showLoading() {
 
   resultsContainer.innerHTML = `
+
     <div class="no-results">
-      <h3>${escapeHTML(message)}</h3>
-      <p>ABAIRA is analysing the fashion collection.</p>
+
+      <h3>
+        AI is searching fashion...
+      </h3>
+
+      <p>
+        Understanding your request and
+        finding semantically relevant products.
+      </p>
+
     </div>
+
   `;
 
 }
 
 
-/* =========================================================
-   NO RESULTS
-========================================================= */
+// =========================================================
+// NO RESULTS
+// =========================================================
 
 function showNoResults() {
 
   resultsContainer.innerHTML = `
+
     <div class="no-results">
-      <h3>No matching products found.</h3>
-      <p>Try another fashion description.</p>
+
+      <h3>
+        No relevant fashion found.
+      </h3>
+
+      <p>
+        Try describing the style, occasion,
+        colour or budget differently.
+      </p>
+
     </div>
+
   `;
 
 }
 
 
-/* =========================================================
-   ERROR
-========================================================= */
-
-function showError(message) {
-
-  resultsContainer.innerHTML = `
-    <div class="no-results">
-      <h3>Something went wrong.</h3>
-      <p>${escapeHTML(message)}</p>
-    </div>
-  `;
-
-}
-
-
-/* =========================================================
-   PRODUCT CARD
-========================================================= */
-
-function createProductCard(product) {
-
-  const priceNumber =
-    Number(product.price);
-
-  const formattedPrice =
-    Number.isFinite(priceNumber)
-      ? priceNumber.toLocaleString("en-IN")
-      : escapeHTML(product.price || "");
-
-
-  const image =
-    getProductImage(product);
-
-
-  const explanation =
-    product.explanation ||
-    (
-      Array.isArray(product.reasons)
-        ? product.reasons.join(". ")
-        : ""
-    );
-
-
-  const matchScore =
-    Number.isFinite(Number(product.matchScore))
-      ? Number(product.matchScore)
-      : null;
-
-
-  return `
-    <article class="product-card">
-
-      <div class="product-image">
-
-        ${
-          image
-            ? `
-              <img
-                src="${escapeHTML(image)}"
-                alt="${escapeHTML(product.name || "Fashion product")}"
-                loading="lazy"
-                onerror="this.style.display='none'; this.parentElement.classList.add('image-failed');"
-              >
-            `
-            : `
-              <div class="image-placeholder">
-                ${escapeHTML(product.category || "FASHION")}
-              </div>
-            `
-        }
-
-        <span class="product-category">
-          ${escapeHTML(product.category || "FASHION")}
-        </span>
-
-      </div>
-
-
-      <div class="product-content">
-
-        <span class="product-brand">
-          ${escapeHTML(product.brand || "")}
-        </span>
-
-
-        <h3 class="product-title">
-          ${escapeHTML(product.name || "")}
-        </h3>
-
-
-        <p class="product-description">
-          ${escapeHTML(product.description || "")}
-        </p>
-
-
-        <div class="product-details">
-
-          ${
-            product.color
-              ? `
-                <span>
-                  Colour: ${escapeHTML(product.color)}
-                </span>
-              `
-              : ""
-          }
-
-          ${
-            product.style &&
-            Array.isArray(product.style)
-              ? `
-                <span>
-                  Style: ${escapeHTML(product.style.join(", "))}
-                </span>
-              `
-              : ""
-          }
-
-        </div>
-
-
-        <div class="product-price">
-          ${escapeHTML(product.currency || "INR")}
-          ${formattedPrice}
-        </div>
-
-
-        ${
-          matchScore !== null
-            ? `
-              <div class="product-match">
-                AI Match: ${matchScore}%
-              </div>
-            `
-            : ""
-        }
-
-
-        ${
-          explanation
-            ? `
-              <p class="product-explanation">
-                ${escapeHTML(explanation)}
-              </p>
-            `
-            : ""
-        }
-
-      </div>
-
-    </article>
-  `;
-
-}
-
-
-/* =========================================================
-   RENDER PRODUCTS
-========================================================= */
+// =========================================================
+// RENDER PRODUCTS
+// =========================================================
 
 function renderProducts(products) {
 
@@ -251,243 +89,296 @@ function renderProducts(products) {
     !Array.isArray(products) ||
     products.length === 0
   ) {
+
     showNoResults();
+
     return;
   }
 
 
   resultsContainer.innerHTML =
     products
-      .map(createProductCard)
+      .map(product => {
+
+        const score =
+          Number(
+            product.ai_match_score || 0
+          );
+
+
+        const material =
+          Array.isArray(product.material)
+            ? product.material.join(", ")
+            : product.material || "";
+
+
+        const style =
+          Array.isArray(product.style)
+            ? product.style.join(", ")
+            : product.style || "";
+
+
+        const occasion =
+          Array.isArray(product.occasion)
+            ? product.occasion.join(", ")
+            : product.occasion || "";
+
+
+        return `
+
+          <article
+            class="product-card"
+          >
+
+            <div
+              class="product-image"
+            >
+
+              <span>
+                ${escapeHTML(
+                  product.category || "Fashion"
+                )}
+              </span>
+
+            </div>
+
+
+            <div
+              class="product-content"
+            >
+
+              <span
+                class="product-brand"
+              >
+                ${escapeHTML(
+                  product.brand
+                )}
+              </span>
+
+
+              <h3
+                class="product-title"
+              >
+                ${escapeHTML(
+                  product.name
+                )}
+              </h3>
+
+
+              <p
+                class="product-description"
+              >
+                ${escapeHTML(
+                  product.description
+                )}
+              </p>
+
+
+              <div
+                class="product-meta"
+              >
+
+                <div
+                  class="product-meta-item"
+                >
+
+                  <span
+                    class="product-meta-label"
+                  >
+                    Colour
+                  </span>
+
+                  ${escapeHTML(
+                    product.color
+                  )}
+
+                </div>
+
+
+                <div
+                  class="product-meta-item"
+                >
+
+                  <span
+                    class="product-meta-label"
+                  >
+                    Material
+                  </span>
+
+                  ${escapeHTML(
+                    material
+                  )}
+
+                </div>
+
+
+                <div
+                  class="product-meta-item"
+                >
+
+                  <span
+                    class="product-meta-label"
+                  >
+                    Style
+                  </span>
+
+                  ${escapeHTML(
+                    style
+                  )}
+
+                </div>
+
+
+                <div
+                  class="product-meta-item"
+                >
+
+                  <span
+                    class="product-meta-label"
+                  >
+                    Occasion
+                  </span>
+
+                  ${escapeHTML(
+                    occasion
+                  )}
+
+                </div>
+
+              </div>
+
+
+              <div
+                class="product-price"
+              >
+
+                ₹${Number(
+                  product.price || 0
+                ).toLocaleString("en-IN")}
+
+              </div>
+
+
+              <div
+                class="stylist-score"
+              >
+
+                <div
+                  class="stylist-score-header"
+                >
+
+                  <span>
+                    AI Match
+                  </span>
+
+                  <strong>
+                    ${score.toFixed(0)}%
+                  </strong>
+
+                </div>
+
+
+                <div
+                  class="stylist-score-bar"
+                >
+
+                  <div
+                    class="stylist-score-fill"
+                    style="
+                      width:${Math.min(
+                        score,
+                        100
+                      )}%;
+                    "
+                  ></div>
+
+                </div>
+
+              </div>
+
+
+              <div
+                class="product-reason"
+              >
+
+                <strong>
+                  AI reasoning
+                </strong>
+
+                <br>
+
+                ${escapeHTML(
+                  product.ai_reason
+                )}
+
+              </div>
+
+
+              <button
+                class="product-button"
+                type="button"
+                onclick="viewProduct(${product.id})"
+              >
+                View Product
+              </button>
+
+            </div>
+
+          </article>
+
+        `;
+
+      })
       .join("");
 
 }
 
 
-/* =========================================================
-   SEARCH API
-========================================================= */
+// =========================================================
+// AI SEARCH
+// =========================================================
 
 async function searchFashion(query) {
 
-  const response =
-    await fetch(
-      `${API_BASE_URL}/api/search`,
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-          query: query
-        })
-      }
-    );
+  const cleanQuery =
+    String(query || "").trim();
 
 
-  const data =
-    await response.json();
+  if (!cleanQuery) {
 
-
-  if (!response.ok) {
-
-    throw new Error(
-      data.error ||
-      "Search failed."
-    );
-
-  }
-
-
-  /*
-     IMPORTANT:
-     Backend returns:
-
-     {
-       success: true,
-       results: [...]
-     }
-  */
-
-  return Array.isArray(data.results)
-    ? data.results
-    : [];
-
-}
-
-
-/* =========================================================
-   RUN SEARCH
-========================================================= */
-
-async function runSearch() {
-
-  const query =
-    searchInput
-      ? searchInput.value.trim()
-      : "";
-
-
-  if (!query) {
-
-    showError(
-      "Please enter something to search."
-    );
+    showNoResults();
 
     return;
 
   }
 
 
-  showLoading(
-    "Finding your fashion matches..."
-  );
-
-
-  if (searchButton) {
-    searchButton.disabled = true;
-    searchButton.textContent = "Searching...";
-  }
-
-
-  try {
-
-    const results =
-      await searchFashion(query);
-
-
-    renderProducts(results);
-
-
-  } catch (error) {
-
-    console.error(
-      "ABAIRA search error:",
-      error
-    );
-
-
-    showError(
-      error.message ||
-      "Unable to connect to ABAIRA AI."
-    );
-
-  }
-
-
-  if (searchButton) {
-    searchButton.disabled = false;
-    searchButton.textContent = "Search";
-  }
-
-}
-
-
-/* =========================================================
-   AI STYLIST
-========================================================= */
-
-async function runAIStylist() {
-
-  const occasion =
-    document
-      .getElementById("stylistOccasion")
-      ?.value
-      .trim() || "";
-
-
-  const style =
-    document
-      .getElementById("stylistStyle")
-      ?.value
-      .trim() || "";
-
-
-  const comfort =
-    document
-      .getElementById("stylistComfort")
-      ?.value
-      .trim() || "";
-
-
-  const color =
-    document
-      .getElementById("stylistColor")
-      ?.value
-      .trim() || "";
-
-
-  const coverage =
-    document
-      .getElementById("stylistCoverage")
-      ?.value
-      .trim() || "";
-
-
-  const description =
-    document
-      .getElementById("stylistDescription")
-      ?.value
-      .trim() || "";
-
-
-  const hasPreferences =
-    [
-      occasion,
-      style,
-      comfort,
-      color,
-      coverage,
-      description
-    ].some(Boolean);
-
-
-  if (!hasPreferences) {
-
-    alert(
-      "Please tell ABAIRA what kind of style you are looking for."
-    );
-
-    return;
-
-  }
-
-
-  showLoading(
-    "Your AI Stylist is creating your recommendations..."
-  );
-
-
-  if (stylistButton) {
-    stylistButton.disabled = true;
-    stylistButton.innerHTML = "Finding Your Style...";
-  }
+  showLoading();
 
 
   try {
 
     const response =
       await fetch(
-        `${API_BASE_URL}/api/stylist`,
+        `${API_BASE_URL}/api/search`,
         {
+
           method: "POST",
 
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type":
+              "application/json"
           },
 
           body: JSON.stringify({
 
-            occasion,
-            style,
-            comfort,
-            color,
-            coverage,
-            description
+            query:
+              cleanQuery,
+
+            limit: 10
 
           })
+
         }
       );
 
@@ -499,123 +390,111 @@ async function runAIStylist() {
     if (!response.ok) {
 
       throw new Error(
-        data.error ||
-        "AI Stylist request failed."
+        data.detail ||
+        "AI search failed."
       );
 
     }
 
 
     renderProducts(
-      data.recommendations || []
+      data.results || []
     );
-
-
-    document
-      .getElementById("discover")
-      ?.scrollIntoView({
-        behavior: "smooth"
-      });
 
 
   } catch (error) {
 
     console.error(
-      "AI Stylist error:",
+      "Fashion AI Search Error:",
       error
     );
 
 
-    showError(
-      error.message ||
-      "Unable to connect to the AI Stylist."
+    resultsContainer.innerHTML = `
+
+      <div class="no-results">
+
+        <h3>
+          AI search is unavailable.
+        </h3>
+
+        <p>
+          Please check that the
+          Fashion AI backend is running.
+        </p>
+
+      </div>
+
+    `;
+
+  }
+
+}
+
+
+// =========================================================
+// SEARCH BUTTON
+// =========================================================
+
+searchButton.addEventListener(
+  "click",
+  () => {
+
+    searchFashion(
+      searchInput.value
     );
 
   }
+);
 
 
-  if (stylistButton) {
+// =========================================================
+// ENTER KEY
+// =========================================================
 
-    stylistButton.disabled = false;
+searchInput.addEventListener(
+  "keydown",
+  event => {
 
-    stylistButton.innerHTML =
-      "<span>✦</span> Find My Style";
+    if (
+      event.key === "Enter"
+    ) {
 
-  }
-
-}
-
-
-/* =========================================================
-   SEARCH BUTTON
-========================================================= */
-
-if (searchButton) {
-
-  searchButton.addEventListener(
-    "click",
-    runSearch
-  );
-
-}
-
-
-/* =========================================================
-   ENTER KEY
-========================================================= */
-
-if (searchInput) {
-
-  searchInput.addEventListener(
-    "keydown",
-    function(event) {
-
-      if (event.key === "Enter") {
-        runSearch();
-      }
+      searchFashion(
+        searchInput.value
+      );
 
     }
-  );
 
-}
-
-
-/* =========================================================
-   STYLIST BUTTON
-========================================================= */
-
-if (stylistButton) {
-
-  stylistButton.addEventListener(
-    "click",
-    runAIStylist
-  );
-
-}
+  }
+);
 
 
-/* =========================================================
-   SEARCH HINTS
-========================================================= */
+// =========================================================
+// SEARCH HINTS
+// =========================================================
 
 document
-  .querySelectorAll(".search-hints button")
+  .querySelectorAll(
+    ".search-hints button"
+  )
   .forEach(button => {
 
     button.addEventListener(
       "click",
-      function() {
+      () => {
 
         const query =
           button.textContent.trim();
 
 
-        if (searchInput) {
-          searchInput.value = query;
-        }
+        searchInput.value =
+          query;
 
 
-        runSearch();
+        searchFashion(
+          query
+        );
 
       }
     );
@@ -623,26 +502,40 @@ document
   });
 
 
-/* =========================================================
-   INITIAL MESSAGE
-========================================================= */
+// =========================================================
+// PRODUCT ACTION
+// =========================================================
 
-if (resultsContainer) {
+function viewProduct(id) {
 
-  resultsContainer.innerHTML = `
-    <div class="no-results">
-      <h3>Start discovering fashion.</h3>
-      <p>
-        Search for a style, occasion, colour,
-        material or budget above.
-      </p>
-    </div>
-  `;
+  const product =
+    Number(id);
+
+
+  alert(
+    `Fashion product #${product} selected.`
+  );
 
 }
 
 
-console.log(
-  "ABAIRA frontend loaded successfully."
-);
-```
+// =========================================================
+// INITIAL STATE
+// =========================================================
+
+resultsContainer.innerHTML = `
+
+  <div class="no-results">
+
+    <h3>
+      AI Fashion Discovery
+    </h3>
+
+    <p>
+      Describe what you want to wear
+      and let the AI find relevant fashion.
+    </p>
+
+  </div>
+
+`;
