@@ -1,6 +1,6 @@
 {
   "name": "fashion-ai-discovery-backend",
-  "version": "4.0.0",
+  "version": "5.0.0",
   "description": "AI-powered fashion discovery and personalized AI stylist",
   "type": "module",
   "main": "server.js",
