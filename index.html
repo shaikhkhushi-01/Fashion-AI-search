@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
   <meta charset="UTF-8">
 
   <meta
@@ -12,703 +10,557 @@
 
   <meta
     name="description"
-    content="Fashion AI Discovery — intelligent fashion search and AI styling."
+    content="Fashion AI Discovery - Search fashion naturally with AI."
   >
 
-  <title>
-    Fashion AI Discovery
-  </title>
-
-  <link
-    rel="preconnect"
-    href="https://fonts.googleapis.com"
-  >
-
-  <link
-    rel="preconnect"
-    href="https://fonts.gstatic.com"
-  >
-
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap"
-    rel="stylesheet"
-  >
+  <title>Fashion AI Discovery</title>
 
   <link
     rel="stylesheet"
     href="styles.css"
   >
-
 </head>
 
 <body>
 
-<header class="navbar">
+  <!-- NAVBAR -->
 
-  <div class="nav-container">
+  <header class="navbar">
 
-    <a
-      href="#home"
-      class="logo"
-    >
-      FASHION AI
-    </a>
+    <div class="nav-container">
 
-    <nav class="nav-links">
-
-      <a href="#home">
-        Discover
-      </a>
-
-      <a href="#search">
-        AI Search
-      </a>
-
-      <a href="#stylist">
-        AI Stylist
-      </a>
-
-      <a href="#about">
-        About
-      </a>
-
-    </nav>
-
-    <a
-      href="#stylist"
-      class="nav-ai-button"
-    >
-      Try AI Stylist
-    </a>
-
-  </div>
-
-</header>
-
-
-<main>
-
-<section
-  class="hero"
-  id="home"
->
-
-  <div>
-
-    <span class="eyebrow">
-      FASHION AI DISCOVERY
-    </span>
-
-    <h1>
-      Fashion search
-      <span>understood by AI.</span>
-    </h1>
-
-    <p class="hero-description">
-      Describe what you want naturally.
-      Our AI understands style, occasion,
-      colour, comfort and budget to discover
-      the most relevant fashion products.
-    </p>
-
-    <div
-      class="main-search"
-      id="search"
-    >
-
-      <input
-        id="searchInput"
-        type="text"
-        autocomplete="off"
-        placeholder="Try: black oversized shirt for college under 2000"
+      <a
+        href="#top"
+        class="logo"
       >
+        FASHION AI
+      </a>
 
-      <button
-        id="searchButton"
-        type="button"
-      >
-        Search with AI
-      </button>
+      <nav class="nav-links">
 
-    </div>
+        <a href="#discover">
+          Discover
+        </a>
 
-    <div class="search-hints">
+        <a href="#search">
+          AI Search
+        </a>
 
-      <span>
-        Try:
-      </span>
-
-      <button type="button">
-        black oversized shirt for college
-      </button>
-
-      <button type="button">
-        elegant wedding outfit
-      </button>
-
-      <button type="button">
-        comfortable everyday fashion under 2500
-      </button>
-
-    </div>
-
-  </div>
-
-
-  <div class="hero-panel">
-
-    <div class="hero-panel-inner">
-
-      <span class="panel-label">
-        AI ENGINE / LIVE
-      </span>
-
-      <div class="hero-orbit">
-
-        <div class="orbit-circle"></div>
-
-        <div class="orbit-core">
-          AI
-        </div>
-
-      </div>
-
-      <div class="hero-stat">
-
-        <strong>
-          Semantic Search
-        </strong>
-
-        <span>
-          Enabled
-        </span>
-
-      </div>
-
-      <div class="hero-stat">
-
-        <strong>
-          Hybrid Ranking
-        </strong>
-
-        <span>
-          Enabled
-        </span>
-
-      </div>
-
-      <div class="hero-stat">
-
-        <strong>
+        <a href="#stylist">
           AI Stylist
+        </a>
+
+        <a href="#about">
+          About
+        </a>
+
+      </nav>
+
+      <a
+        href="#stylist"
+        class="nav-cta"
+      >
+        Try AI Stylist
+      </a>
+
+    </div>
+
+  </header>
+
+
+  <main id="top">
+
+
+    <!-- HERO -->
+
+    <section
+      class="hero"
+      id="discover"
+    >
+
+      <div class="hero-container">
+
+        <div class="hero-content">
+
+          <p class="eyebrow">
+            FASHION AI DISCOVERY
+          </p>
+
+          <h1>
+            Fashion search
+            <span>
+              understood by AI.
+            </span>
+          </h1>
+
+          <p class="hero-description">
+            Describe what you want naturally.
+            Our AI understands style, occasion,
+            colour, comfort and budget to discover
+            relevant fashion products.
+          </p>
+
+
+          <!-- SEARCH -->
+
+          <div
+            class="search-box"
+            id="search"
+          >
+
+            <input
+              id="searchInput"
+              type="text"
+              autocomplete="off"
+              placeholder="Try: black oversized shirt for college"
+              aria-label="Fashion search"
+            >
+
+            <button
+              id="searchButton"
+              type="button"
+            >
+              Search with AI
+            </button>
+
+          </div>
+
+
+          <!-- HINTS -->
+
+          <div class="search-hints">
+
+            <span>Try:</span>
+
+            <button type="button">
+              black oversized shirt
+            </button>
+
+            <button type="button">
+              elegant wedding outfit
+            </button>
+
+            <button type="button">
+              comfortable everyday fashion under 2500
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <!-- HERO STATUS -->
+
+        <div class="hero-status">
+
+          <div class="status-card">
+
+            <span class="status-label">
+              AI ENGINE / LIVE
+            </span>
+
+            <div class="status-dot">
+              <i></i>
+              AI Online
+            </div>
+
+            <div class="status-line">
+              Semantic Search
+              <strong>Enabled</strong>
+            </div>
+
+            <div class="status-line">
+              Hybrid Ranking
+              <strong>Enabled</strong>
+            </div>
+
+            <div class="status-line">
+              AI Stylist
+              <strong>Enabled</strong>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- RESULTS -->
+
+    <section
+      class="results-section"
+      id="results-section"
+    >
+
+      <div class="section-container">
+
+        <div class="section-heading">
+
+          <div>
+
+            <p class="eyebrow">
+              DISCOVERY
+            </p>
+
+            <h2>
+              Your AI fashion matches
+            </h2>
+
+            <p
+              id="searchSummary"
+              class="section-description"
+            >
+              Connecting to Fashion AI...
+            </p>
+
+          </div>
+
+          <div
+            id="resultCount"
+            class="result-count"
+          >
+            Loading
+          </div>
+
+        </div>
+
+
+        <div
+          id="results"
+          class="products-grid"
+        >
+
+          <div class="no-results">
+
+            <div class="loading-spinner"></div>
+
+            <h3>
+              Connecting to Fashion AI...
+            </h3>
+
+            <p>
+              Loading the intelligent fashion catalogue.
+            </p>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- AI STYLIST -->
+
+    <section
+      class="stylist-section"
+      id="stylist"
+    >
+
+      <div class="section-container">
+
+        <div class="stylist-header">
+
+          <p class="eyebrow">
+            AI STYLIST
+          </p>
+
+          <h2>
+            Build your look with AI.
+          </h2>
+
+          <p>
+            Tell the AI about your occasion,
+            style, comfort, colour and coverage.
+            It will find the strongest products
+            for your look.
+          </p>
+
+        </div>
+
+
+        <div class="stylist-card">
+
+          <div class="stylist-grid">
+
+
+            <div class="form-group">
+
+              <label for="stylistOccasion">
+                Occasion
+              </label>
+
+              <select id="stylistOccasion">
+
+                <option value="">
+                  Select occasion
+                </option>
+
+                <option value="college">
+                  College
+                </option>
+
+                <option value="office">
+                  Office
+                </option>
+
+                <option value="casual">
+                  Casual
+                </option>
+
+                <option value="party">
+                  Party
+                </option>
+
+                <option value="wedding">
+                  Wedding
+                </option>
+
+                <option value="date">
+                  Date
+                </option>
+
+                <option value="travel">
+                  Travel
+                </option>
+
+              </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+              <label for="stylistStyle">
+                Style
+              </label>
+
+              <select id="stylistStyle">
+
+                <option value="">
+                  Select style
+                </option>
+
+                <option value="minimal">
+                  Minimal
+                </option>
+
+                <option value="streetwear">
+                  Streetwear
+                </option>
+
+                <option value="casual">
+                  Casual
+                </option>
+
+                <option value="formal">
+                  Formal
+                </option>
+
+                <option value="elegant">
+                  Elegant
+                </option>
+
+                <option value="trendy">
+                  Trendy
+                </option>
+
+              </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+              <label for="stylistComfort">
+                Comfort
+              </label>
+
+              <select id="stylistComfort">
+
+                <option value="">
+                  Select comfort
+                </option>
+
+                <option value="very comfortable">
+                  Very comfortable
+                </option>
+
+                <option value="comfortable">
+                  Comfortable
+                </option>
+
+                <option value="regular">
+                  Regular
+                </option>
+
+                <option value="fashion first">
+                  Fashion first
+                </option>
+
+              </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+              <label for="stylistColor">
+                Colour
+              </label>
+
+              <input
+                id="stylistColor"
+                type="text"
+                placeholder="e.g. black, white, pastel"
+              >
+
+            </div>
+
+
+            <div class="form-group">
+
+              <label for="stylistCoverage">
+                Coverage
+              </label>
+
+              <select id="stylistCoverage">
+
+                <option value="">
+                  Select coverage
+                </option>
+
+                <option value="full">
+                  Full
+                </option>
+
+                <option value="medium">
+                  Medium
+                </option>
+
+                <option value="light">
+                  Light
+                </option>
+
+              </select>
+
+            </div>
+
+
+            <div class="form-group form-group-wide">
+
+              <label for="stylistDescription">
+                Tell us more
+              </label>
+
+              <textarea
+                id="stylistDescription"
+                rows="4"
+                placeholder="Example: I need a smart black outfit for a college presentation under ₹2500..."
+              ></textarea>
+
+            </div>
+
+          </div>
+
+
+          <div class="stylist-action">
+
+            <button
+              id="stylistButton"
+              type="button"
+              class="primary-button"
+            >
+              Find My AI Matches
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ABOUT -->
+
+    <section
+      class="about-section"
+      id="about"
+    >
+
+      <div class="section-container">
+
+        <div class="about-grid">
+
+          <div>
+
+            <p class="eyebrow">
+              ABOUT
+            </p>
+
+            <h2>
+              Search fashion
+              like you talk.
+            </h2>
+
+          </div>
+
+          <div>
+
+            <p>
+              Fashion AI Discovery uses semantic
+              search to understand natural language
+              fashion requests rather than relying
+              only on exact keywords.
+            </p>
+
+            <p>
+              Describe an outfit, occasion, colour,
+              style or budget and the AI ranks the
+              most relevant products.
+            </p>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <!-- FOOTER -->
+
+  <footer class="footer">
+
+    <div class="section-container">
+
+      <div class="footer-content">
+
+        <strong>
+          FASHION AI
         </strong>
 
         <span>
-          Enabled
+          AI-powered fashion discovery
         </span>
 
       </div>
 
     </div>
 
-  </div>
+  </footer>
 
-</section>
 
-
-<section
-  class="results-section"
-  id="results-section"
->
-
-  <div class="stylist-results-header">
-
-    <div>
-
-      <span class="eyebrow">
-        AI DISCOVERY
-      </span>
-
-      <h2>
-        Your AI fashion matches
-      </h2>
-
-      <p id="searchSummary">
-        Describe a fashion look to begin.
-      </p>
-
-    </div>
-
-    <span
-      class="result-count"
-      id="resultCount"
-    >
-      0 matches
-    </span>
-
-  </div>
-
-
-  <div
-    class="product-grid"
-    id="results"
-  >
-
-    <div class="no-results">
-
-      <h3>
-        Start discovering fashion.
-      </h3>
-
-      <p>
-        Search using natural language.
-      </p>
-
-    </div>
-
-  </div>
-
-</section>
-
-
-<section
-  class="stylist-section"
-  id="stylist"
->
-
-  <div class="section-heading">
-
-    <span class="eyebrow">
-      AI STYLIST
-    </span>
-
-    <h2>
-      Build your look
-      with AI.
-    </h2>
-
-    <p>
-      Tell the system about your occasion,
-      style, comfort, colour and coverage.
-      The hybrid recommendation engine will
-      rank the strongest products for you.
-    </p>
-
-  </div>
-
-
-  <div class="stylist-layout">
-
-    <div class="stylist-form-card">
-
-      <div class="form-header">
-
-        <span>
-          PERSONAL STYLE PROFILE
-        </span>
-
-        <small>
-          AI MODE
-        </small>
-
-      </div>
-
-
-      <div class="form-grid">
-
-        <div class="form-field">
-
-          <label>
-            Occasion
-          </label>
-
-          <select
-            id="stylistOccasion"
-          >
-
-            <option value="">
-              Any occasion
-            </option>
-
-            <option value="Wedding">
-              Wedding
-            </option>
-
-            <option value="Party">
-              Party
-            </option>
-
-            <option value="Evening">
-              Evening
-            </option>
-
-            <option value="Formal">
-              Formal
-            </option>
-
-            <option value="Office">
-              Office
-            </option>
-
-            <option value="Casual">
-              Casual
-            </option>
-
-            <option value="College">
-              College
-            </option>
-
-            <option value="Everyday">
-              Everyday
-            </option>
-
-            <option value="Travel">
-              Travel
-            </option>
-
-          </select>
-
-        </div>
-
-
-        <div class="form-field">
-
-          <label>
-            Style
-          </label>
-
-          <select
-            id="stylistStyle"
-          >
-
-            <option value="">
-              Any style
-            </option>
-
-            <option value="Elegant">
-              Elegant
-            </option>
-
-            <option value="Minimal">
-              Minimal
-            </option>
-
-            <option value="Classic">
-              Classic
-            </option>
-
-            <option value="Modern">
-              Modern
-            </option>
-
-            <option value="Traditional">
-              Traditional
-            </option>
-
-            <option value="Comfortable">
-              Comfortable
-            </option>
-
-            <option value="Streetwear">
-              Streetwear
-            </option>
-
-            <option value="Luxury">
-              Luxury
-            </option>
-
-          </select>
-
-        </div>
-
-
-        <div class="form-field">
-
-          <label>
-            Comfort
-          </label>
-
-          <select
-            id="stylistComfort"
-          >
-
-            <option value="">
-              Any level
-            </option>
-
-            <option value="low">
-              Light
-            </option>
-
-            <option value="medium">
-              Medium
-            </option>
-
-            <option value="high">
-              High
-            </option>
-
-            <option value="very-high">
-              Very High
-            </option>
-
-          </select>
-
-        </div>
-
-
-        <div class="form-field">
-
-          <label>
-            Colour
-          </label>
-
-          <select
-            id="stylistColor"
-          >
-
-            <option value="">
-              Any colour
-            </option>
-
-            <option value="Black">
-              Black
-            </option>
-
-            <option value="White">
-              White
-            </option>
-
-            <option value="Blue">
-              Blue
-            </option>
-
-            <option value="Red">
-              Red
-            </option>
-
-            <option value="Neutral">
-              Neutral
-            </option>
-
-            <option value="Dark">
-              Dark
-            </option>
-
-          </select>
-
-        </div>
-
-
-        <div class="form-field">
-
-          <label>
-            Coverage
-          </label>
-
-          <select
-            id="stylistCoverage"
-          >
-
-            <option value="">
-              Any coverage
-            </option>
-
-            <option value="full">
-              Full coverage
-            </option>
-
-          </select>
-
-        </div>
-
-
-        <div class="form-field full-width">
-
-          <label>
-            Describe your look
-          </label>
-
-          <textarea
-            id="stylistDescription"
-            rows="4"
-            placeholder="Example: elegant comfortable black outfit for a wedding..."
-          ></textarea>
-
-        </div>
-
-      </div>
-
-
-      <button
-        class="stylist-button"
-        id="stylistButton"
-        type="button"
-      >
-        Find My AI Matches
-      </button>
-
-    </div>
-
-
-    <div class="stylist-info">
-
-      <span class="eyebrow">
-        HOW IT WORKS
-      </span>
-
-      <h3>
-        Meaning +
-        attributes +
-        ranking.
-      </h3>
-
-      <p>
-        Fashion AI Discovery does not rely only
-        on exact keywords. Your sentence is
-        converted into an embedding and compared
-        against the product representations.
-      </p>
-
-      <div class="workflow">
-
-        <div class="workflow-item">
-
-          <span>01</span>
-
-          <div>
-
-            <strong>
-              Understand
-            </strong>
-
-            <p>
-              AI converts your natural language
-              into a semantic representation.
-            </p>
-
-          </div>
-
-        </div>
-
-
-        <div class="workflow-item">
-
-          <span>02</span>
-
-          <div>
-
-            <strong>
-              Retrieve
-            </strong>
-
-            <p>
-              Relevant products are retrieved
-              using vector similarity.
-            </p>
-
-          </div>
-
-        </div>
-
-
-        <div class="workflow-item">
-
-          <span>03</span>
-
-          <div>
-
-            <strong>
-              Rank
-            </strong>
-
-            <p>
-              Semantic relevance and fashion
-              attributes are combined.
-            </p>
-
-          </div>
-
-        </div>
-
-
-        <div class="workflow-item">
-
-          <span>04</span>
-
-          <div>
-
-            <strong>
-              Explain
-            </strong>
-
-            <p>
-              The interface shows why a product
-              matched your request.
-            </p>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </div>
-
-</section>
-
-
-<section
-  class="about-section"
-  id="about"
->
-
-  <h2>
-    From words
-    to wardrobe.
-  </h2>
-
-  <p>
-    Fashion AI Discovery is being developed
-    as an AI-first fashion discovery system.
-    Instead of forcing users to understand
-    product taxonomy, the system understands
-    the user's own language and maps it to
-    structured fashion data.
-  </p>
-
-</section>
-
-</main>
-
-
-<footer class="footer">
-
-  <div>
-
-    <strong>
-      FASHION AI DISCOVERY
-    </strong>
-
-    <span>
-      AI-powered fashion discovery
-    </span>
-
-  </div>
-
-  <p>
-    Semantic Search · Hybrid Ranking · AI Stylist
-  </p>
-
-</footer>
-
-
-<script
-  src="app.js"
-></script>
+  <script src="app.js"></script>
 
 </body>
-
 </html>
