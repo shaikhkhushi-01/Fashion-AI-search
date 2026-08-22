@@ -1,7 +1,7 @@
 /*
 =========================================================
 FASHION AI DISCOVERY
-DAY 4 — AI STYLIST + PERSONALIZED RECOMMENDATIONS
+DAY 5 — PRODUCT INTELLIGENCE ENGINE
 =========================================================
 */
 
@@ -18,6 +18,8 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 const PORT = process.env.PORT || 10000;
+
+const MODEL_NAME = "Xenova/all-MiniLM-L6-v2";
 
 app.use(
   cors({
@@ -43,28 +45,273 @@ const possibleProductFiles = [
 
 let PRODUCTS = [];
 
+function arrayValue(value) {
+  if (Array.isArray(value)) {
+    return value.filter(
+      (item) =>
+        item !== undefined &&
+        item !== null &&
+        String(item).trim() !== ""
+    );
+  }
+
+  if (
+    value === undefined ||
+    value === null ||
+    value === ""
+  ) {
+    return [];
+  }
+
+  return [value];
+}
+
+function normalize(value) {
+  return String(value ?? "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
 function loadProducts() {
   for (const file of possibleProductFiles) {
-    if (fs.existsSync(file)) {
-      try {
-        const raw = fs.readFileSync(file, "utf8");
-        const parsed = JSON.parse(raw);
+    if (!fs.existsSync(file)) {
+      continue;
+    }
 
-        PRODUCTS = Array.isArray(parsed)
-          ? parsed
-          : Array.isArray(parsed.products)
-          ? parsed.products
-          : [];
+    try {
+      const raw = fs.readFileSync(file, "utf8");
+      const parsed = JSON.parse(raw);
 
-        console.log(`Loaded ${PRODUCTS.length} products.`);
-        return;
-      } catch (error) {
-        console.error("Product JSON error:", error.message);
-      }
+      const products = Array.isArray(parsed)
+        ? parsed
+        : Array.isArray(parsed.products)
+        ? parsed.products
+        : [];
+
+      PRODUCTS = products
+        .map(normalizeProduct)
+        .filter(Boolean);
+
+      console.log(
+        `Loaded ${PRODUCTS.length} products.`
+      );
+
+      return;
+    } catch (error) {
+      console.error(
+        "Product JSON error:",
+        error.message
+      );
     }
   }
 
-  console.error("products.json not found.");
+  console.error(
+    "products.json not found."
+  );
+}
+
+/*
+=========================================================
+PRODUCT NORMALIZATION
+=========================================================
+*/
+
+function normalizeProduct(product) {
+  if (!product || typeof product !== "object") {
+    return null;
+  }
+
+  const normalized = {
+    ...product,
+
+    id: Number(product.id),
+
+    brand:
+      String(product.brand || "Unknown")
+        .trim(),
+
+    name:
+      String(product.name || "Fashion Product")
+        .trim(),
+
+    category:
+      String(product.category || "Fashion")
+        .trim(),
+
+    subcategory:
+      String(product.subcategory || "")
+        .trim(),
+
+    gender:
+      String(product.gender || "Unisex")
+        .trim(),
+
+    color:
+      String(product.color || "")
+        .trim(),
+
+    colorFamily:
+      String(product.colorFamily || product.color || "")
+        .trim(),
+
+    material:
+      arrayValue(product.material),
+
+    style:
+      arrayValue(product.style),
+
+    occasion:
+      arrayValue(product.occasion),
+
+    season:
+      arrayValue(product.season),
+
+    comfort:
+      arrayValue(product.comfort),
+
+    tags:
+      arrayValue(product.tags),
+
+    aliases:
+      arrayValue(product.aliases),
+
+    sizes:
+      arrayValue(product.sizes),
+
+    fit:
+      String(product.fit || "")
+        .trim(),
+
+    coverage:
+      String(product.coverage || "")
+        .trim(),
+
+    description:
+      String(product.description || "")
+        .trim(),
+
+    price:
+      Number(product.price),
+
+    rating:
+      Number(product.rating) || 0,
+
+    popularity:
+      Number(product.popularity) || 0,
+
+    availability:
+      String(
+        product.availability || "In Stock"
+      ),
+  };
+
+  /*
+  -------------------------------------------------------
+  DERIVED PRODUCT INTELLIGENCE
+  -------------------------------------------------------
+  */
+
+  normalized.priceBand =
+    getPriceBand(normalized.price);
+
+  normalized.qualityScore =
+    calculateQualityScore(normalized);
+
+  normalized.searchText =
+    productToText(normalized);
+
+  return normalized;
+}
+
+function getPriceBand(price) {
+  if (!Number.isFinite(price)) {
+    return "unknown";
+  }
+
+  if (price < 1500) {
+    return "budget";
+  }
+
+  if (price < 3000) {
+    return "mid-range";
+  }
+
+  if (price < 5000) {
+    return "premium";
+  }
+
+  return "luxury";
+}
+
+function calculateQualityScore(product) {
+  const rating =
+    Math.max(
+      0,
+      Math.min(
+        5,
+        Number(product.rating) || 0
+      )
+    );
+
+  const popularity =
+    Math.max(
+      0,
+      Math.min(
+        100,
+        Number(product.popularity) || 0
+      )
+    );
+
+  const metadataFields = [
+    product.subcategory,
+    product.color,
+    product.colorFamily,
+    product.fit,
+    product.coverage,
+    product.description,
+    product.priceBand,
+  ];
+
+  const metadataCompleteness =
+    metadataFields.filter(Boolean).length /
+    metadataFields.length;
+
+  const arrays = [
+    product.material,
+    product.style,
+    product.occasion,
+    product.season,
+    product.comfort,
+    product.tags,
+    product.aliases,
+    product.sizes,
+  ];
+
+  const arrayCompleteness =
+    arrays.filter(
+      (item) => Array.isArray(item) && item.length
+    ).length /
+    arrays.length;
+
+  const ratingScore =
+    (rating / 5) * 40;
+
+  const popularityScore =
+    (popularity / 100) * 25;
+
+  const metadataScore =
+    metadataCompleteness * 20;
+
+  const arrayScore =
+    arrayCompleteness * 15;
+
+  return Math.round(
+    ratingScore +
+    popularityScore +
+    metadataScore +
+    arrayScore
+  );
 }
 
 loadProducts();
@@ -75,29 +322,37 @@ AI MODEL
 =========================================================
 */
 
-const MODEL_NAME = "Xenova/all-MiniLM-L6-v2";
-
 let embedder = null;
+
 let productEmbeddings = [];
 
 async function loadAIModel() {
   try {
-    console.log("Preparing AI semantic search model...");
-    console.log(`Creating AI embeddings for ${PRODUCTS.length} products...`);
+    console.log(
+      "Preparing AI semantic search model..."
+    );
+
+    console.log(
+      `Creating AI embeddings for ${PRODUCTS.length} products...`
+    );
 
     embedder = await pipeline(
       "feature-extraction",
       MODEL_NAME
     );
 
-    console.log("AI embedding model loaded.");
+    console.log(
+      "AI embedding model loaded."
+    );
 
     productEmbeddings = [];
 
     for (const product of PRODUCTS) {
-      const text = productToText(product);
+      const text =
+        productToText(product);
 
-      const embedding = await embedText(text);
+      const embedding =
+        await embedText(text);
 
       productEmbeddings.push({
         product,
@@ -105,40 +360,24 @@ async function loadAIModel() {
       });
     }
 
-    console.log("AI product index ready.");
-    console.log(`AI indexed products: ${productEmbeddings.length}`);
+    console.log(
+      "AI product index ready."
+    );
+
+    console.log(
+      `AI indexed products: ${productEmbeddings.length}`
+    );
   } catch (error) {
-    console.error("AI model initialization failed:", error);
+    console.error(
+      "AI model initialization failed:",
+      error
+    );
   }
 }
 
 /*
 =========================================================
-TEXT NORMALIZATION
-=========================================================
-*/
-
-function normalize(value) {
-  return String(value ?? "")
-    .toLowerCase()
-    .trim();
-}
-
-function arrayValue(value) {
-  if (Array.isArray(value)) {
-    return value;
-  }
-
-  if (value === undefined || value === null || value === "") {
-    return [];
-  }
-
-  return [value];
-}
-
-/*
-=========================================================
-PRODUCT → SEARCHABLE TEXT
+PRODUCT → INTELLIGENT SEARCH TEXT
 =========================================================
 */
 
@@ -147,14 +386,27 @@ function productToText(product) {
     product.name,
     product.brand,
     product.category,
-    product.description,
+    product.subcategory,
+
+    product.gender,
+
     product.color,
-    product.price,
-    ...arrayValue(product.style),
+    product.colorFamily,
+
+    product.description,
+
+    product.fit,
+    product.coverage,
+
+    product.priceBand,
+
     ...arrayValue(product.material),
+    ...arrayValue(product.style),
     ...arrayValue(product.occasion),
-    ...arrayValue(product.fit),
-    ...arrayValue(product.gender),
+    ...arrayValue(product.season),
+    ...arrayValue(product.comfort),
+    ...arrayValue(product.tags),
+    ...arrayValue(product.aliases),
   ];
 
   return values
@@ -170,7 +422,9 @@ EMBEDDING
 
 async function embedText(text) {
   if (!embedder) {
-    throw new Error("AI model is not ready.");
+    throw new Error(
+      "AI model is not ready."
+    );
   }
 
   const output = await embedder(
@@ -191,7 +445,11 @@ COSINE SIMILARITY
 */
 
 function cosineSimilarity(a, b) {
-  if (!a || !b || a.length !== b.length) {
+  if (
+    !a ||
+    !b ||
+    a.length !== b.length
+  ) {
     return 0;
   }
 
@@ -199,31 +457,253 @@ function cosineSimilarity(a, b) {
   let magnitudeA = 0;
   let magnitudeB = 0;
 
-  for (let i = 0; i < a.length; i++) {
+  for (
+    let i = 0;
+    i < a.length;
+    i++
+  ) {
     dot += a[i] * b[i];
-    magnitudeA += a[i] * a[i];
-    magnitudeB += b[i] * b[i];
+
+    magnitudeA +=
+      a[i] * a[i];
+
+    magnitudeB +=
+      b[i] * b[i];
   }
 
-  if (!magnitudeA || !magnitudeB) {
+  if (
+    !magnitudeA ||
+    !magnitudeB
+  ) {
     return 0;
   }
 
   return (
     dot /
-    (Math.sqrt(magnitudeA) *
-      Math.sqrt(magnitudeB))
+    (
+      Math.sqrt(magnitudeA) *
+      Math.sqrt(magnitudeB)
+    )
   );
 }
 
 /*
 =========================================================
-BUDGET EXTRACTION
+QUERY INTELLIGENCE
+=========================================================
+*/
+
+const COLOR_ALIASES = {
+  white: ["white", "ivory", "cream", "off white"],
+  black: ["black", "jet black"],
+  blue: ["blue", "navy", "denim"],
+  green: ["green", "olive", "sage"],
+  pink: ["pink", "rose"],
+  brown: ["brown", "camel", "tan"],
+  neutral: [
+    "neutral",
+    "beige",
+    "cream",
+    "white",
+    "ivory",
+    "camel",
+  ],
+};
+
+const STYLE_ALIASES = {
+  casual: [
+    "casual",
+    "everyday",
+    "relaxed",
+    "comfortable",
+  ],
+
+  formal: [
+    "formal",
+    "office",
+    "professional",
+    "business",
+  ],
+
+  streetwear: [
+    "streetwear",
+    "street",
+    "oversized",
+    "baggy",
+    "urban",
+  ],
+
+  elegant: [
+    "elegant",
+    "classy",
+    "sophisticated",
+    "luxury",
+  ],
+
+  sporty: [
+    "sporty",
+    "sports",
+    "gym",
+    "workout",
+    "athletic",
+  ],
+
+  minimal: [
+    "minimal",
+    "simple",
+    "clean",
+    "basic",
+  ],
+};
+
+function extractQuerySignals(query) {
+  const text = normalize(query);
+
+  const signals = {
+    colors: [],
+    styles: [],
+    occasions: [],
+    categories: [],
+    budget: extractBudget(query),
+  };
+
+  /*
+  -------------------------------------------------------
+  COLORS
+  -------------------------------------------------------
+  */
+
+  for (
+    const [canonical, aliases]
+    of Object.entries(COLOR_ALIASES)
+  ) {
+    if (
+      aliases.some(
+        (alias) =>
+          text.includes(
+            normalize(alias)
+          )
+      )
+    ) {
+      signals.colors.push(
+        canonical
+      );
+    }
+  }
+
+  /*
+  -------------------------------------------------------
+  STYLES
+  -------------------------------------------------------
+  */
+
+  for (
+    const [canonical, aliases]
+    of Object.entries(STYLE_ALIASES)
+  ) {
+    if (
+      aliases.some(
+        (alias) =>
+          text.includes(
+            normalize(alias)
+          )
+      )
+    ) {
+      signals.styles.push(
+        canonical
+      );
+    }
+  }
+
+  /*
+  -------------------------------------------------------
+  OCCASIONS
+  -------------------------------------------------------
+  */
+
+  const occasionKeywords = [
+    "college",
+    "office",
+    "formal",
+    "wedding",
+    "party",
+    "date",
+    "travel",
+    "vacation",
+    "summer",
+    "winter",
+    "brunch",
+    "gym",
+    "sports",
+    "everyday",
+  ];
+
+  for (
+    const occasion
+    of occasionKeywords
+  ) {
+    if (
+      text.includes(occasion)
+    ) {
+      signals.occasions.push(
+        occasion
+      );
+    }
+  }
+
+  /*
+  -------------------------------------------------------
+  CATEGORIES
+  -------------------------------------------------------
+  */
+
+  const categoryKeywords = [
+    "shirt",
+    "dress",
+    "trouser",
+    "pants",
+    "jeans",
+    "sneaker",
+    "shoes",
+    "blazer",
+    "hoodie",
+    "jacket",
+    "skirt",
+    "top",
+    "t shirt",
+    "tee",
+    "jumpsuit",
+    "shorts",
+    "coat",
+    "accessories",
+    "bag",
+  ];
+
+  for (
+    const category
+    of categoryKeywords
+  ) {
+    if (
+      text.includes(category)
+    ) {
+      signals.categories.push(
+        category
+      );
+    }
+  }
+
+  return signals;
+}
+
+/*
+=========================================================
+BUDGET
 =========================================================
 */
 
 function extractBudget(query) {
-  const text = normalize(query);
+  const text =
+    normalize(query);
 
   const matches = [
     ...text.matchAll(
@@ -235,31 +715,250 @@ function extractBudget(query) {
     return null;
   }
 
-  const number = Number(
-    matches[matches.length - 1][1].replace(/,/g, "")
-  );
+  const number =
+    Number(
+      matches[
+        matches.length - 1
+      ][1].replace(/,/g, "")
+    );
 
-  return Number.isFinite(number) ? number : null;
+  return Number.isFinite(number)
+    ? number
+    : null;
 }
 
 /*
 =========================================================
-DIRECT PREFERENCE MATCH
+MATCH HELPERS
 =========================================================
 */
 
-function containsValue(product, field, target) {
+function productContains(
+  product,
+  fields,
+  target
+) {
   if (!target) {
     return false;
   }
 
-  const wanted = normalize(target);
+  const wanted =
+    normalize(target);
 
-  const values = arrayValue(product[field]);
+  return fields.some(
+    (field) => {
+      const values =
+        arrayValue(
+          product[field]
+        );
 
-  return values.some((value) => {
-    return normalize(value).includes(wanted);
-  });
+      return values.some(
+        (value) =>
+          normalize(value)
+            .includes(wanted)
+      );
+    }
+  );
+}
+
+function colorMatch(
+  product,
+  color
+) {
+  if (!color) {
+    return false;
+  }
+
+  const wanted =
+    normalize(color);
+
+  const productColors = [
+    product.color,
+    product.colorFamily,
+  ]
+    .filter(Boolean)
+    .map(normalize);
+
+  if (
+    productColors.some(
+      (value) =>
+        value.includes(wanted) ||
+        wanted.includes(value)
+    )
+  ) {
+    return true;
+  }
+
+  const aliases =
+    COLOR_ALIASES[wanted] || [];
+
+  return aliases.some(
+    (alias) =>
+      productColors.some(
+        (value) =>
+          value.includes(
+            normalize(alias)
+          )
+      )
+  );
+}
+
+/*
+=========================================================
+STRUCTURED PRODUCT INTELLIGENCE SCORE
+=========================================================
+*/
+
+function productIntelligenceScore(
+  product,
+  signals
+) {
+  let score = 0;
+  const matched = [];
+
+  /*
+  -------------------------------------------------------
+  COLOR
+  -------------------------------------------------------
+  */
+
+  if (
+    signals.colors.length
+  ) {
+    const match =
+      signals.colors.some(
+        (color) =>
+          colorMatch(
+            product,
+            color
+          )
+      );
+
+    if (match) {
+      score += 12;
+      matched.push(
+        "colour"
+      );
+    }
+  }
+
+  /*
+  -------------------------------------------------------
+  STYLE
+  -------------------------------------------------------
+  */
+
+  if (
+    signals.styles.length
+  ) {
+    const match =
+      signals.styles.some(
+        (style) =>
+          productContains(
+            product,
+            [
+              "style",
+              "tags",
+              "aliases",
+            ],
+            style
+          )
+      );
+
+    if (match) {
+      score += 12;
+      matched.push(
+        "style"
+      );
+    }
+  }
+
+  /*
+  -------------------------------------------------------
+  OCCASION
+  -------------------------------------------------------
+  */
+
+  if (
+    signals.occasions.length
+  ) {
+    const match =
+      signals.occasions.some(
+        (occasion) =>
+          productContains(
+            product,
+            [
+              "occasion",
+              "season",
+              "tags",
+              "aliases",
+            ],
+            occasion
+          )
+      );
+
+    if (match) {
+      score += 14;
+      matched.push(
+        "occasion"
+      );
+    }
+  }
+
+  /*
+  -------------------------------------------------------
+  CATEGORY
+  -------------------------------------------------------
+  */
+
+  if (
+    signals.categories.length
+  ) {
+    const match =
+      signals.categories.some(
+        (category) =>
+          productContains(
+            product,
+            [
+              "category",
+              "subcategory",
+              "name",
+              "aliases",
+            ],
+            category
+          )
+      );
+
+    if (match) {
+      score += 14;
+      matched.push(
+        "category"
+      );
+    }
+  }
+
+  /*
+  -------------------------------------------------------
+  QUALITY
+  -------------------------------------------------------
+  */
+
+  score +=
+    product.qualityScore * 0.08;
+
+  /*
+  -------------------------------------------------------
+  POPULARITY
+  -------------------------------------------------------
+  */
+
+  score +=
+    product.popularity * 0.03;
+
+  return {
+    score,
+    matched,
+  };
 }
 
 /*
@@ -268,7 +967,10 @@ PERSONALIZATION SCORE
 =========================================================
 */
 
-function personalizationScore(product, preferences) {
+function personalizationScore(
+  product,
+  preferences
+) {
   let score = 0;
   let matched = 0;
 
@@ -280,23 +982,48 @@ function personalizationScore(product, preferences) {
     ["coverage", 10],
   ];
 
-  for (const [field, weight] of fields) {
-    const value = preferences[field];
+  for (
+    const [field, weight]
+    of fields
+  ) {
+    const value =
+      preferences[field];
 
     if (!value) {
       continue;
     }
 
-    if (containsValue(product, field, value)) {
-      score += weight;
-      matched += 1;
+    if (
+      field === "color"
+    ) {
+      if (
+        colorMatch(
+          product,
+          value
+        )
+      ) {
+        score += weight;
+        matched += 1;
+      }
+
       continue;
     }
 
-    const productText = normalize(productToText(product));
-
-    if (productText.includes(normalize(value))) {
-      score += weight * 0.55;
+    if (
+      productContains(
+        product,
+        [
+          field,
+          "tags",
+          "style",
+          "occasion",
+          "aliases",
+          "description",
+        ],
+        value
+      )
+    ) {
+      score += weight;
       matched += 1;
     }
   }
@@ -313,56 +1040,100 @@ RECOMMENDATION REASONS
 =========================================================
 */
 
-function generateReasons(product, preferences, semanticScore) {
+function generateReasons(
+  product,
+  preferences,
+  signals,
+  semanticScore,
+  intelligence
+) {
   const reasons = [];
 
   if (
-    preferences.occasion &&
-    containsValue(
-      product,
-      "occasion",
-      preferences.occasion
+    signals.colors.length &&
+    signals.colors.some(
+      (color) =>
+        colorMatch(
+          product,
+          color
+        )
     )
   ) {
     reasons.push(
-      `Matches your ${preferences.occasion} occasion`
+      "Matches the requested colour"
     );
   }
 
   if (
-    preferences.style &&
-    containsValue(
-      product,
-      "style",
-      preferences.style
+    signals.styles.length &&
+    signals.styles.some(
+      (style) =>
+        productContains(
+          product,
+          [
+            "style",
+            "tags",
+            "aliases",
+          ],
+          style
+        )
     )
   ) {
     reasons.push(
-      `Fits your ${preferences.style} style preference`
+      "Matches the requested style"
     );
   }
 
   if (
-    preferences.color &&
-    normalize(product.color).includes(
-      normalize(preferences.color)
+    signals.occasions.length &&
+    signals.occasions.some(
+      (occasion) =>
+        productContains(
+          product,
+          [
+            "occasion",
+            "season",
+            "tags",
+          ],
+          occasion
+        )
     )
   ) {
     reasons.push(
-      `Matches your preferred ${preferences.color} colour`
+      "Suitable for the requested occasion"
     );
   }
 
   if (
-    preferences.comfort &&
-    containsValue(
-      product,
-      "comfort",
-      preferences.comfort
+    signals.categories.length &&
+    signals.categories.some(
+      (category) =>
+        productContains(
+          product,
+          [
+            "category",
+            "subcategory",
+            "name",
+          ],
+          category
+        )
     )
   ) {
     reasons.push(
-      `Aligned with your comfort preference`
+      `Matches the ${product.category.toLowerCase()} category`
+    );
+  }
+
+  if (
+    signals.budget &&
+    Number.isFinite(
+      Number(product.price)
+    ) &&
+    Number(product.price) <=
+      signals.budget
+  ) {
+    reasons.push(
+      "Fits within your detected budget"
     );
   }
 
@@ -370,13 +1141,21 @@ function generateReasons(product, preferences, semanticScore) {
     semanticScore >= 0.65
   ) {
     reasons.push(
-      "Strong semantic match to your description"
+      "Strong semantic match to your request"
+    );
+  }
+
+  if (
+    product.rating >= 4.8
+  ) {
+    reasons.push(
+      "Highly rated product"
     );
   }
 
   if (!reasons.length) {
     reasons.push(
-      "Selected based on overall fashion compatibility"
+      "Selected using overall fashion compatibility"
     );
   }
 
@@ -385,103 +1164,230 @@ function generateReasons(product, preferences, semanticScore) {
 
 /*
 =========================================================
-PERSONALIZED PRODUCT RANKING
+MAIN AI RANKING ENGINE
 =========================================================
 */
 
 async function personalizedRecommendations(
   query,
-  preferences
+  preferences = {}
 ) {
-  if (!productEmbeddings.length) {
+  if (
+    !productEmbeddings.length
+  ) {
     return [];
   }
 
-  const queryEmbedding = await embedText(query);
+  const queryEmbedding =
+    await embedText(query);
 
-  const budget = extractBudget(query);
+  const signals =
+    extractQuerySignals(query);
 
-  const scored = productEmbeddings.map(
-    ({ product, embedding }) => {
-      const semanticSimilarity =
-        cosineSimilarity(
-          queryEmbedding,
-          embedding
-        );
+  const budget =
+    signals.budget;
 
-      const personalization =
-        personalizationScore(
-          product,
-          preferences
-        );
+  const scored =
+    productEmbeddings.map(
+      ({
+        product,
+        embedding,
+      }) => {
 
-      let finalScore =
-        semanticSimilarity * 70 +
-        personalization.score;
+        const semanticSimilarity =
+          cosineSimilarity(
+            queryEmbedding,
+            embedding
+          );
 
-      /*
-      ================================================
-      BUDGET BONUS / PENALTY
-      ================================================
-      */
+        const intelligence =
+          productIntelligenceScore(
+            product,
+            signals
+          );
 
-      const price = Number(product.price);
+        const personalization =
+          personalizationScore(
+            product,
+            preferences
+          );
+
+        /*
+        ---------------------------------------------------
+        BASE AI SCORE
+        ---------------------------------------------------
+        */
+
+        let finalScore =
+          semanticSimilarity * 55;
+
+        /*
+        ---------------------------------------------------
+        STRUCTURED INTELLIGENCE
+        ---------------------------------------------------
+        */
+
+        finalScore +=
+          intelligence.score;
+
+        /*
+        ---------------------------------------------------
+        PERSONALIZATION
+        ---------------------------------------------------
+        */
+
+        finalScore +=
+          personalization.score * 0.45;
+
+        /*
+        ---------------------------------------------------
+        BUDGET INTELLIGENCE
+        ---------------------------------------------------
+        */
+
+        const price =
+          Number(product.price);
+
+        if (
+          budget &&
+          Number.isFinite(price)
+        ) {
+          if (
+            price <= budget
+          ) {
+            finalScore += 10;
+          } else {
+            const overBy =
+              price - budget;
+
+            const overRatio =
+              overBy / budget;
+
+            if (
+              overRatio <= 0.10
+            ) {
+              finalScore -= 5;
+            } else if (
+              overRatio <= 0.25
+            ) {
+              finalScore -= 15;
+            } else {
+              finalScore -= 28;
+            }
+          }
+        }
+
+        /*
+        ---------------------------------------------------
+        AVAILABILITY
+        ---------------------------------------------------
+        */
+
+        if (
+          normalize(
+            product.availability
+          ) === "in stock"
+        ) {
+          finalScore += 3;
+        }
+
+        /*
+        ---------------------------------------------------
+        FINAL CLAMP
+        ---------------------------------------------------
+        */
+
+        finalScore =
+          Math.max(
+            0,
+            Math.min(
+              100,
+              finalScore
+            )
+          );
+
+        const reasons =
+          generateReasons(
+            product,
+            preferences,
+            signals,
+            semanticSimilarity,
+            intelligence
+          );
+
+        return {
+          ...product,
+
+          matchScore:
+            Math.round(
+              finalScore
+            ),
+
+          semanticScore:
+            Number(
+              semanticSimilarity.toFixed(
+                4
+              )
+            ),
+
+          intelligenceScore:
+            Math.round(
+              intelligence.score
+            ),
+
+          personalizationScore:
+            Math.round(
+              personalization.score
+            ),
+
+          matchedSignals:
+            intelligence.matched,
+
+          reasons,
+        };
+      }
+    );
+
+  /*
+  -------------------------------------------------------
+  SORT
+  -------------------------------------------------------
+  */
+
+  scored.sort(
+    (a, b) => {
 
       if (
-        budget &&
-        Number.isFinite(price)
+        b.matchScore !==
+        a.matchScore
       ) {
-        if (price <= budget) {
-          finalScore += 10;
-        } else {
-          finalScore -= 20;
-        }
+        return (
+          b.matchScore -
+          a.matchScore
+        );
       }
 
-      finalScore = Math.max(
-        0,
-        Math.min(
-          100,
-          finalScore
-        )
-      );
-
-      const reasons =
-        generateReasons(
-          product,
-          preferences,
-          semanticSimilarity
+      if (
+        b.qualityScore !==
+        a.qualityScore
+      ) {
+        return (
+          b.qualityScore -
+          a.qualityScore
         );
+      }
 
-      return {
-        ...product,
-
-        matchScore: Math.round(
-          finalScore
-        ),
-
-        semanticScore:
-          Number(
-            semanticSimilarity.toFixed(4)
-          ),
-
-        personalizationScore:
-          Math.round(
-            personalization.score
-          ),
-
-        reasons,
-      };
+      return (
+        b.popularity -
+        a.popularity
+      );
     }
   );
 
-  scored.sort(
-    (a, b) =>
-      b.matchScore -
-      a.matchScore
+  return scored.slice(
+    0,
+    8
   );
-
-  return scored.slice(0, 8);
 }
 
 /*
@@ -495,17 +1401,48 @@ app.get(
   (req, res) => {
     res.json({
       status: "online",
-      service: "Fashion AI Discovery",
-      version: "4.0.0",
+
+      service:
+        "Fashion AI Discovery",
+
+      version:
+        "5.0.0",
+
       ai: {
-        enabled: Boolean(embedder),
-        model: MODEL_NAME,
+        enabled:
+          Boolean(embedder),
+
+        model:
+          MODEL_NAME,
+
         type:
-          "semantic + personalized recommendation",
+          "semantic search + product intelligence + personalized ranking",
       },
-      products: PRODUCTS.length,
+
+      products:
+        PRODUCTS.length,
+
       indexedProducts:
         productEmbeddings.length,
+
+      productIntelligence: {
+        enabled: true,
+
+        fields: [
+          "subcategory",
+          "colorFamily",
+          "season",
+          "fit",
+          "comfort",
+          "coverage",
+          "priceBand",
+          "rating",
+          "popularity",
+          "aliases",
+          "qualityScore",
+        ],
+      },
+
       endpoints: [
         "GET /api/health",
         "GET /api/products",
@@ -527,15 +1464,19 @@ app.get(
   (req, res) => {
     res.json({
       success: true,
-      count: PRODUCTS.length,
-      products: PRODUCTS,
+
+      count:
+        PRODUCTS.length,
+
+      products:
+        PRODUCTS,
     });
   }
 );
 
 /*
 =========================================================
-NORMAL AI SEARCH
+SEARCH
 =========================================================
 */
 
@@ -550,7 +1491,8 @@ app.post(
 
       if (!query) {
         return res.status(400).json({
-          error: "Search query is required.",
+          error:
+            "Search query is required.",
         });
       }
 
@@ -567,12 +1509,36 @@ app.post(
           {}
         );
 
+      const signals =
+        extractQuerySignals(
+          query
+        );
+
       res.json({
         success: true,
+
         query,
+
         budget:
-          extractBudget(query),
-        count: results.length,
+          signals.budget,
+
+        intelligence: {
+          colors:
+            signals.colors,
+
+          styles:
+            signals.styles,
+
+          occasions:
+            signals.occasions,
+
+          categories:
+            signals.categories,
+        },
+
+        count:
+          results.length,
+
         results,
       });
     } catch (error) {
@@ -591,44 +1557,58 @@ app.post(
 
 /*
 =========================================================
-AI STYLIST QUERY BUILDER
+STYLIST QUERY
 =========================================================
 */
 
-function buildStylistQuery(preferences) {
+function buildStylistQuery(
+  preferences
+) {
   const parts = [];
 
-  if (preferences.occasion) {
+  if (
+    preferences.occasion
+  ) {
     parts.push(
       `occasion ${preferences.occasion}`
     );
   }
 
-  if (preferences.style) {
+  if (
+    preferences.style
+  ) {
     parts.push(
       `style ${preferences.style}`
     );
   }
 
-  if (preferences.comfort) {
+  if (
+    preferences.comfort
+  ) {
     parts.push(
       `comfort ${preferences.comfort}`
     );
   }
 
-  if (preferences.color) {
+  if (
+    preferences.color
+  ) {
     parts.push(
       `colour ${preferences.color}`
     );
   }
 
-  if (preferences.coverage) {
+  if (
+    preferences.coverage
+  ) {
     parts.push(
       `coverage ${preferences.coverage}`
     );
   }
 
-  if (preferences.description) {
+  if (
+    preferences.description
+  ) {
     parts.push(
       preferences.description
     );
@@ -757,8 +1737,21 @@ app.get(
       status:
         "online",
 
+      version:
+        "5.0.0",
+
       message:
         "AI fashion discovery backend is running.",
+
+      features: [
+        "Semantic Fashion Search",
+        "Product Intelligence",
+        "Structured Query Understanding",
+        "AI Product Ranking",
+        "Personalized AI Stylist",
+        "Budget Intelligence",
+        "Fashion Metadata Intelligence",
+      ],
 
       frontend:
         "Use the GitHub Pages frontend.",
@@ -792,6 +1785,10 @@ async function startServer() {
 
       console.log(
         `AI indexed products: ${productEmbeddings.length}`
+      );
+
+      console.log(
+        `Product intelligence: ENABLED`
       );
     }
   );
