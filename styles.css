@@ -1288,3 +1288,293 @@ button {
     width: 78%;
   }
 }
+
+/*
+=========================================================
+DAY 6 — AI PERSONALIZATION UI
+=========================================================
+*/
+
+.profile-button {
+  border: 1px solid rgba(255,255,255,0.18);
+  background: #111;
+  color: #fff;
+  padding: 10px 15px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .2s ease;
+}
+
+.profile-button:hover {
+  background: #fff;
+  color: #000;
+  transform: translateY(-2px);
+}
+
+/*
+=========================================================
+PREFERENCE PANEL
+=========================================================
+*/
+
+.preference-panel {
+  display: none;
+
+  width: min(
+    calc(100% - 40px),
+    1240px
+  );
+
+  margin: 30px auto 0;
+
+  border: 1px solid rgba(255,255,255,.12);
+
+  border-radius: 24px;
+
+  background:
+    radial-gradient(
+      circle at top right,
+      #202020,
+      #0e0e0e 60%
+    );
+
+  overflow: hidden;
+}
+
+.preference-panel.visible {
+  display: block;
+}
+
+.preference-panel-inner {
+  padding: 35px;
+}
+
+.preference-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 25px;
+  margin-bottom: 30px;
+}
+
+.preference-header h2 {
+  margin-top: 8px;
+
+  font-size:
+    clamp(30px, 4vw, 48px);
+
+  line-height: 1;
+
+  letter-spacing: -.04em;
+}
+
+.preference-header p {
+  max-width: 650px;
+
+  margin-top: 14px;
+
+  color: #777;
+
+  font-size: 13px;
+
+  line-height: 1.7;
+}
+
+.preference-close {
+  width: 40px;
+  height: 40px;
+
+  border: 1px solid rgba(255,255,255,.12);
+
+  border-radius: 50%;
+
+  background: #111;
+
+  color: #fff;
+
+  font-size: 24px;
+}
+
+.preference-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 18px;
+}
+
+.preference-field {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 8px;
+}
+
+.preference-field label {
+  color: #aaa;
+
+  font-size: 11px;
+
+  font-weight: 700;
+
+  letter-spacing: .08em;
+
+  text-transform: uppercase;
+}
+
+.preference-field input,
+.preference-field select {
+  width: 100%;
+
+  border: 1px solid rgba(255,255,255,.1);
+
+  outline: none;
+
+  border-radius: 11px;
+
+  background: #090909;
+
+  color: #fff;
+
+  padding: 13px 14px;
+
+  font-size: 13px;
+}
+
+.preference-field input:focus,
+.preference-field select:focus {
+  border-color:
+    rgba(255,255,255,.4);
+}
+
+.preference-field input::placeholder {
+  color: #555;
+}
+
+.preference-actions {
+  display: flex;
+
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  margin-top: 25px;
+}
+
+.preference-primary,
+.preference-secondary {
+  border-radius: 10px;
+
+  padding: 13px 18px;
+
+  font-size: 12px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.preference-primary {
+  border: none;
+
+  background: #fff;
+
+  color: #000;
+}
+
+.preference-secondary {
+  border: 1px solid rgba(255,255,255,.12);
+
+  background: transparent;
+
+  color: #aaa;
+}
+
+.preference-primary:hover {
+  background: #ddd;
+}
+
+.preference-secondary:hover {
+  color: #fff;
+}
+
+.preference-status {
+  margin-top: 12px;
+
+  color: #999;
+
+  font-size: 12px;
+
+  text-align: right;
+}
+
+/*
+=========================================================
+PERSONALIZATION LABEL
+=========================================================
+*/
+
+.personalization-label {
+  margin-top: 15px;
+
+  padding: 9px 11px;
+
+  border-radius: 9px;
+
+  background:
+    rgba(255,255,255,.06);
+
+  border:
+    1px solid rgba(255,255,255,.1);
+
+  color: #ddd;
+
+  font-size: 11px;
+
+  font-weight: 700;
+}
+
+/*
+=========================================================
+MOBILE
+=========================================================
+*/
+
+@media (max-width: 700px) {
+
+  .profile-button {
+    padding: 8px 11px;
+
+    font-size: 10px;
+  }
+
+  .preference-panel {
+    width:
+      calc(100% - 28px);
+  }
+
+  .preference-panel-inner {
+    padding: 22px;
+  }
+
+  .preference-header {
+    gap: 15px;
+  }
+
+  .preference-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .preference-actions {
+    flex-direction: column;
+  }
+
+  .preference-primary,
+  .preference-secondary {
+    width: 100%;
+  }
+
+}
