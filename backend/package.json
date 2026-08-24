@@ -5,10 +5,11 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "test": "node --test tests/api.test.js",
-    "test:api": "node --test tests/api.test.js"
-  },
+  "start": "node server.js",
+  "test": "node --test tests/api.test.js",
+  "test:api": "node --test tests/api.test.js",
+  "evaluate": "node tests/evaluate.js"
+},
   "engines": {
     "node": ">=20"
   },
