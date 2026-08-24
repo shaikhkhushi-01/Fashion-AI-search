@@ -1,8 +1,8 @@
 /*
 =========================================================
 FASHION AI DISCOVERY
-DAY 6 FRONTEND
-USER PREFERENCES + PERSONALIZATION
+DAY 7 FRONTEND
+ADVANCED SEARCH + FILTERS
 =========================================================
 */
 
@@ -47,82 +47,75 @@ const stylistButton =
 
 /*
 =========================================================
+FILTER DOM
+=========================================================
+*/
+
+const categoryFilter =
+  document.getElementById(
+    "categoryFilter"
+  );
+
+const colorFilter =
+  document.getElementById(
+    "colorFilter"
+  );
+
+const styleFilter =
+  document.getElementById(
+    "styleFilter"
+  );
+
+const genderFilter =
+  document.getElementById(
+    "genderFilter"
+  );
+
+const occasionFilter =
+  document.getElementById(
+    "occasionFilter"
+  );
+
+const minPrice =
+  document.getElementById(
+    "minPrice"
+  );
+
+const maxPrice =
+  document.getElementById(
+    "maxPrice"
+  );
+
+const sortFilter =
+  document.getElementById(
+    "sortFilter"
+  );
+
+const clearFiltersButton =
+  document.getElementById(
+    "clearFilters"
+  );
+
+/*
+=========================================================
 STATE
 =========================================================
 */
 
 let allProducts = [];
 
-let userPreferences =
-  loadPreferences();
+let filterData = {};
 
 /*
 =========================================================
-PREFERENCE STORAGE
+ESCAPE HTML
 =========================================================
 */
 
-const PREFERENCE_KEY =
-  "fashion_ai_user_preferences";
+function escapeHTML(
+  value
+) {
 
-function loadPreferences() {
-  try {
-    const saved =
-      localStorage.getItem(
-        PREFERENCE_KEY
-      );
-
-    if (!saved) {
-      return {
-        gender: "",
-        favoriteColors: [],
-        favoriteStyles: [],
-        favoriteCategories: [],
-        favoriteMaterials: [],
-        occasions: [],
-        budget: null,
-      };
-    }
-
-    return {
-      gender: "",
-      favoriteColors: [],
-      favoriteStyles: [],
-      favoriteCategories: [],
-      favoriteMaterials: [],
-      occasions: [],
-      budget: null,
-      ...JSON.parse(saved),
-    };
-  } catch {
-    return {
-      gender: "",
-      favoriteColors: [],
-      favoriteStyles: [],
-      favoriteCategories: [],
-      favoriteMaterials: [],
-      occasions: [],
-      budget: null,
-    };
-  }
-}
-
-function savePreferences() {
-  localStorage.setItem(
-    PREFERENCE_KEY,
-    JSON.stringify(
-      userPreferences
-    )
-  );
-}
-
-/*
-=========================================================
-HTML ESCAPE
-=========================================================
-*/
-
-function escapeHTML(value) {
   return String(
     value ?? ""
   )
@@ -150,11 +143,14 @@ function escapeHTML(value) {
 
 /*
 =========================================================
-FORMAT PRICE
+PRICE
 =========================================================
 */
 
-function formatPrice(price) {
+function formatPrice(
+  price
+) {
+
   const number =
     Number(price);
 
@@ -177,28 +173,37 @@ PRODUCT VISUAL
 =========================================================
 */
 
-function productVisual(product) {
+function productVisual(
+  product
+) {
+
   return `
     <div class="product-visual">
+
       <div class="visual-grid"></div>
 
       <div class="visual-fashion">
-        <span>FASHION AI</span>
+
+        <span>
+          FASHION AI
+        </span>
 
         <strong>
           ${escapeHTML(
             product.category ||
-              "Fashion"
+            "Fashion"
           )}
         </strong>
 
         <small>
           ${escapeHTML(
             product.name ||
-              "Fashion Product"
+            "Fashion Product"
           )}
         </small>
+
       </div>
+
     </div>
   `;
 }
@@ -209,28 +214,32 @@ LOADING
 =========================================================
 */
 
-function showLoading(message) {
+function showLoading(
+  message =
+    "AI is searching..."
+) {
+
   resultsContainer.innerHTML = `
+
     <div class="no-results">
+
       <div class="loading-spinner"></div>
 
       <h3>
         ${escapeHTML(
-          message ||
-            "AI is searching..."
+          message
         )}
       </h3>
 
       <p>
-        Personalizing your fashion discovery.
+        Finding the most relevant fashion products.
       </p>
+
     </div>
   `;
 
-  if (resultCount) {
-    resultCount.textContent =
-      "AI working";
-  }
+  resultCount.textContent =
+    "AI working";
 }
 
 /*
@@ -239,26 +248,29 @@ ERROR
 =========================================================
 */
 
-function showError(message) {
+function showError(
+  message
+) {
+
   resultsContainer.innerHTML = `
+
     <div class="no-results">
+
       <h3>
-        Fashion AI unavailable
+        Search unavailable
       </h3>
 
       <p>
         ${escapeHTML(
-          message ||
-            "Something went wrong."
+          message
         )}
       </p>
+
     </div>
   `;
 
-  if (resultCount) {
-    resultCount.textContent =
-      "Error";
-  }
+  resultCount.textContent =
+    "Error";
 }
 
 /*
@@ -268,22 +280,25 @@ NO RESULTS
 */
 
 function showNoResults() {
+
   resultsContainer.innerHTML = `
+
     <div class="no-results">
+
       <h3>
-        No strong fashion matches found.
+        No products match your filters.
       </h3>
 
       <p>
-        Try changing your search or preferences.
+        Try changing the price, category, colour,
+        style or occasion.
       </p>
+
     </div>
   `;
 
-  if (resultCount) {
-    resultCount.textContent =
-      "0 matches";
-  }
+  resultCount.textContent =
+    "0 matches";
 }
 
 /*
@@ -292,8 +307,11 @@ PRODUCT CARD
 =========================================================
 */
 
-function createProductCard(product) {
-  const matchScore =
+function createProductCard(
+  product
+) {
+
+  const score =
     Math.max(
       0,
       Math.min(
@@ -311,11 +329,11 @@ function createProductCard(product) {
       ? product.reasons
       : [];
 
-  const occasions =
+  const material =
     Array.isArray(
-      product.occasion
+      product.material
     )
-      ? product.occasion
+      ? product.material
       : [];
 
   const styles =
@@ -325,22 +343,25 @@ function createProductCard(product) {
       ? product.style
       : [];
 
-  const material =
+  const occasions =
     Array.isArray(
-      product.material
+      product.occasion
     )
-      ? product.material
+      ? product.occasion
       : [];
 
   return `
+
     <article class="product-card">
 
       <div class="product-image-wrap">
 
-        ${productVisual(product)}
+        ${productVisual(
+          product
+        )}
 
         <div class="ai-match-badge">
-          ${matchScore}% AI MATCH
+          ${score}% AI MATCH
         </div>
 
       </div>
@@ -352,14 +373,14 @@ function createProductCard(product) {
           <span class="product-brand">
             ${escapeHTML(
               product.brand ||
-                "FASHION"
+              "FASHION"
             )}
           </span>
 
           <span class="product-category">
             ${escapeHTML(
               product.category ||
-                "Fashion"
+              "Fashion"
             )}
           </span>
 
@@ -368,14 +389,14 @@ function createProductCard(product) {
         <h3 class="product-title">
           ${escapeHTML(
             product.name ||
-              "Fashion Product"
+            "Fashion Product"
           )}
         </h3>
 
         <p class="product-description">
           ${escapeHTML(
             product.description ||
-              ""
+            ""
           )}
         </p>
 
@@ -383,10 +404,6 @@ function createProductCard(product) {
           ₹${formatPrice(
             product.price
           )}
-
-          <span>
-            INR
-          </span>
         </div>
 
         <div class="product-meta">
@@ -429,10 +446,7 @@ function createProductCard(product) {
                   <strong>
                     ${escapeHTML(
                       styles
-                        .slice(
-                          0,
-                          2
-                        )
+                        .slice(0, 2)
                         .join(", ")
                     )}
                   </strong>
@@ -449,10 +463,7 @@ function createProductCard(product) {
                   <strong>
                     ${escapeHTML(
                       occasions
-                        .slice(
-                          0,
-                          2
-                        )
+                        .slice(0, 2)
                         .join(", ")
                     )}
                   </strong>
@@ -466,6 +477,7 @@ function createProductCard(product) {
         ${
           reasons.length
             ? `
+
               <div class="product-reason">
 
                 <strong>
@@ -473,31 +485,22 @@ function createProductCard(product) {
                 </strong>
 
                 <ul>
+
                   ${reasons
-                    .slice(
-                      0,
-                      3
-                    )
+                    .slice(0, 3)
                     .map(
-                      (reason) =>
-                        `<li>${escapeHTML(
-                          reason
-                        )}</li>`
+                      (reason) => `
+                        <li>
+                          ${escapeHTML(
+                            reason
+                          )}
+                        </li>
+                      `
                     )
                     .join("")}
+
                 </ul>
 
-              </div>
-            `
-            : ""
-        }
-
-        ${
-          product.personalizationScore >
-          0
-            ? `
-              <div class="personalization-label">
-                ✦ Personalized for you
               </div>
             `
             : ""
@@ -512,7 +515,7 @@ function createProductCard(product) {
             </span>
 
             <strong>
-              ${matchScore}%
+              ${score}%
             </strong>
 
           </div>
@@ -521,7 +524,7 @@ function createProductCard(product) {
 
             <div
               class="match-score-fill"
-              style="width:${matchScore}%"
+              style="width:${score}%"
             ></div>
 
           </div>
@@ -536,7 +539,7 @@ function createProductCard(product) {
 
 /*
 =========================================================
-RENDER
+RENDER PRODUCTS
 =========================================================
 */
 
@@ -544,11 +547,14 @@ function renderProducts(
   products,
   query = ""
 ) {
+
   if (
     !Array.isArray(products) ||
-    !products.length
+    products.length === 0
   ) {
+
     showNoResults();
+
     return;
   }
 
@@ -559,18 +565,54 @@ function renderProducts(
       )
       .join("");
 
-  if (resultCount) {
-    resultCount.textContent =
-      `${products.length} AI matches`;
-  }
+  resultCount.textContent =
+    `${products.length} matches`;
 
-  if (
-    searchSummary &&
-    query
-  ) {
+  if (query) {
+
     searchSummary.textContent =
-      `Personalized AI results for "${query}"`;
+      `AI results for "${query}"`;
   }
+}
+
+/*
+=========================================================
+GET FILTER VALUES
+=========================================================
+*/
+
+function getFilterValues() {
+
+  return {
+    query:
+      searchInput?.value.trim() ||
+      "",
+
+    minPrice:
+      minPrice?.value || "",
+
+    maxPrice:
+      maxPrice?.value || "",
+
+    category:
+      categoryFilter?.value || "",
+
+    color:
+      colorFilter?.value || "",
+
+    style:
+      styleFilter?.value || "",
+
+    gender:
+      genderFilter?.value || "",
+
+    occasion:
+      occasionFilter?.value || "",
+
+    sort:
+      sortFilter?.value ||
+      "relevance",
+  };
 }
 
 /*
@@ -580,7 +622,9 @@ LOAD PRODUCTS
 */
 
 async function loadProducts() {
+
   try {
+
     const response =
       await fetch(
         `${API_BASE_URL}/api/products`
@@ -592,15 +636,17 @@ async function loadProducts() {
     if (!response.ok) {
       throw new Error(
         data.error ||
-          "Unable to load products."
+        "Could not load products."
       );
     }
 
     allProducts =
       data.products || [];
+
   } catch (error) {
+
     console.error(
-      "Product loading error:",
+      "Products error:",
       error
     );
   }
@@ -608,80 +654,225 @@ async function loadProducts() {
 
 /*
 =========================================================
-AI SEARCH
+LOAD FILTER OPTIONS
 =========================================================
 */
 
-async function searchFashion(
-  query
-) {
-  const response =
-    await fetch(
-      `${API_BASE_URL}/api/search`,
-      {
-        method: "POST",
+async function loadFilterOptions() {
 
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
+  try {
 
-        body: JSON.stringify({
-          query,
+    const response =
+      await fetch(
+        `${API_BASE_URL}/api/filters`
+      );
 
-          preferences:
-            userPreferences,
-        }),
-      }
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        "Unable to load filters."
+      );
+    }
+
+    filterData =
+      data.filters || {};
+
+    populateSelect(
+      categoryFilter,
+      filterData.categories
     );
 
-  const data =
-    await response.json();
+    populateSelect(
+      colorFilter,
+      filterData.colors
+    );
 
-  if (!response.ok) {
-    throw new Error(
-      data.error ||
-        "AI search failed."
+    populateSelect(
+      styleFilter,
+      filterData.styles
+    );
+
+    populateSelect(
+      genderFilter,
+      filterData.genders
+    );
+
+    populateSelect(
+      occasionFilter,
+      filterData.occasions
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Filter loading error:",
+      error
     );
   }
-
-  return data;
 }
 
 /*
 =========================================================
-RUN SEARCH
+POPULATE SELECT
 =========================================================
 */
 
-async function runSearch() {
-  const query =
-    searchInput?.value.trim();
+function populateSelect(
+  select,
+  values
+) {
 
-  if (!query) {
-    if (
-      allProducts.length
-    ) {
-      await loadPersonalizedProducts();
+  if (
+    !select ||
+    !Array.isArray(values)
+  ) {
+    return;
+  }
+
+  const currentValue =
+    select.value;
+
+  const label =
+    select.dataset.label ||
+    "All";
+
+  select.innerHTML = `
+    <option value="">
+      ${escapeHTML(label)}
+    </option>
+  `;
+
+  values.forEach(
+    (value) => {
+
+      const option =
+        document.createElement(
+          "option"
+        );
+
+      option.value =
+        value;
+
+      option.textContent =
+        value;
+
+      select.appendChild(
+        option
+      );
     }
+  );
+
+  if (
+    values.includes(
+      currentValue
+    )
+  ) {
+    select.value =
+      currentValue;
+  }
+}
+
+/*
+=========================================================
+ADVANCED SEARCH
+=========================================================
+*/
+
+async function runAdvancedSearch() {
+
+  const filters =
+    getFilterValues();
+
+  const hasQuery =
+    Boolean(
+      filters.query
+    );
+
+  const hasFilters =
+    Boolean(
+      filters.minPrice ||
+      filters.maxPrice ||
+      filters.category ||
+      filters.color ||
+      filters.style ||
+      filters.gender ||
+      filters.occasion
+    );
+
+  if (
+    !hasQuery &&
+    !hasFilters
+  ) {
+
+    renderProducts(
+      allProducts.slice(0, 6)
+    );
+
+    resultCount.textContent =
+      "AI catalogue ready";
+
+    searchSummary.textContent =
+      `${allProducts.length} products available for AI discovery.`;
 
     return;
   }
 
   showLoading(
-    "Understanding your style and preferences..."
+    "AI is combining your search with advanced filters..."
   );
 
   try {
-    const data =
-      await searchFashion(
-        query
+
+    const response =
+      await fetch(
+        `${API_BASE_URL}/api/search`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body:
+            JSON.stringify(
+              filters
+            ),
+        }
       );
 
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.error ||
+        "Advanced search failed."
+      );
+    }
+
+    const results =
+      data.results || [];
+
+    if (
+      !results.length
+    ) {
+
+      showNoResults();
+
+      return;
+    }
+
     renderProducts(
-      data.results || [],
-      query
+      results,
+      filters.query
     );
+
+    searchSummary.textContent =
+      `${results.length} products found using AI + advanced filters.`;
 
     document
       .getElementById(
@@ -690,11 +881,14 @@ async function runSearch() {
       ?.scrollIntoView({
         behavior:
           "smooth",
-        block: "start",
+        block:
+          "start",
       });
+
   } catch (error) {
+
     console.error(
-      "AI Search Error:",
+      "Advanced search error:",
       error
     );
 
@@ -706,110 +900,106 @@ async function runSearch() {
 
 /*
 =========================================================
-PERSONALIZED HOME
+CLEAR FILTERS
 =========================================================
 */
 
-async function loadPersonalizedProducts() {
-  showLoading(
-    "Preparing your personalized fashion feed..."
+function clearFilters() {
+
+  if (searchInput) {
+    searchInput.value =
+      "";
+  }
+
+  if (categoryFilter) {
+    categoryFilter.value =
+      "";
+  }
+
+  if (colorFilter) {
+    colorFilter.value =
+      "";
+  }
+
+  if (styleFilter) {
+    styleFilter.value =
+      "";
+  }
+
+  if (genderFilter) {
+    genderFilter.value =
+      "";
+  }
+
+  if (occasionFilter) {
+    occasionFilter.value =
+      "";
+  }
+
+  if (minPrice) {
+    minPrice.value =
+      "";
+  }
+
+  if (maxPrice) {
+    maxPrice.value =
+      "";
+  }
+
+  if (sortFilter) {
+    sortFilter.value =
+      "relevance";
+  }
+
+  renderProducts(
+    allProducts.slice(0, 6)
   );
 
-  try {
-    const response =
-      await fetch(
-        `${API_BASE_URL}/api/personalize`,
-        {
-          method: "POST",
+  resultCount.textContent =
+    "AI catalogue ready";
 
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-
-          body: JSON.stringify({
-            preferences:
-              userPreferences,
-          }),
-        }
-      );
-
-    const data =
-      await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.error ||
-          "Personalization failed."
-      );
-    }
-
-    renderProducts(
-      data.recommendations ||
-        []
-    );
-
-    if (
-      searchSummary
-    ) {
-      searchSummary.textContent =
-        "Your personalized AI fashion feed";
-    }
-  } catch (error) {
-    console.error(
-      "Personalization error:",
-      error
-    );
-
-    renderProducts(
-      allProducts.slice(0, 6)
-    );
-  }
+  searchSummary.textContent =
+    `${allProducts.length} products available for AI discovery.`;
 }
 
 /*
 =========================================================
-AI STYLIST
+STYLIST
 =========================================================
 */
 
 async function runAIStylist() {
-  const getValue =
-    (id) =>
-      document
-        .getElementById(id)
-        ?.value
-        ?.trim() || "";
 
   const occasion =
-    getValue(
+    document.getElementById(
       "stylistOccasion"
-    );
+    )?.value || "";
 
   const style =
-    getValue(
+    document.getElementById(
       "stylistStyle"
-    );
+    )?.value || "";
 
   const comfort =
-    getValue(
+    document.getElementById(
       "stylistComfort"
-    );
+    )?.value || "";
 
   const color =
-    getValue(
+    document.getElementById(
       "stylistColor"
-    );
+    )?.value || "";
 
   const coverage =
-    getValue(
+    document.getElementById(
       "stylistCoverage"
-    );
+    )?.value || "";
 
   const description =
-    getValue(
+    document.getElementById(
       "stylistDescription"
-    );
+    )?.value
+      ?.trim() || "";
 
   const hasInput =
     [
@@ -822,6 +1012,7 @@ async function runAIStylist() {
     ].some(Boolean);
 
   if (!hasInput) {
+
     alert(
       "Please describe at least one part of your desired look."
     );
@@ -830,6 +1021,7 @@ async function runAIStylist() {
   }
 
   if (stylistButton) {
+
     stylistButton.disabled =
       true;
 
@@ -838,10 +1030,11 @@ async function runAIStylist() {
   }
 
   showLoading(
-    "Creating your personalized look..."
+    "Building your personalised look..."
   );
 
   try {
+
     const response =
       await fetch(
         `${API_BASE_URL}/api/stylist`,
@@ -853,17 +1046,15 @@ async function runAIStylist() {
               "application/json",
           },
 
-          body: JSON.stringify({
-            occasion,
-            style,
-            comfort,
-            color,
-            coverage,
-            description,
-
-            preferences:
-              userPreferences,
-          }),
+          body:
+            JSON.stringify({
+              occasion,
+              style,
+              comfort,
+              color,
+              coverage,
+              description,
+            }),
         }
       );
 
@@ -871,46 +1062,50 @@ async function runAIStylist() {
       await response.json();
 
     if (!response.ok) {
+
       throw new Error(
         data.error ||
-          "AI Stylist failed."
+        "AI Stylist failed."
       );
     }
 
-    renderProducts(
+    const recommendations =
       data.recommendations ||
-        [],
+      [];
+
+    if (
+      !recommendations.length
+    ) {
+
+      showNoResults();
+
+      return;
+    }
+
+    renderProducts(
+      recommendations,
       data.query ||
         description
     );
 
-    if (
-      searchSummary
-    ) {
-      searchSummary.textContent =
-        "✦ Personalized by your AI Style Profile";
-    }
+    searchSummary.textContent =
+      "Personalised recommendations generated by AI Stylist.";
 
-    document
-      .getElementById(
-        "results-section"
-      )
-      ?.scrollIntoView({
-        behavior:
-          "smooth",
-        block: "start",
-      });
   } catch (error) {
+
     console.error(
-      "AI Stylist error:",
+      "Stylist error:",
       error
     );
 
     showError(
       error.message
     );
+
   } finally {
+
     if (stylistButton) {
+
       stylistButton.disabled =
         false;
 
@@ -922,506 +1117,50 @@ async function runAIStylist() {
 
 /*
 =========================================================
-PREFERENCE UI
-=========================================================
-*/
-
-function createPreferencePanel() {
-  if (
-    document.getElementById(
-      "preferencePanel"
-    )
-  ) {
-    return;
-  }
-
-  const panel =
-    document.createElement(
-      "section"
-    );
-
-  panel.id =
-    "preferencePanel";
-
-  panel.className =
-    "preference-panel";
-
-  panel.innerHTML = `
-    <div class="preference-panel-inner">
-
-      <div class="preference-header">
-
-        <div>
-          <span class="eyebrow">
-            AI STYLE PROFILE
-          </span>
-
-          <h2>
-            Teach Fashion AI your taste.
-          </h2>
-
-          <p>
-            Your preferences are stored locally
-            and used to personalize AI recommendations.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          id="closePreferences"
-          class="preference-close"
-        >
-          ×
-        </button>
-
-      </div>
-
-      <div class="preference-grid">
-
-        <div class="preference-field">
-
-          <label>
-            Gender
-          </label>
-
-          <select
-            id="prefGender"
-          >
-            <option value="">
-              Any
-            </option>
-
-            <option value="women">
-              Women
-            </option>
-
-            <option value="men">
-              Men
-            </option>
-
-            <option value="unisex">
-              Unisex
-            </option>
-          </select>
-
-        </div>
-
-        <div class="preference-field">
-
-          <label>
-            Favourite colours
-          </label>
-
-          <input
-            id="prefColors"
-            placeholder="black, white, blue"
-          />
-
-        </div>
-
-        <div class="preference-field">
-
-          <label>
-            Favourite styles
-          </label>
-
-          <input
-            id="prefStyles"
-            placeholder="minimal, casual, elegant"
-          />
-
-        </div>
-
-        <div class="preference-field">
-
-          <label>
-            Favourite categories
-          </label>
-
-          <input
-            id="prefCategories"
-            placeholder="dresses, shirts, sneakers"
-          />
-
-        </div>
-
-        <div class="preference-field">
-
-          <label>
-            Favourite materials
-          </label>
-
-          <input
-            id="prefMaterials"
-            placeholder="cotton, linen, denim"
-          />
-
-        </div>
-
-        <div class="preference-field">
-
-          <label>
-            Occasions
-          </label>
-
-          <input
-            id="prefOccasions"
-            placeholder="college, office, travel"
-          />
-
-        </div>
-
-        <div class="preference-field">
-
-          <label>
-            Maximum budget (INR)
-          </label>
-
-          <input
-            id="prefBudget"
-            type="number"
-            min="0"
-            placeholder="5000"
-          />
-
-        </div>
-
-      </div>
-
-      <div class="preference-actions">
-
-        <button
-          type="button"
-          id="clearPreferences"
-          class="preference-secondary"
-        >
-          Clear profile
-        </button>
-
-        <button
-          type="button"
-          id="savePreferences"
-          class="preference-primary"
-        >
-          Save AI Style Profile
-        </button>
-
-      </div>
-
-      <div
-        id="preferenceStatus"
-        class="preference-status"
-      ></div>
-
-    </div>
-  `;
-
-  const main =
-    document.querySelector(
-      "main"
-    );
-
-  if (main) {
-    main.prepend(
-      panel
-    );
-  } else {
-    document.body.prepend(
-      panel
-    );
-  }
-
-  fillPreferenceForm();
-
-  document
-    .getElementById(
-      "closePreferences"
-    )
-    ?.addEventListener(
-      "click",
-      () => {
-        panel.classList.remove(
-          "visible"
-        );
-      }
-    );
-
-  document
-    .getElementById(
-      "savePreferences"
-    )
-    ?.addEventListener(
-      "click",
-      savePreferenceForm
-    );
-
-  document
-    .getElementById(
-      "clearPreferences"
-    )
-    ?.addEventListener(
-      "click",
-      clearPreferences
-    );
-}
-
-/*
-=========================================================
-PREFERENCE FORM
-=========================================================
-*/
-
-function csvToArray(value) {
-  return String(
-    value || ""
-  )
-    .split(",")
-    .map(
-      (item) =>
-        item
-          .trim()
-          .toLowerCase()
-    )
-    .filter(Boolean);
-}
-
-function fillPreferenceForm() {
-  const set =
-    (id, value) => {
-      const element =
-        document.getElementById(
-          id
-        );
-
-      if (element) {
-        element.value =
-          value || "";
-      }
-    };
-
-  set(
-    "prefGender",
-    userPreferences.gender
-  );
-
-  set(
-    "prefColors",
-    userPreferences.favoriteColors.join(
-      ", "
-    )
-  );
-
-  set(
-    "prefStyles",
-    userPreferences.favoriteStyles.join(
-      ", "
-    )
-  );
-
-  set(
-    "prefCategories",
-    userPreferences.favoriteCategories.join(
-      ", "
-    )
-  );
-
-  set(
-    "prefMaterials",
-    userPreferences.favoriteMaterials.join(
-      ", "
-    )
-  );
-
-  set(
-    "prefOccasions",
-    userPreferences.occasions.join(
-      ", "
-    )
-  );
-
-  set(
-    "prefBudget",
-    userPreferences.budget
-  );
-}
-
-function savePreferenceForm() {
-  userPreferences = {
-    gender:
-      document.getElementById(
-        "prefGender"
-      )?.value || "",
-
-    favoriteColors:
-      csvToArray(
-        document.getElementById(
-          "prefColors"
-        )?.value
-      ),
-
-    favoriteStyles:
-      csvToArray(
-        document.getElementById(
-          "prefStyles"
-        )?.value
-      ),
-
-    favoriteCategories:
-      csvToArray(
-        document.getElementById(
-          "prefCategories"
-        )?.value
-      ),
-
-    favoriteMaterials:
-      csvToArray(
-        document.getElementById(
-          "prefMaterials"
-        )?.value
-      ),
-
-    occasions:
-      csvToArray(
-        document.getElementById(
-          "prefOccasions"
-        )?.value
-      ),
-
-    budget:
-      Number(
-        document.getElementById(
-          "prefBudget"
-        )?.value
-      ) || null,
-  };
-
-  savePreferences();
-
-  const status =
-    document.getElementById(
-      "preferenceStatus"
-    );
-
-  if (status) {
-    status.textContent =
-      "✓ Your AI Style Profile has been saved.";
-
-    setTimeout(() => {
-      status.textContent =
-        "";
-    }, 3000);
-  }
-
-  loadPersonalizedProducts();
-}
-
-function clearPreferences() {
-  userPreferences = {
-    gender: "",
-    favoriteColors: [],
-    favoriteStyles: [],
-    favoriteCategories: [],
-    favoriteMaterials: [],
-    occasions: [],
-    budget: null,
-  };
-
-  savePreferences();
-
-  fillPreferenceForm();
-
-  const status =
-    document.getElementById(
-      "preferenceStatus"
-    );
-
-  if (status) {
-    status.textContent =
-      "Style profile cleared.";
-  }
-
-  loadPersonalizedProducts();
-}
-
-/*
-=========================================================
-PROFILE BUTTON
-=========================================================
-*/
-
-function createProfileButton() {
-  if (
-    document.getElementById(
-      "openPreferences"
-    )
-  ) {
-    return;
-  }
-
-  const button =
-    document.createElement(
-      "button"
-    );
-
-  button.id =
-    "openPreferences";
-
-  button.className =
-    "profile-button";
-
-  button.type =
-    "button";
-
-  button.textContent =
-    "✦ My AI Style";
-
-  button.addEventListener(
-    "click",
-    () => {
-      const panel =
-        document.getElementById(
-          "preferencePanel"
-        );
-
-      panel?.classList.add(
-        "visible"
-      );
-    }
-  );
-
-  const nav =
-    document.querySelector(
-      ".nav-container"
-    );
-
-  if (nav) {
-    nav.appendChild(
-      button
-    );
-  }
-}
-
-/*
-=========================================================
 EVENTS
 =========================================================
 */
 
 searchButton?.addEventListener(
   "click",
-  runSearch
+  runAdvancedSearch
 );
 
 searchInput?.addEventListener(
   "keydown",
   (event) => {
+
     if (
       event.key ===
       "Enter"
     ) {
-      runSearch();
+      runAdvancedSearch();
     }
   }
+);
+
+[
+  categoryFilter,
+  colorFilter,
+  styleFilter,
+  genderFilter,
+  occasionFilter,
+  minPrice,
+  maxPrice,
+  sortFilter,
+].forEach(
+  (element) => {
+
+    element?.addEventListener(
+      "change",
+      runAdvancedSearch
+    );
+  }
+);
+
+clearFiltersButton?.addEventListener(
+  "click",
+  clearFilters
 );
 
 stylistButton?.addEventListener(
@@ -1441,17 +1180,20 @@ document
   )
   .forEach(
     (button) => {
+
       button.addEventListener(
         "click",
         () => {
+
           if (
             searchInput
           ) {
+
             searchInput.value =
               button.textContent.trim();
           }
 
-          runSearch();
+          runAdvancedSearch();
         }
       );
     }
@@ -1464,21 +1206,45 @@ INITIALIZE
 */
 
 async function initialize() {
-  createPreferencePanel();
 
-  createProfileButton();
+  resultsContainer.innerHTML = `
 
-  showLoading(
-    "Connecting to Fashion AI..."
-  );
+    <div class="no-results">
 
-  await loadProducts();
+      <div class="loading-spinner"></div>
+
+      <h3>
+        Connecting to Fashion AI...
+      </h3>
+
+      <p>
+        Loading products and advanced filters.
+      </p>
+
+    </div>
+  `;
+
+  await Promise.all([
+    loadProducts(),
+    loadFilterOptions(),
+  ]);
 
   if (
     allProducts.length
   ) {
-    await loadPersonalizedProducts();
+
+    renderProducts(
+      allProducts.slice(0, 6)
+    );
+
+    resultCount.textContent =
+      "AI catalogue ready";
+
+    searchSummary.textContent =
+      `${allProducts.length} products available for AI discovery.`;
+
   } else {
+
     showError(
       "Could not load the fashion catalogue."
     );
