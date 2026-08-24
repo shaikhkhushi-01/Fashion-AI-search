@@ -103,19 +103,14 @@ PRODUCT VISUAL
 */
 
 function productVisual(product) {
-  const category =
-    String(product.category || "Fashion");
-
-  const name =
-    String(product.name || "Fashion Product");
+  const category = String(product.category || "Fashion");
+  const name = String(product.name || "Fashion Product");
 
   return `
     <div class="product-visual">
-
       <div class="visual-grid"></div>
 
       <div class="visual-content">
-
         <span class="visual-label">
           FASHION AI
         </span>
@@ -127,13 +122,10 @@ function productVisual(product) {
         <small>
           ${escapeHTML(name)}
         </small>
-
       </div>
-
     </div>
   `;
 }
-
 /*
 =========================================================
 LOADING
