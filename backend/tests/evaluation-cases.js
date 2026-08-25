@@ -1,174 +1,140 @@
 /*
 =========================================================
 FASHION AI DISCOVERY
-DAY 8
-BENCHMARK QUERIES
+DAY 1 - RESEARCH EVALUATION DATASET
 =========================================================
 */
 
 export const evaluationCases = [
 
   {
+    id: "Q001",
+
     query:
-      "black oversized shirt",
+      "black oversized shirt for college",
 
-    expected: {
-      category:
-        "Shirts",
+    productIds: [2],
 
-      color:
-        "Black",
-
-      style:
-        "Oversized",
-    },
+    categories: [
+      "Shirts"
+    ]
   },
 
   {
+    id: "Q002",
+
     query:
-      "comfortable summer shirt",
+      "comfortable summer linen shirt",
 
-    expected: {
-      category:
-        "Shirts",
+    productIds: [1],
 
-      style:
-        "Relaxed",
-
-      occasion:
-        "Summer",
-    },
+    categories: [
+      "Shirts"
+    ]
   },
 
   {
+    id: "Q003",
+
     query:
-      "minimal white sneakers",
+      "elegant black dress for wedding",
 
-    expected: {
-      category:
-        "Sneakers",
+    productIds: [8],
 
-      color:
-        "White",
-
-      style:
-        "Minimal",
-    },
+    categories: [
+      "Dresses"
+    ]
   },
 
   {
+    id: "Q004",
+
     query:
-      "formal black blazer",
+      "white minimal sneakers",
 
-    expected: {
-      category:
-        "Blazers",
+    productIds: [10],
 
-      color:
-        "Black",
-
-      style:
-        "Formal",
-    },
+    categories: [
+      "Sneakers"
+    ]
   },
 
   {
+    id: "Q005",
+
     query:
-      "college casual jeans",
+      "comfortable hoodie for college",
 
-    expected: {
-      category:
-        "Jeans",
+    productIds: [9],
 
-      occasion:
-        "College",
-
-      style:
-        "Casual",
-    },
+    categories: [
+      "Hoodies"
+    ]
   },
 
   {
+    id: "Q006",
+
     query:
-      "grey oversized hoodie",
+      "black blazer for office",
 
-    expected: {
-      category:
-        "Hoodies",
+    productIds: [6],
 
-      color:
-        "Grey",
-
-      style:
-        "Oversized",
-    },
+    categories: [
+      "Blazers"
+    ]
   },
 
   {
+    id: "Q007",
+
     query:
-      "elegant black evening dress",
+      "blue jeans for college",
 
-    expected: {
-      category:
-        "Dresses",
+    productIds: [7],
 
-      color:
-        "Black",
-
-      style:
-        "Elegant",
-
-      occasion:
-        "Evening",
-    },
+    categories: [
+      "Jeans"
+    ]
   },
 
   {
+    id: "Q008",
+
     query:
-      "white lightweight sneakers for travel",
+      "relaxed black trousers",
 
-    expected: {
-      category:
-        "Sneakers",
+    productIds: [4],
 
-      color:
-        "White",
-
-      occasion:
-        "Travel",
-    },
+    categories: [
+      "Trousers"
+    ]
   },
 
   {
+    id: "Q009",
+
     query:
-      "minimal black trousers for office",
+      "sporty white shoes for travel",
 
-    expected: {
-      category:
-        "Trousers",
+    productIds: [5],
 
-      color:
-        "Black",
-
-      occasion:
-        "Office",
-    },
+    categories: [
+      "Sneakers"
+    ]
   },
 
   {
+    id: "Q010",
+
     query:
-      "cream summer dress",
+      "minimal cream summer dress",
 
-    expected: {
-      category:
-        "Dresses",
+    productIds: [3],
 
-      color:
-        "Cream",
-
-      occasion:
-        "Summer",
-    },
-  },
+    categories: [
+      "Dresses"
+    ]
+  }
 
 ];
