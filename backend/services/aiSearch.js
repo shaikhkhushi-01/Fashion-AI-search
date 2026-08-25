@@ -1,902 +1,791 @@
-const {
-  pipeline,
-  env
-} = require("@xenova/transformers");
+/*
+=========================================================
+FASHION AI DISCOVERY
+DAY 1 - AI SEARCH FOUNDATION
+=========================================================
+*/
 
-env.allowLocalModels = false;
-env.allowRemoteModels = true;
+import {
+  loadCatalog
+} from "./catalog.js";
 
-let extractor = null;
-let modelLoadingPromise = null;
+/*
+=========================================================
+TEXT NORMALIZATION
+=========================================================
+*/
 
+function normalizeText(value) {
 
-/* =========================================================
-   MODEL
-========================================================= */
-
-const MODEL_NAME =
-  "Xenova/all-MiniLM-L6-v2";
-
-
-async function getExtractor() {
-
-  if (extractor) {
-    return extractor;
-  }
-
-  if (!modelLoadingPromise) {
-
-    console.log(
-      "Loading AI embedding model..."
-    );
-
-    modelLoadingPromise =
-      pipeline(
-        "feature-extraction",
-        MODEL_NAME
-      );
-
-  }
-
-  extractor =
-    await modelLoadingPromise;
-
-  console.log(
-    "AI embedding model loaded."
-  );
-
-  return extractor;
-}
-
-
-/* =========================================================
-   NORMALIZATION
-========================================================= */
-
-function normalize(value) {
-
-  return String(value || "")
+  return String(value ?? "")
     .toLowerCase()
-    .replace(/[^\w\s₹-]/g, " ")
+    .replace(/[^\w\s₹]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-
 }
 
-
-/* =========================================================
-   TOKENIZATION
-========================================================= */
+/*
+=========================================================
+TOKENIZATION
+=========================================================
+*/
 
 function tokenize(text) {
 
-  return normalize(text)
-    .split(/\s+/)
-    .filter(Boolean);
-
+  return normalizeText(text)
+    .split(" ")
+    .filter(
+      (token) =>
+        token.length > 1
+    );
 }
 
+/*
+=========================================================
+QUERY UNDERSTANDING
+=========================================================
+*/
 
-/* =========================================================
-   ARRAY NORMALIZATION
-========================================================= */
+function extractBudget(query) {
 
-function arrayText(value) {
+  const normalized =
+    normalizeText(query);
 
-  if (!Array.isArray(value)) {
-    return normalize(value);
-  }
-
-  return value
-    .map(item => normalize(item))
-    .join(" ");
-
-}
-
-
-/* =========================================================
-   PRODUCT TEXT
-========================================================= */
-
-function productToSearchText(product) {
-
-  return [
-
-    product.brand,
-
-    product.name,
-
-    product.category,
-
-    product.gender,
-
-    product.color,
-
-    arrayText(product.material),
-
-    arrayText(product.style),
-
-    arrayText(product.occasion),
-
-    arrayText(product.tags),
-
-    arrayText(product.sizes),
-
-    product.description,
-
-    product.availability
-
-  ]
-    .filter(Boolean)
-    .join(". ");
-
-}
-
-
-/* =========================================================
-   EMBEDDING
-========================================================= */
-
-async function createEmbedding(text) {
-
-  const model =
-    await getExtractor();
-
-  const output =
-    await model(
-      text,
-      {
-        pooling: "mean",
-        normalize: true
-      }
+  const matches =
+    normalized.match(
+      /(?:under|below|less than|max|budget)\s*(?:₹|rs|inr)?\s*(\d+(?:,\d{3})*)/
     );
 
-  return Array.from(
-    output.data
-  );
+  if (!matches) {
+    return null;
+  }
 
+  return Number(
+    matches[1].replace(/,/g, "")
+  );
 }
 
+function extractSignals(query) {
 
-/* =========================================================
-   COSINE SIMILARITY
-========================================================= */
+  const normalized =
+    normalizeText(query);
 
-function cosineSimilarity(a, b) {
+  const signals = {
+    colors: [
+      "black",
+      "white",
+      "blue",
+      "grey",
+      "gray",
+      "cream",
+      "red",
+      "green",
+      "pink",
+      "beige",
+      "brown"
+    ],
 
-  if (
-    !Array.isArray(a) ||
-    !Array.isArray(b) ||
-    a.length !== b.length
-  ) {
+    styles: [
+      "minimal",
+      "casual",
+      "formal",
+      "oversized",
+      "relaxed",
+      "classic",
+      "streetwear",
+      "elegant",
+      "sporty",
+      "modern",
+      "luxury"
+    ],
 
-    return 0;
+    occasions: [
+      "college",
+      "office",
+      "wedding",
+      "party",
+      "date",
+      "travel",
+      "summer",
+      "everyday",
+      "evening",
+      "formal"
+    ],
 
-  }
+    categories: [
+      "shirt",
+      "shirts",
+      "dress",
+      "dresses",
+      "jeans",
+      "trousers",
+      "sneakers",
+      "hoodie",
+      "hoodies",
+      "blazer",
+      "blazers"
+    ],
 
-  let dot = 0;
-  let normA = 0;
-  let normB = 0;
+    materials: [
+      "cotton",
+      "linen",
+      "denim",
+      "satin",
+      "leather",
+      "mesh",
+      "wool"
+    ]
+  };
+
+  const result = {
+    colors: [],
+    styles: [],
+    occasions: [],
+    categories: [],
+    materials: [],
+    budget:
+      extractBudget(query)
+  };
 
   for (
-    let i = 0;
-    i < a.length;
-    i++
+    const color of
+    signals.colors
   ) {
 
-    dot += a[i] * b[i];
-
-    normA += a[i] * a[i];
-
-    normB += b[i] * b[i];
-
+    if (
+      normalized.includes(color)
+    ) {
+      result.colors.push(
+        color
+      );
+    }
   }
 
-  if (
-    normA === 0 ||
-    normB === 0
+  for (
+    const style of
+    signals.styles
   ) {
 
-    return 0;
+    if (
+      normalized.includes(style)
+    ) {
+      result.styles.push(
+        style
+      );
+    }
+  }
 
+  for (
+    const occasion of
+    signals.occasions
+  ) {
+
+    if (
+      normalized.includes(
+        occasion
+      )
+    ) {
+      result.occasions.push(
+        occasion
+      );
+    }
+  }
+
+  for (
+    const category of
+    signals.categories
+  ) {
+
+    if (
+      normalized.includes(
+        category
+      )
+    ) {
+      result.categories.push(
+        category
+      );
+    }
+  }
+
+  for (
+    const material of
+    signals.materials
+  ) {
+
+    if (
+      normalized.includes(
+        material
+      )
+    ) {
+      result.materials.push(
+        material
+      );
+    }
+  }
+
+  return result;
+}
+
+/*
+=========================================================
+PRODUCT SEARCH TEXT
+=========================================================
+*/
+
+function productSearchText(
+  product
+) {
+
+  return normalizeText(
+    [
+      product.brand,
+      product.name,
+      product.category,
+      product.gender,
+      product.color,
+      ...(product.material || []),
+      ...(product.style || []),
+      ...(product.occasion || []),
+      ...(product.tags || []),
+      product.description
+    ].join(" ")
+  );
+}
+
+/*
+=========================================================
+TOKEN OVERLAP
+=========================================================
+*/
+
+function calculateTokenScore(
+  queryTokens,
+  product
+) {
+
+  const text =
+    productSearchText(
+      product
+    );
+
+  const productTokens =
+    new Set(
+      tokenize(text)
+    );
+
+  if (
+    queryTokens.length === 0
+  ) {
+    return 0;
+  }
+
+  let matches = 0;
+
+  for (
+    const token of
+    queryTokens
+  ) {
+
+    if (
+      productTokens.has(token)
+    ) {
+      matches++;
+      continue;
+    }
+
+    /*
+    Small fuzzy matching.
+    Example:
+    sneaker -> sneakers
+    dress -> dresses
+    */
+    for (
+      const productToken of
+      productTokens
+    ) {
+
+      if (
+        productToken.startsWith(
+          token
+        ) ||
+        token.startsWith(
+          productToken
+        )
+      ) {
+
+        matches += 0.7;
+
+        break;
+      }
+    }
   }
 
   return (
-    dot /
-    (
-      Math.sqrt(normA) *
-      Math.sqrt(normB)
-    )
+    matches /
+    queryTokens.length
   );
-
 }
 
+/*
+=========================================================
+STRUCTURED SIGNAL SCORE
+=========================================================
+*/
 
-/* =========================================================
-   FASHION INTENT
-========================================================= */
+function containsAny(
+  values,
+  targets
+) {
 
-function understandFashionQuery(query) {
+  const normalizedValues =
+    values.map(
+      normalizeText
+    );
 
-  const text =
-    normalize(query);
-
-  const tokens =
-    tokenize(text);
-
-
-  const intent = {
-
-    query,
-
-    normalizedQuery: text,
-
-    tokens,
-
-    category: [],
-
-    colors: [],
-
-    materials: [],
-
-    styles: [],
-
-    occasions: [],
-
-    genders: [],
-
-    priceMin: null,
-
-    priceMax: null
-
-  };
-
-
-  /* CATEGORY */
-
-  const categoryMap = {
-
-    dress: "Dresses",
-    dresses: "Dresses",
-
-    shirt: "Shirts",
-    shirts: "Shirts",
-
-    tshirt: "T-Shirts",
-    "t-shirt": "T-Shirts",
-
-    jeans: "Jeans",
-
-    trouser: "Trousers",
-    trousers: "Trousers",
-
-    pants: "Pants",
-
-    skirt: "Skirts",
-    skirts: "Skirts",
-
-    jacket: "Jackets",
-
-    coat: "Coats",
-
-    blazer: "Blazers",
-
-    hoodie: "Hoodies",
-
-    sweater: "Sweaters",
-
-    kurta: "Kurtas",
-    kurti: "Kurtis",
-
-    saree: "Sarees",
-    sari: "Sarees",
-
-    abaya: "Abayas",
-
-    hijab: "Hijabs",
-
-    top: "Tops",
-    tops: "Tops",
-
-    sneakers: "Sneakers",
-
-    shoes: "Shoes"
-
-  };
-
-
-  Object.keys(categoryMap)
-    .forEach(keyword => {
-
-      if (
-        text.includes(keyword)
-      ) {
-
-        if (
-          !intent.category.includes(
-            categoryMap[keyword]
+  return targets.some(
+    (target) =>
+      normalizedValues.some(
+        (value) =>
+          value.includes(
+            normalizeText(
+              target
+            )
           )
-        ) {
-
-          intent.category.push(
-            categoryMap[keyword]
-          );
-
-        }
-
-      }
-
-    });
-
-
-  /* COLORS */
-
-  const colors = [
-    "black",
-    "white",
-    "red",
-    "blue",
-    "navy",
-    "green",
-    "olive",
-    "pink",
-    "purple",
-    "yellow",
-    "orange",
-    "brown",
-    "beige",
-    "cream",
-    "grey",
-    "gray",
-    "maroon",
-    "gold",
-    "silver"
-  ];
-
-
-  intent.colors =
-    colors.filter(
-      color =>
-        text.includes(color)
-    );
-
-
-  /* MATERIAL */
-
-  const materials = [
-    "cotton",
-    "linen",
-    "silk",
-    "wool",
-    "denim",
-    "velvet",
-    "chiffon",
-    "polyester",
-    "leather",
-    "satin",
-    "mesh"
-  ];
-
-
-  intent.materials =
-    materials.filter(
-      material =>
-        text.includes(material)
-    );
-
-
-  /* STYLE */
-
-  const styles = [
-    "minimal",
-    "minimalist",
-    "modern",
-    "classic",
-    "luxury",
-    "modest",
-    "oversized",
-    "slim",
-    "relaxed",
-    "streetwear",
-    "vintage",
-    "traditional",
-    "trendy",
-    "simple",
-    "elegant",
-    "comfortable"
-  ];
-
-
-  intent.styles =
-    styles.filter(
-      style =>
-        text.includes(style)
-    );
-
-
-  /* OCCASION */
-
-  const occasions = [
-    "wedding",
-    "party",
-    "casual",
-    "formal",
-    "office",
-    "work",
-    "evening",
-    "summer",
-    "winter",
-    "travel",
-    "beach",
-    "festive",
-    "festival",
-    "daily",
-    "everyday",
-    "date",
-    "college"
-  ];
-
-
-  intent.occasions =
-    occasions.filter(
-      occasion =>
-        text.includes(occasion)
-    );
-
-
-  /* GENDER */
-
-  const genders = [
-    "men",
-    "man",
-    "women",
-    "woman",
-    "unisex",
-    "kids",
-    "children"
-  ];
-
-
-  intent.genders =
-    genders.filter(
-      gender =>
-        text.includes(gender)
-    );
-
-
-  /* PRICE RANGE */
-
-  const range =
-    text.match(
-      /between\s*(?:₹|rs\.?|inr)?\s*(\d+)\s*(?:and|-)\s*(?:₹|rs\.?|inr)?\s*(\d+)/i
-    );
-
-
-  if (range) {
-
-    intent.priceMin =
-      Number(range[1]);
-
-    intent.priceMax =
-      Number(range[2]);
-
-  }
-
-
-  const max =
-    text.match(
-      /(?:under|below|less than|upto|up to|within|budget)\s*(?:₹|rs\.?|inr)?\s*(\d+)/i
-    );
-
-
-  if (max) {
-
-    intent.priceMax =
-      Number(max[1]);
-
-  }
-
-
-  return intent;
-
+      )
+  );
 }
 
-
-/* =========================================================
-   ATTRIBUTE MATCH
-========================================================= */
-
-function attributeMatch(
+function calculateSignalScore(
   product,
-  intent
+  signals
 ) {
 
   let score = 0;
 
-  const reasons = [];
-
-
-  const category =
-    normalize(product.category);
-
-  const color =
-    normalize(product.color);
-
-  const material =
-    arrayText(product.material);
-
-  const style =
-    arrayText(product.style);
-
-  const occasion =
-    arrayText(product.occasion);
-
-  const gender =
-    normalize(product.gender);
-
-
-  /* CATEGORY */
+  let possible = 0;
 
   if (
-    intent.category.length &&
-    intent.category.some(
-      item =>
-        category.includes(
-          normalize(item)
+    signals.colors.length
+  ) {
+
+    possible++;
+
+    if (
+      signals.colors.some(
+        (color) =>
+          normalizeText(
+            product.color
+          ).includes(color)
+      )
+    ) {
+      score++;
+    }
+  }
+
+  if (
+    signals.styles.length
+  ) {
+
+    possible++;
+
+    if (
+      containsAny(
+        product.style || [],
+        signals.styles
+      )
+    ) {
+      score++;
+    }
+  }
+
+  if (
+    signals.occasions.length
+  ) {
+
+    possible++;
+
+    if (
+      containsAny(
+        product.occasion || [],
+        signals.occasions
+      )
+    ) {
+      score++;
+    }
+  }
+
+  if (
+    signals.categories.length
+  ) {
+
+    possible++;
+
+    const category =
+      normalizeText(
+        product.category
+      );
+
+    if (
+      signals.categories.some(
+        (value) =>
+          category.includes(
+            value.replace(
+              /s$/,
+              ""
+            )
+          )
+      )
+    ) {
+      score++;
+    }
+  }
+
+  if (
+    signals.materials.length
+  ) {
+
+    possible++;
+
+    if (
+      containsAny(
+        product.material || [],
+        signals.materials
+      )
+    ) {
+      score++;
+    }
+  }
+
+  if (
+    possible === 0
+  ) {
+    return 0;
+  }
+
+  return (
+    score /
+    possible
+  );
+}
+
+/*
+=========================================================
+BUDGET SCORE
+=========================================================
+*/
+
+function calculateBudgetScore(
+  product,
+  budget
+) {
+
+  if (
+    !Number.isFinite(budget)
+  ) {
+    return 0.5;
+  }
+
+  if (
+    product.price <= budget
+  ) {
+    return 1;
+  }
+
+  const difference =
+    product.price -
+    budget;
+
+  /*
+  Gradually penalise
+  products above budget.
+  */
+
+  return Math.max(
+    0,
+    1 -
+      difference /
+        Math.max(
+          budget,
+          1
         )
-    )
-  ) {
+  );
+}
 
-    score += 0.16;
+/*
+=========================================================
+FINAL SCORE
+=========================================================
+*/
 
-    reasons.push(
-      "category match"
+function scoreProduct(
+  product,
+  query
+) {
+
+  const queryTokens =
+    tokenize(query);
+
+  const signals =
+    extractSignals(
+      query
     );
 
-  }
-
-
-  /* COLOR */
-
-  if (
-    intent.colors.some(
-      item =>
-        color.includes(item)
-    )
-  ) {
-
-    score += 0.14;
-
-    reasons.push(
-      "colour match"
+  const lexical =
+    calculateTokenScore(
+      queryTokens,
+      product
     );
 
-  }
-
-
-  /* MATERIAL */
-
-  if (
-    intent.materials.some(
-      item =>
-        material.includes(item)
-    )
-  ) {
-
-    score += 0.12;
-
-    reasons.push(
-      "material match"
+  const structured =
+    calculateSignalScore(
+      product,
+      signals
     );
 
-  }
-
-
-  /* STYLE */
-
-  if (
-    intent.styles.some(
-      item =>
-        style.includes(item)
-    )
-  ) {
-
-    score += 0.12;
-
-    reasons.push(
-      "style match"
+  const budget =
+    calculateBudgetScore(
+      product,
+      signals.budget
     );
 
-  }
+  /*
+  Day 1 baseline ranking.
 
+  Day 2:
+  semantic embeddings.
 
-  /* OCCASION */
+  Day 3:
+  learning/ranking improvements.
+  */
 
-  if (
-    intent.occasions.some(
-      item =>
-        occasion.includes(item)
-    )
-  ) {
-
-    score += 0.12;
-
-    reasons.push(
-      "occasion match"
+  const finalScore =
+    (
+      lexical * 0.45 +
+      structured * 0.40 +
+      budget * 0.15
     );
-
-  }
-
-
-  /* GENDER */
-
-  if (
-    intent.genders.some(
-      item =>
-        gender.includes(item)
-    )
-  ) {
-
-    score += 0.08;
-
-    reasons.push(
-      "gender match"
-    );
-
-  }
-
-
-  /* PRICE */
-
-  const price =
-    Number(product.price);
-
-
-  if (
-    intent.priceMax !== null &&
-    !Number.isNaN(price)
-  ) {
-
-    if (
-      price <= intent.priceMax
-    ) {
-
-      score += 0.10;
-
-      reasons.push(
-        "within budget"
-      );
-
-    } else {
-
-      score -= 0.10;
-
-    }
-
-  }
-
-
-  if (
-    intent.priceMin !== null &&
-    !Number.isNaN(price)
-  ) {
-
-    if (
-      price >= intent.priceMin
-    ) {
-
-      score += 0.05;
-
-      reasons.push(
-        "above minimum budget"
-      );
-
-    } else {
-
-      score -= 0.05;
-
-    }
-
-  }
-
 
   return {
+    score:
+      Math.round(
+        finalScore * 100
+      ),
 
-    score,
-
-    reasons
-
+    lexical,
+    structured,
+    budget,
+    signals
   };
-
 }
 
+/*
+=========================================================
+EXPLANATION
+=========================================================
+*/
 
-/* =========================================================
-   BUILD PRODUCT INDEX
-========================================================= */
-
-async function buildProductIndex(
-  products
+function generateReasons(
+  product,
+  ranking
 ) {
 
-  console.log(
-    `Creating AI embeddings for ${products.length} products...`
-  );
+  const reasons = [];
 
-
-  const indexedProducts = [];
-
-
-  for (
-    const product of products
-  ) {
-
-    const text =
-      productToSearchText(
-        product
-      );
-
-    const embedding =
-      await createEmbedding(text);
-
-
-    indexedProducts.push({
-
-      ...product,
-
-      _searchText: text,
-
-      _embedding: embedding
-
-    });
-
-  }
-
-
-  console.log(
-    "AI product index ready."
-  );
-
-
-  return indexedProducts;
-
-}
-
-
-/* =========================================================
-   AI SEARCH
-========================================================= */
-
-async function semanticSearch(
-  query,
-  indexedProducts,
-  limit = 20
-) {
+  const signals =
+    ranking.signals;
 
   if (
-    !query ||
-    !Array.isArray(indexedProducts)
+    signals.colors.some(
+      (color) =>
+        normalizeText(
+          product.color
+        ).includes(color)
+    )
   ) {
 
-    return [];
-
+    reasons.push(
+      `Matches requested colour: ${product.color}`
+    );
   }
 
+  if (
+    containsAny(
+      product.style || [],
+      signals.styles
+    )
+  ) {
 
-  const intent =
-    understandFashionQuery(
-      query
+    reasons.push(
+      "Matches the requested style"
     );
+  }
 
+  if (
+    containsAny(
+      product.occasion || [],
+      signals.occasions
+    )
+  ) {
 
-  const queryEmbedding =
-    await createEmbedding(
-      query
+    reasons.push(
+      "Suitable for the requested occasion"
     );
+  }
 
+  if (
+    signals.budget &&
+    product.price <=
+      signals.budget
+  ) {
 
-  const results =
-    indexedProducts.map(
-      product => {
+    reasons.push(
+      "Within the requested budget"
+    );
+  }
 
-        const semanticScore =
-          cosineSimilarity(
-            queryEmbedding,
-            product._embedding
-          );
+  if (
+    !reasons.length &&
+    ranking.lexical > 0
+  ) {
 
+    reasons.push(
+      "Relevant product description and attributes matched the query"
+    );
+  }
 
-        const attribute =
-          attributeMatch(
+  if (!reasons.length) {
+
+    reasons.push(
+      "Recommended by the Fashion AI baseline ranking model"
+    );
+  }
+
+  return reasons;
+}
+
+/*
+=========================================================
+MAIN SEARCH
+=========================================================
+*/
+
+export function searchProducts(
+  query,
+  {
+    limit = 20
+  } = {}
+) {
+
+  const cleanQuery =
+    String(query ?? "")
+      .trim();
+
+  if (!cleanQuery) {
+
+    return {
+      query: "",
+      results: [],
+      budget: null,
+      signals: {}
+    };
+  }
+
+  const products =
+    loadCatalog();
+
+  const ranked =
+    products.map(
+      (product) => {
+
+        const ranking =
+          scoreProduct(
             product,
-            intent
+            cleanQuery
           );
-
-
-        const finalScore =
-          (
-            semanticScore * 0.65
-          ) +
-          (
-            attribute.score * 0.35
-          );
-
 
         return {
-
           ...product,
 
-          semanticScore:
-            Number(
-              semanticScore.toFixed(4)
+          matchScore:
+            ranking.score,
+
+          score:
+            ranking.score,
+
+          reasons:
+            generateReasons(
+              product,
+              ranking
             ),
 
-          attributeScore:
-            Number(
-              attribute.score.toFixed(4)
-            ),
+          ranking: {
+            lexical:
+              Number(
+                ranking.lexical
+                  .toFixed(4)
+              ),
 
-          relevanceScore:
-            Number(
-              finalScore.toFixed(4)
-            ),
+            structured:
+              Number(
+                ranking.structured
+                  .toFixed(4)
+              ),
 
-          matchedFields:
-            attribute.reasons
-
+            budget:
+              Number(
+                ranking.budget
+                  .toFixed(4)
+              )
+          }
         };
-
       }
     );
 
+  ranked.sort(
+    (a, b) =>
+      b.matchScore -
+      a.matchScore
+  );
 
-  return results
+  const signals =
+    extractSignals(
+      cleanQuery
+    );
 
-    .filter(
-      product =>
-        product.relevanceScore > 0
-    )
+  return {
+    query:
+      cleanQuery,
 
-    .sort(
-      (a, b) =>
-        b.relevanceScore -
-        a.relevanceScore
-    )
+    budget:
+      signals.budget,
 
-    .slice(0, limit)
+    signals,
 
-    .map(product => {
+    total:
+      ranked.length,
 
-      const cleanProduct = {
-        ...product
-      };
-
-      delete cleanProduct._embedding;
-      delete cleanProduct._searchText;
-
-      return cleanProduct;
-
-    });
-
+    results:
+      ranked.slice(
+        0,
+        Math.max(
+          1,
+          Number(limit) || 20
+        )
+      )
+  };
 }
 
+/*
+=========================================================
+EXPORT QUERY UNDERSTANDING
+=========================================================
+*/
 
-/* =========================================================
-   EXPORT
-========================================================= */
+export function understandQuery(
+  query
+) {
 
-module.exports = {
-
-  getExtractor,
-
-  createEmbedding,
-
-  buildProductIndex,
-
-  semanticSearch,
-
-  understandFashionQuery,
-
-  productToSearchText
-
-};
+  return extractSignals(
+    query
+  );
+}
