@@ -1,26 +1,32 @@
-import express from "express";
-import cors from "cors";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-
 /*
 =========================================================
 FASHION AI DISCOVERY
-DAY 1 - RESEARCH FOUNDATION
+RESEARCH-GRADE BACKEND
+DAY 1
 =========================================================
 */
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import express from "express";
+import cors from "cors";
 
-const app = express();
+import {
+  getProducts,
+  getCatalogStats,
+  filterCatalog,
+  reloadCatalog
+} from "./services/catalog.js";
 
-const PORT = process.env.PORT || 10000;
+import {
+  searchProducts,
+  understandQuery
+} from "./services/aiSearch.js";
 
-const API_VERSION = "1.0.0";
+const app =
+  express();
 
-const START_TIME = Date.now();
+const PORT =
+  process.env.PORT ||
+  10000;
 
 /*
 =========================================================
@@ -30,580 +36,467 @@ MIDDLEWARE
 
 app.use(
   cors({
-    origin: "*",
-    methods: ["GET", "POST", "OPTIONS"],
-    allowedHeaders: ["Content-Type"]
+    origin: "*"
   })
 );
 
-app.use(express.json({ limit: "1mb" }));
+app.use(
+  express.json({
+    limit: "1mb"
+  })
+);
 
 /*
 =========================================================
-LOAD DATASET
+REQUEST LOGGER
 =========================================================
 */
 
-const PRODUCTS_PATH =
-  path.join(__dirname, "products.json");
+app.use(
+  (
+    request,
+    response,
+    next
+  ) => {
 
-let products = [];
+    const start =
+      Date.now();
 
-try {
-  const raw =
-    fs.readFileSync(
-      PRODUCTS_PATH,
-      "utf8"
-    );
+    response.on(
+      "finish",
+      () => {
 
-  products =
-    JSON.parse(raw);
+        const duration =
+          Date.now() -
+          start;
 
-  if (!Array.isArray(products)) {
-    throw new Error(
-      "products.json must contain an array."
-    );
-  }
-
-  console.log(
-    `Loaded ${products.length} products.`
-  );
-
-} catch (error) {
-
-  console.error(
-    "Unable to load products.json:",
-    error.message
-  );
-
-  process.exit(1);
-}
-
-/*
-=========================================================
-DATA VALIDATION
-=========================================================
-*/
-
-function validateProduct(product) {
-
-  const requiredFields = [
-    "id",
-    "brand",
-    "name",
-    "category",
-    "gender",
-    "color",
-    "material",
-    "style",
-    "occasion",
-    "sizes",
-    "price",
-    "currency",
-    "availability",
-    "tags",
-    "description"
-  ];
-
-  return requiredFields.every(
-    (field) =>
-      product[field] !== undefined &&
-      product[field] !== null
-  );
-}
-
-const invalidProducts =
-  products.filter(
-    (product) =>
-      !validateProduct(product)
-  );
-
-if (invalidProducts.length) {
-
-  console.warn(
-    `${invalidProducts.length} products have missing fields.`
-  );
-}
-
-/*
-=========================================================
-DATASET METADATA
-=========================================================
-*/
-
-function getDatasetStats() {
-
-  const brands =
-    new Set(
-      products.map(
-        (product) =>
-          product.brand
-      )
-    );
-
-  const categories =
-    new Set(
-      products.map(
-        (product) =>
-          product.category
-      )
-    );
-
-  const colors =
-    new Set(
-      products.map(
-        (product) =>
-          product.color
-      )
-    );
-
-  const prices =
-    products
-      .map(
-        (product) =>
-          Number(product.price)
-      )
-      .filter(
-        Number.isFinite
-      );
-
-  const averagePrice =
-    prices.length
-      ? prices.reduce(
-          (sum, price) =>
-            sum + price,
-          0
-        ) / prices.length
-      : 0;
-
-  return {
-    totalProducts:
-      products.length,
-
-    brands:
-      brands.size,
-
-    categories:
-      categories.size,
-
-    colors:
-      colors.size,
-
-    averagePrice:
-      Math.round(
-        averagePrice
-      ),
-
-    minPrice:
-      prices.length
-        ? Math.min(...prices)
-        : 0,
-
-    maxPrice:
-      prices.length
-        ? Math.max(...prices)
-        : 0
-  };
-}
-
-/*
-=========================================================
-NORMALIZATION
-=========================================================
-*/
-
-function normalize(value) {
-
-  return String(
-    value ?? ""
-  )
-    .toLowerCase()
-    .trim();
-}
-
-function productSearchText(product) {
-
-  return [
-    product.brand,
-    product.name,
-    product.category,
-    product.gender,
-    product.color,
-    ...(Array.isArray(product.material)
-      ? product.material
-      : []),
-    ...(Array.isArray(product.style)
-      ? product.style
-      : []),
-    ...(Array.isArray(product.occasion)
-      ? product.occasion
-      : []),
-    ...(Array.isArray(product.tags)
-      ? product.tags
-      : []),
-    product.description
-  ]
-    .join(" ")
-    .toLowerCase();
-}
-
-/*
-=========================================================
-BASE SEARCH
-=========================================================
-*/
-
-function lexicalSearch(query) {
-
-  const normalizedQuery =
-    normalize(query);
-
-  if (!normalizedQuery) {
-    return [];
-  }
-
-  const terms =
-    normalizedQuery
-      .split(/\s+/)
-      .filter(Boolean);
-
-  const results =
-    products.map(
-      (product) => {
-
-        const text =
-          productSearchText(
-            product
-          );
-
-        let matchedTerms = 0;
-
-        const matched =
-          [];
-
-        for (const term of terms) {
-
-          if (
-            text.includes(term)
-          ) {
-
-            matchedTerms += 1;
-
-            matched.push(term);
-          }
-        }
-
-        const score =
-          terms.length
-            ? matchedTerms /
-              terms.length
-            : 0;
-
-        return {
-          ...product,
-          matchScore:
-            Math.round(
-              score * 100
-            ),
-          matchedTerms:
-            matched
-        };
+        console.log(
+          `${request.method} ${request.originalUrl} ${response.statusCode} ${duration}ms`
+        );
       }
-    )
-    .filter(
-      (product) =>
-        product.matchScore > 0
-    )
-    .sort(
-      (a, b) =>
-        b.matchScore -
-        a.matchScore
     );
 
-  return results;
-}
+    next();
+  }
+);
 
 /*
 =========================================================
-API: HEALTH
+ROOT
 =========================================================
 */
 
 app.get(
-  "/api/health",
-  (req, res) => {
+  "/",
+  (
+    request,
+    response
+  ) => {
 
-    res.json({
-      status: "online",
+    response.json({
 
       service:
         "Fashion AI Discovery",
 
       version:
-        API_VERSION,
+        "5.0.0",
 
-      uptimeSeconds:
-        Math.floor(
-          (Date.now() -
-            START_TIME) /
-            1000
-        ),
+      status:
+        "running",
 
-      dataset:
-        getDatasetStats(),
+      description:
+        "Research-grade AI fashion discovery backend",
 
-      architecture:
-        {
-          search:
-            "lexical-baseline",
-          ai:
-            "Day 2+",
-          personalization:
-            "Day 6+",
-          evaluation:
-            "Day 8+"
-        }
+      endpoints: [
+        "/api/health",
+        "/api/products",
+        "/api/catalog/stats",
+        "/api/search",
+        "/api/query/understand",
+        "/api/products/filter"
+      ]
     });
   }
 );
 
 /*
 =========================================================
-API: PRODUCTS
+HEALTH
+=========================================================
+*/
+
+app.get(
+  "/api/health",
+  (
+    request,
+    response
+  ) => {
+
+    try {
+
+      const products =
+        getProducts();
+
+      response.json({
+
+        status:
+          "ok",
+
+        service:
+          "Fashion AI Discovery",
+
+        version:
+          "5.0.0",
+
+        products:
+          products.length,
+
+        timestamp:
+          new Date().toISOString()
+      });
+
+    } catch (error) {
+
+      response.status(
+        500
+      ).json({
+
+        status:
+          "error",
+
+        error:
+          error.message
+      });
+    }
+  }
+);
+
+/*
+=========================================================
+PRODUCTS
 =========================================================
 */
 
 app.get(
   "/api/products",
-  (req, res) => {
+  (
+    request,
+    response
+  ) => {
 
-    res.json({
-      count:
-        products.length,
+    try {
 
-      products
-    });
-  }
-);
+      const products =
+        getProducts();
 
-/*
-=========================================================
-API: PRODUCT BY ID
-=========================================================
-*/
+      response.json({
 
-app.get(
-  "/api/products/:id",
-  (req, res) => {
+        success:
+          true,
 
-    const id =
-      Number(req.params.id);
+        count:
+          products.length,
 
-    const product =
-      products.find(
-        (item) =>
-          Number(item.id) === id
-      );
+        products
+      });
 
-    if (!product) {
+    } catch (error) {
 
-      return res
-        .status(404)
-        .json({
-          error:
-            "Product not found."
-        });
+      response.status(
+        500
+      ).json({
+
+        success:
+          false,
+
+        error:
+          error.message
+      });
     }
-
-    res.json({
-      product
-    });
   }
 );
 
 /*
 =========================================================
-API: DATASET STATS
+CATALOG STATS
 =========================================================
 */
 
 app.get(
-  "/api/dataset/stats",
-  (req, res) => {
+  "/api/catalog/stats",
+  (
+    request,
+    response
+  ) => {
 
-    res.json(
-      getDatasetStats()
-    );
+    try {
+
+      response.json({
+
+        success:
+          true,
+
+        stats:
+          getCatalogStats()
+      });
+
+    } catch (error) {
+
+      response.status(
+        500
+      ).json({
+
+        success:
+          false,
+
+        error:
+          error.message
+      });
+    }
   }
 );
 
 /*
 =========================================================
-API: SEARCH
+SEARCH
 =========================================================
 */
 
 app.post(
   "/api/search",
-  (req, res) => {
+  (
+    request,
+    response
+  ) => {
 
-    const query =
-      typeof req.body?.query ===
-      "string"
-        ? req.body.query.trim()
-        : "";
+    try {
 
-    if (!query) {
+      const {
+        query,
+        limit
+      } =
+        request.body || {};
 
-      return res
-        .status(400)
+      if (
+        typeof query !==
+        "string" ||
+        !query.trim()
+      ) {
+
+        return response
+          .status(400)
+          .json({
+
+            success:
+              false,
+
+            error:
+              "Search query is required."
+          });
+      }
+
+      const result =
+        searchProducts(
+          query,
+          {
+            limit:
+              Math.min(
+                Math.max(
+                  Number(limit) ||
+                    20,
+                  1
+                ),
+                50
+              )
+          }
+        );
+
+      response.json({
+
+        success:
+          true,
+
+        ...result
+      });
+
+    } catch (error) {
+
+      console.error(
+        "Search error:",
+        error
+      );
+
+      response
+        .status(500)
         .json({
+
+          success:
+            false,
+
           error:
-            "Search query is required."
+            error.message
         });
     }
-
-    const results =
-      lexicalSearch(query);
-
-    res.json({
-
-      query,
-
-      method:
-        "lexical-baseline",
-
-      count:
-        results.length,
-
-      results
-    });
   }
 );
 
 /*
 =========================================================
-API: FILTER
+QUERY UNDERSTANDING
 =========================================================
 */
 
 app.post(
-  "/api/filter",
-  (req, res) => {
+  "/api/query/understand",
+  (
+    request,
+    response
+  ) => {
 
-    const {
-      category,
-      brand,
-      color,
-      gender,
-      minPrice,
-      maxPrice
-    } = req.body || {};
+    try {
 
-    let filtered =
-      [...products];
+      const {
+        query
+      } =
+        request.body || {};
 
-    if (category) {
+      if (
+        typeof query !==
+        "string" ||
+        !query.trim()
+      ) {
 
-      filtered =
-        filtered.filter(
-          (product) =>
-            normalize(
-              product.category
-            ) ===
-            normalize(category)
-        );
+        return response
+          .status(400)
+          .json({
+
+            success:
+              false,
+
+            error:
+              "Query is required."
+          });
+      }
+
+      response.json({
+
+        success:
+          true,
+
+        query,
+
+        interpretation:
+          understandQuery(
+            query
+          )
+      });
+
+    } catch (error) {
+
+      response
+        .status(500)
+        .json({
+
+          success:
+            false,
+
+          error:
+            error.message
+        });
     }
+  }
+);
 
-    if (brand) {
+/*
+=========================================================
+FILTER PRODUCTS
+=========================================================
+*/
 
-      filtered =
-        filtered.filter(
-          (product) =>
-            normalize(
-              product.brand
-            ) ===
-            normalize(brand)
+app.get(
+  "/api/products/filter",
+  (
+    request,
+    response
+  ) => {
+
+    try {
+
+      const products =
+        filterCatalog(
+          request.query
         );
+
+      response.json({
+
+        success:
+          true,
+
+        count:
+          products.length,
+
+        products
+      });
+
+    } catch (error) {
+
+      response
+        .status(500)
+        .json({
+
+          success:
+            false,
+
+          error:
+            error.message
+        });
     }
+  }
+);
 
-    if (color) {
+/*
+=========================================================
+RELOAD DATASET
+=========================================================
+*/
 
-      filtered =
-        filtered.filter(
-          (product) =>
-            normalize(
-              product.color
-            ) ===
-            normalize(color)
-        );
+app.post(
+  "/api/catalog/reload",
+  (
+    request,
+    response
+  ) => {
+
+    try {
+
+      const products =
+        reloadCatalog();
+
+      response.json({
+
+        success:
+          true,
+
+        message:
+          "Catalog reloaded successfully.",
+
+        count:
+          products.length
+      });
+
+    } catch (error) {
+
+      response
+        .status(500)
+        .json({
+
+          success:
+            false,
+
+          error:
+            error.message
+        });
     }
-
-    if (gender) {
-
-      filtered =
-        filtered.filter(
-          (product) =>
-            normalize(
-              product.gender
-            ) ===
-            normalize(gender)
-        );
-    }
-
-    if (
-      minPrice !==
-      undefined
-    ) {
-
-      filtered =
-        filtered.filter(
-          (product) =>
-            Number(
-              product.price
-            ) >=
-            Number(minPrice)
-        );
-    }
-
-    if (
-      maxPrice !==
-      undefined
-    ) {
-
-      filtered =
-        filtered.filter(
-          (product) =>
-            Number(
-              product.price
-            ) <=
-            Number(maxPrice)
-        );
-    }
-
-    res.json({
-
-      count:
-        filtered.length,
-
-      filters: {
-        category:
-          category || null,
-        brand:
-          brand || null,
-        color:
-          color || null,
-        gender:
-          gender || null,
-        minPrice:
-          minPrice ?? null,
-        maxPrice:
-          maxPrice ?? null
-      },
-
-      products:
-        filtered
-    });
   }
 );
 
@@ -614,34 +507,53 @@ app.post(
 */
 
 app.use(
-  (req, res) => {
+  (
+    request,
+    response
+  ) => {
 
-    res.status(404).json({
-      error:
-        "API endpoint not found.",
-      path:
-        req.originalUrl
-    });
+    response
+      .status(404)
+      .json({
+
+        success:
+          false,
+
+        error:
+          "Endpoint not found.",
+
+        path:
+          request.originalUrl
+      });
   }
 );
 
 /*
 =========================================================
-ERROR HANDLER
+GLOBAL ERROR
 =========================================================
 */
 
 app.use(
-  (error, req, res, next) => {
+  (
+    error,
+    request,
+    response,
+    next
+  ) => {
 
     console.error(
-      "Server error:",
+      "Unhandled server error:",
       error
     );
 
-    res
+    response
       .status(500)
       .json({
+
+        success:
+          false,
+
         error:
           "Internal server error."
       });
@@ -659,7 +571,7 @@ app.listen(
   () => {
 
     console.log(
-      "========================================"
+      "=========================================="
     );
 
     console.log(
@@ -667,19 +579,40 @@ app.listen(
     );
 
     console.log(
-      `Running on port ${PORT}`
+      "Research Foundation v5.0.0"
     );
 
     console.log(
-      `Products: ${products.length}`
+      `Server running on port ${PORT}`
     );
 
-    console.log(
-      "Research foundation ready."
-    );
+    try {
+
+      const stats =
+        getCatalogStats();
+
+      console.log(
+        `Products loaded: ${stats.totalProducts}`
+      );
+
+      console.log(
+        `Brands: ${stats.uniqueBrands}`
+      );
+
+      console.log(
+        `Categories: ${stats.uniqueCategories}`
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Dataset loading failed:",
+        error.message
+      );
+    }
 
     console.log(
-      "========================================"
+      "=========================================="
     );
   }
 );
