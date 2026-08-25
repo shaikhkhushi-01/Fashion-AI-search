@@ -1,12 +1,11 @@
 {
   "name": "fashion-ai-discovery-backend",
-  "version": "5.0.0",
-  "description": "Research-grade AI fashion discovery and recommendation backend",
+  "version": "2.0.0",
+  "description": "AI-powered fashion discovery with semantic NLP search",
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "test:evaluation": "node tests/evaluate.js"
+    "start": "node server.js"
   },
   "engines": {
     "node": ">=20"
