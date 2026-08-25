@@ -1,28 +1,29 @@
 /*
 =========================================================
 FASHION AI DISCOVERY
-DAY 2 — AI / NLP SEARCH BACKEND
+BACKEND SERVER
+DAY 3
 =========================================================
 */
 
+"use strict";
+
 import express from "express";
-
 import cors from "cors";
-
 import fs from "fs";
-
 import path from "path";
+import { fileURLToPath } from "url";
 
 import {
-  fileURLToPath
-} from "url";
-
-import {
-  initializeSearchEngine,
-  searchProducts,
-  parseSearchQuery,
-  getSearchEngineStatus
+  searchProducts
 } from "./services/aiSearch.js";
+
+import {
+  rankProducts,
+  rankWithAblation,
+  RANKING_VERSION,
+  WEIGHTS
+} from "./services/ranking.js";
 
 /*
 =========================================================
@@ -40,7 +41,7 @@ const __dirname =
     __filename
   );
 
-const DATA_PATH =
+const PRODUCTS_PATH =
   path.join(
     __dirname,
     "..",
@@ -58,7 +59,8 @@ const app =
   express();
 
 const PORT =
-  process.env.PORT || 10000;
+  process.env.PORT ||
+  10000;
 
 /*
 =========================================================
@@ -90,8 +92,8 @@ function loadProducts() {
 
     const raw =
       fs.readFileSync(
-        DATA_PATH,
-        "utf-8"
+        PRODUCTS_PATH,
+        "utf8"
       );
 
     const parsed =
@@ -100,7 +102,6 @@ function loadProducts() {
     if (
       !Array.isArray(parsed)
     ) {
-
       throw new Error(
         "products.json must contain an array."
       );
@@ -120,48 +121,11 @@ function loadProducts() {
       error
     );
 
-    process.exit(1);
+    products = [];
   }
 }
 
-/*
-=========================================================
-ROOT
-=========================================================
-*/
-
-app.get(
-  "/",
-  (req, res) => {
-
-    res.json({
-
-      name:
-        "Fashion AI Discovery API",
-
-      version:
-        "2.0.0",
-
-      status:
-        "running",
-
-      endpoints: {
-
-        health:
-          "GET /api/health",
-
-        products:
-          "GET /api/products",
-
-        search:
-          "POST /api/search",
-
-        searchInfo:
-          "GET /api/search/info"
-      }
-    });
-  }
-);
+loadProducts();
 
 /*
 =========================================================
@@ -174,18 +138,20 @@ app.get(
   (req, res) => {
 
     res.json({
-
       status:
         "ok",
 
       service:
         "fashion-ai-discovery",
 
+      rankingVersion:
+        RANKING_VERSION,
+
       products:
         products.length,
 
-      searchEngine:
-        getSearchEngineStatus()
+      timestamp:
+        new Date().toISOString()
     });
   }
 );
@@ -201,190 +167,349 @@ app.get(
   (req, res) => {
 
     res.json({
-
-      success:
-        true,
-
+      products,
       count:
         products.length,
 
-      products
+      rankingVersion:
+        RANKING_VERSION
     });
   }
 );
 
 /*
 =========================================================
-SEARCH INFO
-=========================================================
-*/
-
-app.get(
-  "/api/search/info",
-  (req, res) => {
-
-    res.json({
-
-      success:
-        true,
-
-      engine:
-        getSearchEngineStatus(),
-
-      ranking: {
-
-        semantic:
-          0.55,
-
-        lexical:
-          0.15,
-
-        attributes:
-          0.20,
-
-        budget:
-          0.10
-      },
-
-      model:
-        "Xenova/all-MiniLM-L6-v2"
-    });
-  }
-);
-
-/*
-=========================================================
-AI SEARCH
+SEARCH
 =========================================================
 */
 
 app.post(
   "/api/search",
-  async (req, res) => {
+  (req, res) => {
 
     try {
 
       const query =
         String(
-          req.body?.query ??
+          req.body?.query ||
           ""
         ).trim();
 
       if (!query) {
 
-        return res.status(400)
-          .json({
-
-            success:
-              false,
-
-            error:
-              "Search query is required."
-          });
+        return res.status(400).json({
+          error:
+            "Search query is required."
+        });
       }
 
-      if (
-        query.length > 500
-      ) {
-
-        return res.status(400)
-          .json({
-
-            success:
-              false,
-
-            error:
-              "Search query is too long."
-          });
-      }
-
-      console.log(
-        `AI Search Query: "${query}"`
-      );
-
-      const results =
-        await searchProducts(
-          query,
+      const limit =
+        Number(
+          req.body?.limit ||
           20
         );
 
-      const parsedQuery =
-        parseSearchQuery(
-          query
+      const result =
+        searchProducts(
+          products,
+          query,
+          {
+            limit
+          }
         );
 
-      return res.json({
-
-        success:
-          true,
-
+      res.json({
         query,
 
+        results:
+          result.results,
+
         budget:
-          parsedQuery.budget,
+          result.budget,
 
-        detectedAttributes: {
+        totalCandidates:
+          result.totalCandidates,
 
-          colors:
-            parsedQuery.colors,
-
-          categories:
-            parsedQuery.categories,
-
-          styles:
-            parsedQuery.styles,
-
-          occasions:
-            parsedQuery.occasions
-        },
-
-        count:
-          results.length,
-
-        results
+        rankingVersion:
+          result.rankingVersion
       });
 
     } catch (error) {
 
       console.error(
-        "AI Search Error:",
+        "Search error:",
         error
       );
 
-      return res.status(500)
-        .json({
-
-          success:
-            false,
-
-          error:
-            "AI search failed.",
-
-          details:
-            error.message
-        });
+      res.status(500).json({
+        error:
+          "Search failed.",
+        message:
+          error.message
+      });
     }
   }
 );
 
 /*
 =========================================================
-404
+RANKING DEBUG
+=========================================================
+
+Useful for:
+- research
+- debugging
+- experiments
+- screenshots
+- thesis/report
 =========================================================
 */
 
-app.use(
+app.post(
+  "/api/ranking/debug",
   (req, res) => {
 
-    res.status(404)
-      .json({
+    try {
 
-        success:
-          false,
+      const query =
+        String(
+          req.body?.query ||
+          ""
+        ).trim();
 
-        error:
-          "Endpoint not found."
+      if (!query) {
+
+        return res.status(400).json({
+          error:
+            "Query is required."
+        });
+      }
+
+      const ranked =
+        rankProducts(
+          products,
+          query
+        );
+
+      res.json({
+        query,
+
+        rankingVersion:
+          RANKING_VERSION,
+
+        weights:
+          WEIGHTS,
+
+        results:
+          ranked.slice(
+            0,
+            20
+          )
       });
+
+    } catch (error) {
+
+      console.error(
+        "Ranking debug error:",
+        error
+      );
+
+      res.status(500).json({
+        error:
+          error.message
+      });
+    }
+  }
+);
+
+/*
+=========================================================
+ABLATION EXPERIMENT
+=========================================================
+
+Example:
+
+POST /api/ranking/ablation
+
+{
+  "query": "black casual outfit",
+  "disable": ["semantic"]
+}
+
+=========================================================
+*/
+
+app.post(
+  "/api/ranking/ablation",
+  (req, res) => {
+
+    try {
+
+      const query =
+        String(
+          req.body?.query ||
+          ""
+        ).trim();
+
+      const disabled =
+        Array.isArray(
+          req.body?.disable
+        )
+          ? req.body.disable
+          : [];
+
+      if (!query) {
+
+        return res.status(400).json({
+          error:
+            "Query is required."
+        });
+      }
+
+      const ranked =
+        rankWithAblation(
+          products,
+          query,
+          disabled
+        );
+
+      res.json({
+        query,
+
+        disabledSignals:
+          disabled,
+
+        results:
+          ranked.slice(
+            0,
+            20
+          )
+      });
+
+    } catch (error) {
+
+      console.error(
+        "Ablation error:",
+        error
+      );
+
+      res.status(500).json({
+        error:
+          error.message
+      });
+    }
+  }
+);
+
+/*
+=========================================================
+STYLIST
+=========================================================
+*/
+
+app.post(
+  "/api/stylist",
+  (req, res) => {
+
+    try {
+
+      const {
+        occasion = "",
+        style = "",
+        comfort = "",
+        color = "",
+        coverage = "",
+        description = ""
+      } = req.body || {};
+
+      const query =
+        [
+          occasion,
+          style,
+          comfort,
+          color,
+          coverage,
+          description
+        ]
+          .filter(Boolean)
+          .join(" ");
+
+      if (!query.trim()) {
+
+        return res.status(400).json({
+          error:
+            "Please provide styling preferences."
+        });
+      }
+
+      const result =
+        searchProducts(
+          products,
+          query,
+          {
+            limit: 12
+          }
+        );
+
+      res.json({
+        query,
+
+        recommendations:
+          result.results,
+
+        rankingVersion:
+          result.rankingVersion
+      });
+
+    } catch (error) {
+
+      console.error(
+        "Stylist error:",
+        error
+      );
+
+      res.status(500).json({
+        error:
+          "Stylist request failed.",
+        message:
+          error.message
+      });
+    }
+  }
+);
+
+/*
+=========================================================
+ROOT
+=========================================================
+*/
+
+app.get(
+  "/",
+  (req, res) => {
+
+    res.json({
+      name:
+        "Fashion AI Discovery API",
+
+      version:
+        "Day 3",
+
+      status:
+        "running",
+
+      ranking:
+        RANKING_VERSION,
+
+      endpoints: [
+        "GET /api/health",
+        "GET /api/products",
+        "POST /api/search",
+        "POST /api/stylist",
+        "POST /api/ranking/debug",
+        "POST /api/ranking/ablation"
+      ]
+    });
   }
 );
 
@@ -394,76 +519,32 @@ START
 =========================================================
 */
 
-async function startServer() {
+app.listen(
+  PORT,
+  () => {
 
-  /*
-  Load product catalogue.
-  */
-
-  loadProducts();
-
-  /*
-  Build semantic index.
-  */
-
-  try {
-
-    await initializeSearchEngine(
-      products
+    console.log(
+      "================================================="
     );
 
-  } catch (error) {
-
-    console.error(
-      "Failed to initialize AI search engine:",
-      error
+    console.log(
+      "Fashion AI Discovery Backend"
     );
 
-    process.exit(1);
+    console.log(
+      `Server running on port ${PORT}`
+    );
+
+    console.log(
+      `Products loaded: ${products.length}`
+    );
+
+    console.log(
+      `Ranking: ${RANKING_VERSION}`
+    );
+
+    console.log(
+      "================================================="
+    );
   }
-
-  /*
-  Start HTTP server.
-  */
-
-  app.listen(
-    PORT,
-    "0.0.0.0",
-    () => {
-
-      console.log(
-        "=========================================="
-      );
-
-      console.log(
-        "Fashion AI Discovery Backend"
-      );
-
-      console.log(
-        "=========================================="
-      );
-
-      console.log(
-        `Server running on port ${PORT}`
-      );
-
-      console.log(
-        `Products: ${products.length}`
-      );
-
-      console.log(
-        "AI Search: READY"
-      );
-
-      console.log(
-        "Semantic Model: all-MiniLM-L6-v2"
-      );
-
-      console.log(
-        "=========================================="
-      );
-    }
-  );
-}
-
-startServer();
+);
