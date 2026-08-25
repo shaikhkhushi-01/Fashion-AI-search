@@ -1,82 +1,79 @@
-/*
-=========================================================
-FASHION AI DISCOVERY
-DAY 7 - ADVANCED SEARCH + FILTERS
-=========================================================
-*/
-
 import express from "express";
 import cors from "cors";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { pipeline } from "@huggingface/transformers";
 
 /*
 =========================================================
-PATH
+FASHION AI DISCOVERY
+DAY 1 - RESEARCH FOUNDATION
 =========================================================
 */
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const app = express();
+
+const PORT = process.env.PORT || 10000;
+
+const API_VERSION = "1.0.0";
+
+const START_TIME = Date.now();
+
 /*
 =========================================================
-APP
+MIDDLEWARE
 =========================================================
 */
-
-const app = express();
 
 app.use(
   cors({
     origin: "*",
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type"]
   })
 );
 
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
 
 /*
 =========================================================
-PORT
+LOAD DATASET
 =========================================================
 */
 
-const PORT =
-  process.env.PORT || 10000;
-
-/*
-=========================================================
-PRODUCT DATA
-=========================================================
-*/
-
-const productsPath =
-  path.join(
-    __dirname,
-    "../data/products.json"
-  );
+const PRODUCTS_PATH =
+  path.join(__dirname, "products.json");
 
 let products = [];
 
 try {
   const raw =
     fs.readFileSync(
-      productsPath,
+      PRODUCTS_PATH,
       "utf8"
     );
 
   products =
     JSON.parse(raw);
 
+  if (!Array.isArray(products)) {
+    throw new Error(
+      "products.json must contain an array."
+    );
+  }
+
   console.log(
     `Loaded ${products.length} products.`
   );
+
 } catch (error) {
+
   console.error(
     "Unable to load products.json:",
-    error
+    error.message
   );
 
   process.exit(1);
@@ -84,55 +81,139 @@ try {
 
 /*
 =========================================================
-AI MODEL
+DATA VALIDATION
 =========================================================
 */
 
-let embeddingModel = null;
+function validateProduct(product) {
 
-const MODEL_NAME =
-  "Xenova/all-MiniLM-L6-v2";
+  const requiredFields = [
+    "id",
+    "brand",
+    "name",
+    "category",
+    "gender",
+    "color",
+    "material",
+    "style",
+    "occasion",
+    "sizes",
+    "price",
+    "currency",
+    "availability",
+    "tags",
+    "description"
+  ];
 
-/*
-=========================================================
-AI MODEL LOADING
-=========================================================
-*/
+  return requiredFields.every(
+    (field) =>
+      product[field] !== undefined &&
+      product[field] !== null
+  );
+}
 
-async function loadEmbeddingModel() {
-  try {
-    console.log(
-      "Preparing AI semantic search model..."
-    );
+const invalidProducts =
+  products.filter(
+    (product) =>
+      !validateProduct(product)
+  );
 
-    embeddingModel =
-      await pipeline(
-        "feature-extraction",
-        MODEL_NAME
-      );
+if (invalidProducts.length) {
 
-    console.log(
-      "AI embedding model loaded."
-    );
-  } catch (error) {
-    console.error(
-      "AI model loading failed:",
-      error
-    );
-
-    embeddingModel = null;
-  }
+  console.warn(
+    `${invalidProducts.length} products have missing fields.`
+  );
 }
 
 /*
 =========================================================
-TEXT NORMALIZATION
+DATASET METADATA
 =========================================================
 */
 
-function normalizeText(
-  value
-) {
+function getDatasetStats() {
+
+  const brands =
+    new Set(
+      products.map(
+        (product) =>
+          product.brand
+      )
+    );
+
+  const categories =
+    new Set(
+      products.map(
+        (product) =>
+          product.category
+      )
+    );
+
+  const colors =
+    new Set(
+      products.map(
+        (product) =>
+          product.color
+      )
+    );
+
+  const prices =
+    products
+      .map(
+        (product) =>
+          Number(product.price)
+      )
+      .filter(
+        Number.isFinite
+      );
+
+  const averagePrice =
+    prices.length
+      ? prices.reduce(
+          (sum, price) =>
+            sum + price,
+          0
+        ) / prices.length
+      : 0;
+
+  return {
+    totalProducts:
+      products.length,
+
+    brands:
+      brands.size,
+
+    categories:
+      categories.size,
+
+    colors:
+      colors.size,
+
+    averagePrice:
+      Math.round(
+        averagePrice
+      ),
+
+    minPrice:
+      prices.length
+        ? Math.min(...prices)
+        : 0,
+
+    maxPrice:
+      prices.length
+        ? Math.max(...prices)
+        : 0
+  };
+}
+
+/*
+=========================================================
+NORMALIZATION
+=========================================================
+*/
+
+function normalize(value) {
+
   return String(
     value ?? ""
   )
@@ -140,612 +221,155 @@ function normalizeText(
     .trim();
 }
 
-/*
-=========================================================
-PRODUCT TEXT
-=========================================================
-*/
+function productSearchText(product) {
 
-function productToText(
-  product
-) {
   return [
     product.brand,
     product.name,
     product.category,
     product.gender,
     product.color,
-    ...(product.material || []),
-    ...(product.style || []),
-    ...(product.occasion || []),
-    ...(product.tags || []),
-    product.description,
+    ...(Array.isArray(product.material)
+      ? product.material
+      : []),
+    ...(Array.isArray(product.style)
+      ? product.style
+      : []),
+    ...(Array.isArray(product.occasion)
+      ? product.occasion
+      : []),
+    ...(Array.isArray(product.tags)
+      ? product.tags
+      : []),
+    product.description
   ]
-    .filter(Boolean)
-    .join(" ");
+    .join(" ")
+    .toLowerCase();
 }
 
 /*
 =========================================================
-EMBEDDINGS
+BASE SEARCH
 =========================================================
 */
 
-let productEmbeddings = [];
+function lexicalSearch(query) {
 
-/*
-=========================================================
-COSINE SIMILARITY
-=========================================================
-*/
+  const normalizedQuery =
+    normalize(query);
 
-function cosineSimilarity(
-  a,
-  b
-) {
-  if (
-    !a ||
-    !b ||
-    a.length !== b.length
-  ) {
-    return 0;
+  if (!normalizedQuery) {
+    return [];
   }
 
-  let dot = 0;
-  let normA = 0;
-  let normB = 0;
-
-  for (
-    let i = 0;
-    i < a.length;
-    i++
-  ) {
-    dot +=
-      a[i] * b[i];
-
-    normA +=
-      a[i] * a[i];
-
-    normB +=
-      b[i] * b[i];
-  }
-
-  if (
-    normA === 0 ||
-    normB === 0
-  ) {
-    return 0;
-  }
-
-  return (
-    dot /
-    (
-      Math.sqrt(normA) *
-      Math.sqrt(normB)
-    )
-  );
-}
-
-/*
-=========================================================
-CREATE EMBEDDINGS
-=========================================================
-*/
-
-async function createProductEmbeddings() {
-  if (!embeddingModel) {
-    return;
-  }
-
-  console.log(
-    `Creating AI embeddings for ${products.length} products...`
-  );
-
-  productEmbeddings = [];
-
-  for (
-    const product of products
-  ) {
-    try {
-      const output =
-        await embeddingModel(
-          productToText(product),
-          {
-            pooling: "mean",
-            normalize: true,
-          }
-        );
-
-      productEmbeddings.push(
-        Array.from(
-          output.data
-        )
-      );
-    } catch (error) {
-      console.error(
-        `Embedding failed for product ${product.id}:`,
-        error
-      );
-
-      productEmbeddings.push(
-        []
-      );
-    }
-  }
-
-  console.log(
-    "AI product index ready."
-  );
-}
-
-/*
-=========================================================
-FILTER HELPERS
-=========================================================
-*/
-
-function arrayIncludes(
-  array,
-  value
-) {
-  if (!Array.isArray(array)) {
-    return false;
-  }
-
-  const target =
-    normalizeText(value);
-
-  return array.some(
-    (item) =>
-      normalizeText(item) ===
-      target
-  );
-}
-
-function matchesAny(
-  array,
-  selectedValues
-) {
-  if (
-    !selectedValues ||
-    selectedValues.length === 0
-  ) {
-    return true;
-  }
-
-  if (!Array.isArray(array)) {
-    return false;
-  }
-
-  return selectedValues.some(
-    (value) =>
-      arrayIncludes(
-        array,
-        value
-      )
-  );
-}
-
-/*
-=========================================================
-ADVANCED FILTERING
-=========================================================
-*/
-
-function applyFilters(
-  productList,
-  filters = {}
-) {
-  const {
-    minPrice,
-    maxPrice,
-    category,
-    categories,
-    color,
-    colors,
-    style,
-    styles,
-    gender,
-    genders,
-    occasion,
-    occasions,
-    availability,
-  } = filters;
-
-  const selectedCategories =
-    Array.isArray(categories)
-      ? categories
-      : category
-        ? [category]
-        : [];
-
-  const selectedColors =
-    Array.isArray(colors)
-      ? colors
-      : color
-        ? [color]
-        : [];
-
-  const selectedStyles =
-    Array.isArray(styles)
-      ? styles
-      : style
-        ? [style]
-        : [];
-
-  const selectedGenders =
-    Array.isArray(genders)
-      ? genders
-      : gender
-        ? [gender]
-        : [];
-
-  const selectedOccasions =
-    Array.isArray(occasions)
-      ? occasions
-      : occasion
-        ? [occasion]
-        : [];
-
-  return productList.filter(
-    (product) => {
-
-      const price =
-        Number(product.price);
-
-      if (
-        minPrice !== undefined &&
-        minPrice !== null &&
-        minPrice !== "" &&
-        price <
-          Number(minPrice)
-      ) {
-        return false;
-      }
-
-      if (
-        maxPrice !== undefined &&
-        maxPrice !== null &&
-        maxPrice !== "" &&
-        price >
-          Number(maxPrice)
-      ) {
-        return false;
-      }
-
-      if (
-        !matchesAny(
-          [product.category],
-          selectedCategories
-        )
-      ) {
-        return false;
-      }
-
-      if (
-        !matchesAny(
-          [product.color],
-          selectedColors
-        )
-      ) {
-        return false;
-      }
-
-      if (
-        !matchesAny(
-          product.style,
-          selectedStyles
-        )
-      ) {
-        return false;
-      }
-
-      if (
-        !matchesAny(
-          [product.gender],
-          selectedGenders
-        )
-      ) {
-        return false;
-      }
-
-      if (
-        !matchesAny(
-          product.occasion,
-          selectedOccasions
-        )
-      ) {
-        return false;
-      }
-
-      if (
-        availability &&
-        normalizeText(
-          product.availability
-        ) !==
-          normalizeText(
-            availability
-          )
-      ) {
-        return false;
-      }
-
-      return true;
-    }
-  );
-}
-
-/*
-=========================================================
-SEARCH SCORE
-=========================================================
-*/
-
-function keywordScore(
-  query,
-  product
-) {
-  if (!query) {
-    return 0;
-  }
-
-  const q =
-    normalizeText(query);
-
-  const text =
-    normalizeText(
-      productToText(product)
-    );
-
-  const words =
-    q
+  const terms =
+    normalizedQuery
       .split(/\s+/)
-      .filter(
-        (word) =>
-          word.length > 2
-      );
+      .filter(Boolean);
 
-  if (!words.length) {
-    return 0;
-  }
+  const results =
+    products.map(
+      (product) => {
 
-  let matched = 0;
+        const text =
+          productSearchText(
+            product
+          );
 
-  for (
-    const word of words
-  ) {
-    if (
-      text.includes(word)
-    ) {
-      matched++;
-    }
-  }
+        let matchedTerms = 0;
 
-  return (
-    matched /
-    words.length
-  );
+        const matched =
+          [];
+
+        for (const term of terms) {
+
+          if (
+            text.includes(term)
+          ) {
+
+            matchedTerms += 1;
+
+            matched.push(term);
+          }
+        }
+
+        const score =
+          terms.length
+            ? matchedTerms /
+              terms.length
+            : 0;
+
+        return {
+          ...product,
+          matchScore:
+            Math.round(
+              score * 100
+            ),
+          matchedTerms:
+            matched
+        };
+      }
+    )
+    .filter(
+      (product) =>
+        product.matchScore > 0
+    )
+    .sort(
+      (a, b) =>
+        b.matchScore -
+        a.matchScore
+    );
+
+  return results;
 }
 
 /*
 =========================================================
-REASONS
-=========================================================
-*/
-
-function generateReasons(
-  product,
-  query,
-  semanticScore,
-  filterScore
-) {
-  const reasons = [];
-
-  const q =
-    normalizeText(query);
-
-  const productText =
-    normalizeText(
-      productToText(product)
-    );
-
-  if (
-    q &&
-    productText.includes(q)
-  ) {
-    reasons.push(
-      "Strong match with your search description."
-    );
-  }
-
-  if (
-    semanticScore >= 0.7
-  ) {
-    reasons.push(
-      "High semantic similarity to your request."
-    );
-  }
-
-  if (
-    keywordScore(
-      query,
-      product
-    ) >= 0.5
-  ) {
-    reasons.push(
-      "Several requested fashion attributes match."
-    );
-  }
-
-  if (
-    filterScore > 0
-  ) {
-    reasons.push(
-      "Matches your selected filters."
-    );
-  }
-
-  if (
-    !reasons.length
-  ) {
-    reasons.push(
-      "Recommended based on overall fashion relevance."
-    );
-  }
-
-  return reasons;
-}
-
-/*
-=========================================================
-FORMAT RESULT
-=========================================================
-*/
-
-function formatResult(
-  product,
-  score = 0,
-  query = "",
-  filterScore = 0
-) {
-  const matchScore =
-    Math.round(
-      Math.max(
-        0,
-        Math.min(
-          100,
-          score * 100
-        )
-      )
-    );
-
-  return {
-    ...product,
-
-    matchScore,
-
-    reasons:
-      generateReasons(
-        product,
-        query,
-        score,
-        filterScore
-      ),
-  };
-}
-
-/*
-=========================================================
-SORT
-=========================================================
-*/
-
-function sortProducts(
-  results,
-  sort = "relevance"
-) {
-  const sorted =
-    [...results];
-
-  switch (
-    normalizeText(sort)
-  ) {
-
-    case "price-low":
-    case "price_asc":
-    case "low":
-      sorted.sort(
-        (a, b) =>
-          Number(a.price) -
-          Number(b.price)
-      );
-      break;
-
-    case "price-high":
-    case "price_desc":
-    case "high":
-      sorted.sort(
-        (a, b) =>
-          Number(b.price) -
-          Number(a.price)
-      );
-      break;
-
-    case "name":
-      sorted.sort(
-        (a, b) =>
-          String(a.name)
-            .localeCompare(
-              String(b.name)
-            )
-      );
-      break;
-
-    default:
-      sorted.sort(
-        (a, b) =>
-          Number(b.matchScore) -
-          Number(a.matchScore)
-      );
-  }
-
-  return sorted;
-}
-
-/*
-=========================================================
-HEALTH
+API: HEALTH
 =========================================================
 */
 
 app.get(
   "/api/health",
   (req, res) => {
+
     res.json({
       status: "online",
+
       service:
         "Fashion AI Discovery",
-      version: "7.0.0",
 
-      ai: {
-        enabled:
-          Boolean(
-            embeddingModel
-          ),
+      version:
+        API_VERSION,
 
-        model:
-          MODEL_NAME,
+      uptimeSeconds:
+        Math.floor(
+          (Date.now() -
+            START_TIME) /
+            1000
+        ),
 
-        type:
-          "semantic-embedding-search",
-      },
+      dataset:
+        getDatasetStats(),
 
-      products:
-        products.length,
-
-      indexedProducts:
-        productEmbeddings.length,
-
-      advancedSearch:
-        true,
-
-      filters: [
-        "price",
-        "category",
-        "color",
-        "style",
-        "gender",
-        "occasion",
-        "availability",
-        "sort",
-      ],
+      architecture:
+        {
+          search:
+            "lexical-baseline",
+          ai:
+            "Day 2+",
+          personalization:
+            "Day 6+",
+          evaluation:
+            "Day 8+"
+        }
     });
   }
 );
 
 /*
 =========================================================
-ALL PRODUCTS
+API: PRODUCTS
 =========================================================
 */
 
@@ -754,561 +378,273 @@ app.get(
   (req, res) => {
 
     res.json({
-      success: true,
-
-      products,
-
       count:
         products.length,
+
+      products
     });
   }
 );
 
 /*
 =========================================================
-FILTER OPTIONS
+API: PRODUCT BY ID
 =========================================================
 */
 
 app.get(
-  "/api/filters",
+  "/api/products/:id",
   (req, res) => {
 
-    const unique =
-      (values) =>
-        [
-          ...new Set(
-            values
-              .filter(Boolean)
-              .map(
-                (value) =>
-                  String(value)
-                    .trim()
-              )
-          ),
-        ].sort();
+    const id =
+      Number(req.params.id);
 
-    const categories =
-      unique(
-        products.map(
-          (p) =>
-            p.category
-        )
+    const product =
+      products.find(
+        (item) =>
+          Number(item.id) === id
       );
 
-    const colors =
-      unique(
-        products.map(
-          (p) =>
-            p.color
-        )
-      );
+    if (!product) {
 
-    const genders =
-      unique(
-        products.map(
-          (p) =>
-            p.gender
-        )
-      );
-
-    const styles =
-      unique(
-        products.flatMap(
-          (p) =>
-            Array.isArray(
-              p.style
-            )
-              ? p.style
-              : []
-        )
-      );
-
-    const occasions =
-      unique(
-        products.flatMap(
-          (p) =>
-            Array.isArray(
-              p.occasion
-            )
-              ? p.occasion
-              : []
-        )
-      );
-
-    const materials =
-      unique(
-        products.flatMap(
-          (p) =>
-            Array.isArray(
-              p.material
-            )
-              ? p.material
-              : []
-        )
-      );
-
-    const prices =
-      products.map(
-        (p) =>
-          Number(p.price)
-      );
+      return res
+        .status(404)
+        .json({
+          error:
+            "Product not found."
+        });
+    }
 
     res.json({
-      success: true,
-
-      filters: {
-        categories,
-        colors,
-        genders,
-        styles,
-        occasions,
-        materials,
-
-        price: {
-          min:
-            Math.min(
-              ...prices
-            ),
-
-          max:
-            Math.max(
-              ...prices
-            ),
-        },
-      },
+      product
     });
   }
 );
 
 /*
 =========================================================
-ADVANCED SEARCH
+API: DATASET STATS
+=========================================================
+*/
+
+app.get(
+  "/api/dataset/stats",
+  (req, res) => {
+
+    res.json(
+      getDatasetStats()
+    );
+  }
+);
+
+/*
+=========================================================
+API: SEARCH
 =========================================================
 */
 
 app.post(
   "/api/search",
-  async (
-    req,
-    res
-  ) => {
+  (req, res) => {
 
-    try {
+    const query =
+      typeof req.body?.query ===
+      "string"
+        ? req.body.query.trim()
+        : "";
 
-      const {
-        query = "",
+    if (!query) {
 
-        minPrice,
-        maxPrice,
-
-        category,
-        categories,
-
-        color,
-        colors,
-
-        style,
-        styles,
-
-        gender,
-        genders,
-
-        occasion,
-        occasions,
-
-        availability,
-
-        sort = "relevance",
-
-        limit = 20,
-      } =
-        req.body || {};
-
-      const cleanQuery =
-        String(
-          query || ""
-        ).trim();
-
-      /*
-      -----------------------------------------------
-      FILTER PRODUCTS FIRST
-      -----------------------------------------------
-      */
-
-      const filteredProducts =
-        applyFilters(
-          products,
-          {
-            minPrice,
-            maxPrice,
-            category,
-            categories,
-            color,
-            colors,
-            style,
-            styles,
-            gender,
-            genders,
-            occasion,
-            occasions,
-            availability,
-          }
-        );
-
-      /*
-      -----------------------------------------------
-      AI SEARCH
-      -----------------------------------------------
-      */
-
-      let scoredResults = [];
-
-      let queryEmbedding = null;
-
-      if (
-        cleanQuery &&
-        embeddingModel
-      ) {
-
-        const output =
-          await embeddingModel(
-            cleanQuery,
-            {
-              pooling: "mean",
-              normalize: true,
-            }
-          );
-
-        queryEmbedding =
-          Array.from(
-            output.data
-          );
-      }
-
-      for (
-        const product of filteredProducts
-      ) {
-
-        const originalIndex =
-          products.findIndex(
-            (item) =>
-              item.id ===
-              product.id
-          );
-
-        const semanticScore =
-          queryEmbedding &&
-          productEmbeddings[
-            originalIndex
-          ]?.length
-            ? Math.max(
-                0,
-                cosineSimilarity(
-                  queryEmbedding,
-                  productEmbeddings[
-                    originalIndex
-                  ]
-                )
-              )
-            : 0;
-
-        const keywords =
-          keywordScore(
-            cleanQuery,
-            product
-          );
-
-        /*
-        AI ranking:
-        70% semantic
-        30% keyword
-        */
-
-        let score =
-          cleanQuery
-            ? (
-                semanticScore *
-                  0.7 +
-                keywords *
-                  0.3
-              )
-            : 0.5;
-
-        /*
-        Filter match bonus
-        */
-
-        let filterScore = 0;
-
-        if (
-          category ||
-          categories?.length
-        ) {
-          filterScore += 0.05;
-        }
-
-        if (
-          color ||
-          colors?.length
-        ) {
-          filterScore += 0.05;
-        }
-
-        if (
-          style ||
-          styles?.length
-        ) {
-          filterScore += 0.05;
-        }
-
-        if (
-          gender ||
-          genders?.length
-        ) {
-          filterScore += 0.03;
-        }
-
-        if (
-          occasion ||
-          occasions?.length
-        ) {
-          filterScore += 0.05;
-        }
-
-        if (
-          minPrice !== undefined ||
-          maxPrice !== undefined
-        ) {
-          filterScore += 0.05;
-        }
-
-        score +=
-          filterScore;
-
-        score =
-          Math.min(
-            1,
-            score
-          );
-
-        scoredResults.push(
-          formatResult(
-            product,
-            score,
-            cleanQuery,
-            filterScore
-          )
-        );
-      }
-
-      /*
-      -----------------------------------------------
-      SORT
-      -----------------------------------------------
-      */
-
-      scoredResults =
-        sortProducts(
-          scoredResults,
-          sort
-        );
-
-      /*
-      -----------------------------------------------
-      LIMIT
-      -----------------------------------------------
-      */
-
-      const safeLimit =
-        Math.min(
-          50,
-          Math.max(
-            1,
-            Number(limit) || 20
-          )
-        );
-
-      const finalResults =
-        scoredResults.slice(
-          0,
-          safeLimit
-        );
-
-      /*
-      -----------------------------------------------
-      RESPONSE
-      -----------------------------------------------
-      */
-
-      res.json({
-        success: true,
-
-        query:
-          cleanQuery,
-
-        filters: {
-          minPrice:
-            minPrice ?? null,
-
-          maxPrice:
-            maxPrice ?? null,
-
-          categories:
-            categories ||
-            (category
-              ? [category]
-              : []),
-
-          colors:
-            colors ||
-            (color
-              ? [color]
-              : []),
-
-          styles:
-            styles ||
-            (style
-              ? [style]
-              : []),
-
-          genders:
-            genders ||
-            (gender
-              ? [gender]
-              : []),
-
-          occasions:
-            occasions ||
-            (occasion
-              ? [occasion]
-              : []),
-
-          availability:
-            availability ||
-            null,
-        },
-
-        sort,
-
-        total:
-          finalResults.length,
-
-        totalBeforeLimit:
-          scoredResults.length,
-
-        results:
-          finalResults,
-      });
-
-    } catch (error) {
-
-      console.error(
-        "Advanced search error:",
-        error
-      );
-
-      res.status(500).json({
-        success: false,
-        error:
-          "Advanced AI search failed.",
-      });
+      return res
+        .status(400)
+        .json({
+          error:
+            "Search query is required."
+        });
     }
+
+    const results =
+      lexicalSearch(query);
+
+    res.json({
+
+      query,
+
+      method:
+        "lexical-baseline",
+
+      count:
+        results.length,
+
+      results
+    });
   }
 );
 
 /*
 =========================================================
-AI STYLIST
+API: FILTER
 =========================================================
 */
 
 app.post(
-  "/api/stylist",
-  async (
-    req,
-    res
-  ) => {
+  "/api/filter",
+  (req, res) => {
 
-    try {
+    const {
+      category,
+      brand,
+      color,
+      gender,
+      minPrice,
+      maxPrice
+    } = req.body || {};
 
-      const {
-        occasion = "",
-        style = "",
-        comfort = "",
-        color = "",
-        coverage = "",
-        description = "",
-      } =
-        req.body || {};
+    let filtered =
+      [...products];
 
-      const query =
-        [
-          occasion,
-          style,
-          comfort,
-          color,
-          coverage,
-          description,
-        ]
-          .filter(Boolean)
-          .join(" ");
+    if (category) {
 
-      const searchResponse =
-        await fetch(
-          `http://localhost:${PORT}/api/search`,
-          {
-            method: "POST",
-
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-
-            body:
-              JSON.stringify({
-                query,
-
-                occasion:
-                  occasion || undefined,
-
-                style:
-                  style || undefined,
-
-                color:
-                  color || undefined,
-
-                limit: 10,
-              }),
-          }
+      filtered =
+        filtered.filter(
+          (product) =>
+            normalize(
+              product.category
+            ) ===
+            normalize(category)
         );
-
-      const data =
-        await searchResponse.json();
-
-      res.json({
-        success: true,
-
-        query,
-
-        recommendations:
-          data.results || [],
-      });
-
-    } catch (error) {
-
-      console.error(
-        "AI Stylist error:",
-        error
-      );
-
-      res.status(500).json({
-        success: false,
-
-        error:
-          "AI Stylist failed.",
-      });
     }
+
+    if (brand) {
+
+      filtered =
+        filtered.filter(
+          (product) =>
+            normalize(
+              product.brand
+            ) ===
+            normalize(brand)
+        );
+    }
+
+    if (color) {
+
+      filtered =
+        filtered.filter(
+          (product) =>
+            normalize(
+              product.color
+            ) ===
+            normalize(color)
+        );
+    }
+
+    if (gender) {
+
+      filtered =
+        filtered.filter(
+          (product) =>
+            normalize(
+              product.gender
+            ) ===
+            normalize(gender)
+        );
+    }
+
+    if (
+      minPrice !==
+      undefined
+    ) {
+
+      filtered =
+        filtered.filter(
+          (product) =>
+            Number(
+              product.price
+            ) >=
+            Number(minPrice)
+        );
+    }
+
+    if (
+      maxPrice !==
+      undefined
+    ) {
+
+      filtered =
+        filtered.filter(
+          (product) =>
+            Number(
+              product.price
+            ) <=
+            Number(maxPrice)
+        );
+    }
+
+    res.json({
+
+      count:
+        filtered.length,
+
+      filters: {
+        category:
+          category || null,
+        brand:
+          brand || null,
+        color:
+          color || null,
+        gender:
+          gender || null,
+        minPrice:
+          minPrice ?? null,
+        maxPrice:
+          maxPrice ?? null
+      },
+
+      products:
+        filtered
+    });
+  }
+);
+
+/*
+=========================================================
+404
+=========================================================
+*/
+
+app.use(
+  (req, res) => {
+
+    res.status(404).json({
+      error:
+        "API endpoint not found.",
+      path:
+        req.originalUrl
+    });
+  }
+);
+
+/*
+=========================================================
+ERROR HANDLER
+=========================================================
+*/
+
+app.use(
+  (error, req, res, next) => {
+
+    console.error(
+      "Server error:",
+      error
+    );
+
+    res
+      .status(500)
+      .json({
+        error:
+          "Internal server error."
+      });
   }
 );
 
@@ -1318,29 +654,32 @@ START
 =========================================================
 */
 
-async function startServer() {
+app.listen(
+  PORT,
+  () => {
 
-  console.log(
-    "Starting Fashion AI Discovery..."
-  );
+    console.log(
+      "========================================"
+    );
 
-  await loadEmbeddingModel();
+    console.log(
+      "Fashion AI Discovery Backend"
+    );
 
-  await createProductEmbeddings();
+    console.log(
+      `Running on port ${PORT}`
+    );
 
-  app.listen(
-    PORT,
-    () => {
+    console.log(
+      `Products: ${products.length}`
+    );
 
-      console.log(
-        `Fashion AI Discovery running on port ${PORT}`
-      );
+    console.log(
+      "Research foundation ready."
+    );
 
-      console.log(
-        `AI indexed products: ${productEmbeddings.length}`
-      );
-    }
-  );
-}
-
-startServer();
+    console.log(
+      "========================================"
+    );
+  }
+);
