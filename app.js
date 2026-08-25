@@ -1,4 +1,3 @@
-```javascript
 /*
 =========================================================
 FASHION AI DISCOVERY
@@ -8,65 +7,42 @@ DAY 9 - PRODUCTION FRONTEND
 
 "use strict";
 
-/*
-=========================================================
-API
-=========================================================
-*/
+/* ========================================================
+   API
+======================================================== */
 
-const API_BASE_URL =
-  "https://fashion-ai-search-lj6s.onrender.com";
+const API_BASE_URL = "https://fashion-ai-search-lj6s.onrender.com";
 
-/*
-=========================================================
-DOM HELPERS
-=========================================================
-*/
+/* ========================================================
+   DOM HELPERS
+======================================================== */
 
-const $ = (id) =>
-  document.getElementById(id);
+function $(id) {
+  return document.getElementById(id);
+}
 
-const searchInput =
-  $("searchInput");
+/* ========================================================
+   STATE
+======================================================== */
 
-const searchButton =
-  $("searchButton");
-
-const resultsContainer =
-  $("results");
-
-const resultCount =
-  $("resultCount");
-
-const searchSummary =
-  $("searchSummary");
-
-const stylistButton =
-  $("stylistButton");
-
-/*
-=========================================================
-STATE
-=========================================================
-*/
+let searchInput = null;
+let searchButton = null;
+let resultsContainer = null;
+let resultCount = null;
+let searchSummary = null;
+let stylistButton = null;
 
 let allProducts = [];
-
 let currentResults = [];
-
 let currentQuery = "";
-
 let isSearching = false;
 
-/*
-=========================================================
-HTML ESCAPE
-=========================================================
-*/
+/* ========================================================
+   HTML ESCAPE
+======================================================== */
 
 function escapeHTML(value) {
-
-  return String(value ?? "")
+  return String(value == null ? "" : value)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
@@ -74,16 +50,28 @@ function escapeHTML(value) {
     .replace(/'/g, "&#039;");
 }
 
-/*
-=========================================================
-PRICE
-=========================================================
-*/
+/* ========================================================
+   ARRAY NORMALIZER
+======================================================== */
+
+function safeArray(value) {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    return [value];
+  }
+
+  return [];
+}
+
+/* ========================================================
+   PRICE FORMAT
+======================================================== */
 
 function formatPrice(price) {
-
-  const value =
-    Number(price);
+  const value = Number(price);
 
   if (!Number.isFinite(value)) {
     return escapeHTML(price || "");
@@ -92,520 +80,391 @@ function formatPrice(price) {
   return value.toLocaleString("en-IN");
 }
 
-/*
-=========================================================
-PRODUCT VISUAL
-=========================================================
-*/
+/* ========================================================
+   PRODUCT VISUAL
+======================================================== */
 
 function productVisual(product) {
+  const category = String(product.category || "Fashion");
+  const name = String(product.name || "Fashion Product");
 
-  const category =
-    String(
-      product.category ||
-      "Fashion"
-    );
+  return (
+    '<div class="product-visual">' +
+      '<div class="visual-grid"></div>' +
 
-  const name =
-    String(
-      product.name ||
-      "Fashion Product"
-    );
+      '<div class="visual-content">' +
 
-  return `
-    <div class="product-visual">
+        '<span class="visual-label">' +
+          'FASHION AI' +
+        '</span>' +
 
-      <div class="visual-grid"></div>
+        '<strong>' +
+          escapeHTML(category) +
+        '</strong>' +
 
-      <div class="visual-content">
+        '<small>' +
+          escapeHTML(name) +
+        '</small>' +
 
-        <span class="visual-label">
-          FASHION AI
-        </span>
-
-        <strong>
-          ${escapeHTML(category)}
-        </strong>
-
-        <small>
-          ${escapeHTML(name)}
-        </small>
-
-      </div>
-
-    </div>
-  `;
+      '</div>' +
+    '</div>'
+  );
 }
 
-/*
-=========================================================
-LOADING
-=========================================================
-*/
+/* ========================================================
+   LOADING
+======================================================== */
 
 function showLoading(message) {
-
   if (!resultsContainer) {
     return;
   }
 
-  resultsContainer.innerHTML = `
-    <div class="no-results">
+  resultsContainer.innerHTML =
+    '<div class="no-results">' +
 
-      <div class="loading-spinner"></div>
+      '<div class="loading-spinner"></div>' +
 
-      <h3>
-        ${escapeHTML(
-          message ||
-          "AI is working..."
-        )}
-      </h3>
+      '<h3>' +
+        escapeHTML(message || "AI is working...") +
+      '</h3>' +
 
-      <p>
-        Fashion AI is analysing your request.
-      </p>
+      '<p>' +
+        'Fashion AI is analysing your request.' +
+      '</p>' +
 
-    </div>
-  `;
+    '</div>';
 
   if (resultCount) {
-    resultCount.textContent =
-      "AI working";
+    resultCount.textContent = "AI working";
   }
 }
 
-/*
-=========================================================
-ERROR
-=========================================================
-*/
+/* ========================================================
+   ERROR
+======================================================== */
 
 function showError(message) {
-
   if (!resultsContainer) {
     return;
   }
 
-  resultsContainer.innerHTML = `
-    <div class="no-results">
+  resultsContainer.innerHTML =
+    '<div class="no-results">' +
 
-      <h3>
-        AI service unavailable
-      </h3>
+      '<h3>AI service unavailable</h3>' +
 
-      <p>
-        ${escapeHTML(
-          message ||
-          "Something went wrong. Please try again."
-        )}
-      </p>
+      '<p>' +
+        escapeHTML(
+          message || "Something went wrong. Please try again."
+        ) +
+      '</p>' +
 
-    </div>
-  `;
+    '</div>';
 
   if (resultCount) {
-    resultCount.textContent =
-      "Error";
+    resultCount.textContent = "Error";
   }
 }
 
-/*
-=========================================================
-NO RESULTS
-=========================================================
-*/
+/* ========================================================
+   NO RESULTS
+======================================================== */
 
 function showNoResults() {
-
   if (!resultsContainer) {
     return;
   }
 
-  resultsContainer.innerHTML = `
-    <div class="no-results">
+  resultsContainer.innerHTML =
+    '<div class="no-results">' +
 
-      <h3>
-        No strong fashion matches found.
-      </h3>
+      '<h3>No strong fashion matches found.</h3>' +
 
-      <p>
-        Try another colour, style,
-        occasion or budget.
-      </p>
+      '<p>' +
+        'Try another colour, style, occasion or budget.' +
+      '</p>' +
 
-    </div>
-  `;
+    '</div>';
 
   if (resultCount) {
-    resultCount.textContent =
-      "0 matches";
+    resultCount.textContent = "0 matches";
   }
 }
 
-/*
-=========================================================
-ARRAY NORMALIZER
-=========================================================
-*/
-
-function safeArray(value) {
-
-  if (Array.isArray(value)) {
-    return value;
-  }
-
-  if (
-    typeof value === "string" &&
-    value.trim()
-  ) {
-    return [value];
-  }
-
-  return [];
-}
-
-/*
-=========================================================
-PRODUCT CARD
-=========================================================
-*/
+/* ========================================================
+   PRODUCT CARD
+======================================================== */
 
 function createProductCard(product) {
+  const rawScore =
+    product.matchScore != null
+      ? product.matchScore
+      : product.score != null
+        ? product.score
+        : 0;
 
-  const score =
-    Math.max(
-      0,
-      Math.min(
-        100,
-        Number(
-          product.matchScore ??
-          product.score ??
-          0
-        )
-      )
-    );
+  let score = Number(rawScore);
 
-  const reasons =
-    safeArray(product.reasons);
+  if (!Number.isFinite(score)) {
+    score = 0;
+  }
 
-  const styles =
-    safeArray(product.style);
+  score = Math.max(0, Math.min(100, score));
 
-  const occasions =
-    safeArray(product.occasion);
+  const reasons = safeArray(product.reasons);
+  const styles = safeArray(product.style);
+  const occasions = safeArray(product.occasion);
+  const materials = safeArray(product.material);
 
-  const materials =
-    safeArray(product.material);
+  let colorHTML = "";
+  let materialHTML = "";
+  let styleHTML = "";
+  let occasionHTML = "";
+  let reasonsHTML = "";
 
-  return `
-    <article class="product-card">
+  if (product.color) {
+    colorHTML =
+      '<div class="product-meta-item">' +
+        '<span>Colour</span>' +
+        '<strong>' +
+          escapeHTML(product.color) +
+        '</strong>' +
+      '</div>';
+  }
 
-      <div class="product-image-wrap">
+  if (materials.length) {
+    materialHTML =
+      '<div class="product-meta-item">' +
+        '<span>Material</span>' +
+        '<strong>' +
+          escapeHTML(materials.slice(0, 2).join(", ")) +
+        '</strong>' +
+      '</div>';
+  }
 
-        ${productVisual(product)}
+  if (styles.length) {
+    styleHTML =
+      '<div class="product-meta-item">' +
+        '<span>Style</span>' +
+        '<strong>' +
+          escapeHTML(styles.slice(0, 2).join(", ")) +
+        '</strong>' +
+      '</div>';
+  }
 
-        <div class="ai-match-badge">
-          ${Math.round(score)}% AI MATCH
-        </div>
+  if (occasions.length) {
+    occasionHTML =
+      '<div class="product-meta-item">' +
+        '<span>Occasion</span>' +
+        '<strong>' +
+          escapeHTML(occasions.slice(0, 2).join(", ")) +
+        '</strong>' +
+      '</div>';
+  }
 
-      </div>
+  if (reasons.length) {
+    let reasonItems = "";
 
-      <div class="product-content">
+    reasons.slice(0, 3).forEach(function(reason) {
+      reasonItems +=
+        '<li>' +
+          escapeHTML(reason) +
+        '</li>';
+    });
 
-        <div class="product-top">
+    reasonsHTML =
+      '<div class="product-reason">' +
 
-          <span class="product-brand">
-            ${escapeHTML(
-              product.brand ||
-              "FASHION"
-            )}
-          </span>
+        '<strong>Why AI selected this</strong>' +
 
-          <span class="product-category">
-            ${escapeHTML(
-              product.category ||
-              "Fashion"
-            )}
-          </span>
+        '<ul>' +
+          reasonItems +
+        '</ul>' +
 
-        </div>
+      '</div>';
+  }
 
-        <h3 class="product-title">
-          ${escapeHTML(
-            product.name ||
-            "Fashion Product"
-          )}
-        </h3>
+  return (
+    '<article class="product-card">' +
 
-        <p class="product-description">
-          ${escapeHTML(
-            product.description ||
-            ""
-          )}
-        </p>
+      '<div class="product-image-wrap">' +
 
-        <div class="product-price">
-          ₹${formatPrice(product.price)}
-        </div>
+        productVisual(product) +
 
-        <div class="product-meta">
+        '<div class="ai-match-badge">' +
+          Math.round(score) +
+          '% AI MATCH' +
+        '</div>' +
 
-          ${
-            product.color
-              ? `
-                <div class="product-meta-item">
-                  <span>Colour</span>
-                  <strong>
-                    ${escapeHTML(
-                      product.color
-                    )}
-                  </strong>
-                </div>
-              `
-              : ""
-          }
+      '</div>' +
 
-          ${
-            materials.length
-              ? `
-                <div class="product-meta-item">
-                  <span>Material</span>
-                  <strong>
-                    ${escapeHTML(
-                      materials
-                        .slice(0, 2)
-                        .join(", ")
-                    )}
-                  </strong>
-                </div>
-              `
-              : ""
-          }
+      '<div class="product-content">' +
 
-          ${
-            styles.length
-              ? `
-                <div class="product-meta-item">
-                  <span>Style</span>
-                  <strong>
-                    ${escapeHTML(
-                      styles
-                        .slice(0, 2)
-                        .join(", ")
-                    )}
-                  </strong>
-                </div>
-              `
-              : ""
-          }
+        '<div class="product-top">' +
 
-          ${
-            occasions.length
-              ? `
-                <div class="product-meta-item">
-                  <span>Occasion</span>
-                  <strong>
-                    ${escapeHTML(
-                      occasions
-                        .slice(0, 2)
-                        .join(", ")
-                    )}
-                  </strong>
-                </div>
-              `
-              : ""
-          }
+          '<span class="product-brand">' +
+            escapeHTML(product.brand || "FASHION") +
+          '</span>' +
 
-        </div>
+          '<span class="product-category">' +
+            escapeHTML(product.category || "Fashion") +
+          '</span>' +
 
-        ${
-          reasons.length
-            ? `
-              <div class="product-reason">
+        '</div>' +
 
-                <strong>
-                  Why AI selected this
-                </strong>
+        '<h3 class="product-title">' +
+          escapeHTML(product.name || "Fashion Product") +
+        '</h3>' +
 
-                <ul>
-                  ${reasons
-                    .slice(0, 3)
-                    .map(
-                      (reason) => `
-                        <li>
-                          ${escapeHTML(
-                            reason
-                          )}
-                        </li>
-                      `
-                    )
-                    .join("")}
-                </ul>
+        '<p class="product-description">' +
+          escapeHTML(product.description || "") +
+        '</p>' +
 
-              </div>
-            `
-            : ""
-        }
+        '<div class="product-price">' +
+          '₹' +
+          formatPrice(product.price) +
+        '</div>' +
 
-        <div class="match-score">
+        '<div class="product-meta">' +
+          colorHTML +
+          materialHTML +
+          styleHTML +
+          occasionHTML +
+        '</div>' +
 
-          <div class="match-score-header">
+        reasonsHTML +
 
-            <span>
-              AI relevance
-            </span>
+        '<div class="match-score">' +
 
-            <strong>
-              ${Math.round(score)}%
-            </strong>
+          '<div class="match-score-header">' +
 
-          </div>
+            '<span>AI relevance</span>' +
 
-          <div class="match-score-bar">
+            '<strong>' +
+              Math.round(score) +
+              '%' +
+            '</strong>' +
 
-            <div
-              class="match-score-fill"
-              style="width:${Math.round(score)}%"
-            ></div>
+          '</div>' +
 
-          </div>
+          '<div class="match-score-bar">' +
 
-        </div>
+            '<div class="match-score-fill" ' +
+              'style="width:' +
+              Math.round(score) +
+              '%">' +
+            '</div>' +
 
-      </div>
+          '</div>' +
 
-    </article>
-  `;
+        '</div>' +
+
+      '</div>' +
+
+    '</article>'
+  );
 }
 
-/*
-=========================================================
-RENDER PRODUCTS
-=========================================================
-*/
+/* ========================================================
+   RENDER PRODUCTS
+======================================================== */
 
-function renderProducts(
-  products,
-  query = ""
-) {
-
+function renderProducts(products, query) {
   if (
     !Array.isArray(products) ||
     products.length === 0
   ) {
-
     showNoResults();
-
     return;
   }
 
-  currentResults =
-    products;
+  currentResults = products;
 
-  resultsContainer.innerHTML =
-    products
+  if (resultsContainer) {
+    resultsContainer.innerHTML = products
       .map(createProductCard)
       .join("");
-
-  if (resultCount) {
-
-    resultCount.textContent =
-      `${products.length} AI matches`;
   }
 
-  if (
-    searchSummary &&
-    query
-  ) {
+  if (resultCount) {
+    resultCount.textContent =
+      products.length + " AI matches";
+  }
 
+  if (searchSummary && query) {
     searchSummary.textContent =
-      `AI-ranked results for "${query}"`;
+      'AI-ranked results for "' +
+      query +
+      '"';
   }
 }
 
-/*
-=========================================================
-API REQUEST HELPER
-=========================================================
-*/
+/* ========================================================
+   API REQUEST
+======================================================== */
 
-async function apiRequest(
-  endpoint,
-  options = {}
-) {
+async function apiRequest(endpoint, options) {
+  const controller = new AbortController();
 
-  const controller =
-    new AbortController();
-
-  const timeout =
-    setTimeout(
-      () => controller.abort(),
-      30000
-    );
+  const timeout = setTimeout(function() {
+    controller.abort();
+  }, 30000);
 
   try {
+    const requestOptions = options || {};
 
-    const response =
-      await fetch(
-        `${API_BASE_URL}${endpoint}`,
-        {
-          ...options,
-          signal:
-            controller.signal
-        }
-      );
+    const response = await fetch(
+      API_BASE_URL + endpoint,
+      {
+        ...requestOptions,
+        signal: controller.signal
+      }
+    );
 
     let data = {};
 
     try {
-      data =
-        await response.json();
-    } catch {
+      data = await response.json();
+    } catch (error) {
       data = {};
     }
 
     if (!response.ok) {
-
       throw new Error(
         data.error ||
-        `Request failed (${response.status})`
+        "Request failed (" +
+        response.status +
+        ")"
       );
     }
 
     return data;
 
   } finally {
-
     clearTimeout(timeout);
   }
 }
 
-/*
-=========================================================
-LOAD PRODUCTS
-=========================================================
-*/
+/* ========================================================
+   LOAD PRODUCTS
+======================================================== */
 
 async function loadProducts() {
-
   try {
+    const data = await apiRequest("/api/products");
 
-    const data =
-      await apiRequest(
-        "/api/products"
-      );
-
-    allProducts =
-      Array.isArray(
-        data.products
-      )
-        ? data.products
-        : [];
+    if (Array.isArray(data.products)) {
+      allProducts = data.products;
+    } else if (Array.isArray(data)) {
+      allProducts = data;
+    } else {
+      allProducts = [];
+    }
 
     return allProducts;
 
   } catch (error) {
-
     console.error(
       "Product loading error:",
       error
@@ -615,42 +474,32 @@ async function loadProducts() {
   }
 }
 
-/*
-=========================================================
-AI SEARCH
-=========================================================
-*/
+/* ========================================================
+   AI SEARCH
+======================================================== */
 
-async function searchFashion(
-  query
-) {
-
+async function searchFashion(query) {
   return apiRequest(
     "/api/search",
     {
       method: "POST",
 
       headers: {
-        "Content-Type":
-          "application/json"
+        "Content-Type": "application/json"
       },
 
-      body:
-        JSON.stringify({
-          query
-        })
+      body: JSON.stringify({
+        query: query
+      })
     }
   );
 }
 
-/*
-=========================================================
-RUN SEARCH
-=========================================================
-*/
+/* ========================================================
+   RUN SEARCH
+======================================================== */
 
 async function runSearch() {
-
   if (isSearching) {
     return;
   }
@@ -661,18 +510,17 @@ async function runSearch() {
       : "";
 
   if (!query) {
-
     currentQuery = "";
 
     if (allProducts.length) {
-
       renderProducts(
         allProducts.slice(0, 6)
       );
 
       if (searchSummary) {
         searchSummary.textContent =
-          `${allProducts.length} products available for AI discovery.`;
+          allProducts.length +
+          " products available for AI discovery.";
       }
     }
 
@@ -680,37 +528,27 @@ async function runSearch() {
   }
 
   isSearching = true;
+  currentQuery = query;
 
   if (searchButton) {
-    searchButton.disabled =
-      true;
+    searchButton.disabled = true;
   }
-
-  currentQuery =
-    query;
 
   showLoading(
     "Understanding your fashion request..."
   );
 
   try {
-
     const data =
-      await searchFashion(
-        query
-      );
+      await searchFashion(query);
 
     const results =
-      Array.isArray(
-        data.results
-      )
+      Array.isArray(data.results)
         ? data.results
         : [];
 
     if (!results.length) {
-
       showNoResults();
-
       return;
     }
 
@@ -723,86 +561,83 @@ async function runSearch() {
       data.budget &&
       searchSummary
     ) {
-
       searchSummary.textContent =
-        `AI-ranked results for "${query}" · budget detected: ₹${formatPrice(data.budget)}`;
+        'AI-ranked results for "' +
+        query +
+        '" · budget detected: ₹' +
+        formatPrice(data.budget);
     }
 
-    document
-      .getElementById(
-        "results-section"
-      )
-      ?.scrollIntoView({
+    const resultsSection =
+      $("results-section");
+
+    if (resultsSection) {
+      resultsSection.scrollIntoView({
         behavior: "smooth",
         block: "start"
       });
+    }
 
   } catch (error) {
-
     console.error(
       "AI Search Error:",
       error
     );
 
-    showError(
-      error.name === "AbortError"
-        ? "AI request timed out. Please try again."
-        : error.message
-    );
+    if (error.name === "AbortError") {
+      showError(
+        "AI request timed out. Please try again."
+      );
+    } else {
+      showError(
+        error.message ||
+        "AI search failed."
+      );
+    }
 
   } finally {
-
     isSearching = false;
 
     if (searchButton) {
-      searchButton.disabled =
-        false;
+      searchButton.disabled = false;
     }
   }
 }
 
-/*
-=========================================================
-AI STYLIST
-=========================================================
-*/
+/* ========================================================
+   AI STYLIST
+======================================================== */
 
 async function runAIStylist() {
+  function getValue(id) {
+    const element = $(id);
 
-  const getValue =
-    (id) =>
-      $(id)?.value?.trim() || "";
+    if (!element) {
+      return "";
+    }
 
-  const occasion =
-    getValue("stylistOccasion");
+    return element.value
+      ? element.value.trim()
+      : "";
+  }
 
-  const style =
-    getValue("stylistStyle");
+  const occasion = getValue("stylistOccasion");
+  const style = getValue("stylistStyle");
+  const comfort = getValue("stylistComfort");
+  const color = getValue("stylistColor");
+  const coverage = getValue("stylistCoverage");
+  const description = getValue("stylistDescription");
 
-  const comfort =
-    getValue("stylistComfort");
-
-  const color =
-    getValue("stylistColor");
-
-  const coverage =
-    getValue("stylistCoverage");
-
-  const description =
-    getValue("stylistDescription");
-
-  const hasInput =
-    [
-      occasion,
-      style,
-      comfort,
-      color,
-      coverage,
-      description
-    ].some(Boolean);
+  const hasInput = [
+    occasion,
+    style,
+    comfort,
+    color,
+    coverage,
+    description
+  ].some(Boolean);
 
   if (!hasInput) {
-
     alert(
       "Please describe at least one part of your desired look."
     );
@@ -811,10 +646,7 @@ async function runAIStylist() {
   }
 
   if (stylistButton) {
-
-    stylistButton.disabled =
-      true;
-
+    stylistButton.disabled = true;
     stylistButton.textContent =
       "AI is styling...";
   }
@@ -824,7 +656,6 @@ async function runAIStylist() {
   );
 
   try {
-
     const data =
       await apiRequest(
         "/api/stylist",
@@ -832,59 +663,51 @@ async function runAIStylist() {
           method: "POST",
 
           headers: {
-            "Content-Type":
-              "application/json"
+            "Content-Type": "application/json"
           },
 
-          body:
-            JSON.stringify({
-              occasion,
-              style,
-              comfort,
-              color,
-              coverage,
-              description
-            })
+          body: JSON.stringify({
+            occasion: occasion,
+            style: style,
+            comfort: comfort,
+            color: color,
+            coverage: coverage,
+            description: description
+          })
         }
       );
 
     const recommendations =
-      Array.isArray(
-        data.recommendations
-      )
+      Array.isArray(data.recommendations)
         ? data.recommendations
         : [];
 
     if (!recommendations.length) {
-
       showNoResults();
-
       return;
     }
 
     renderProducts(
       recommendations,
-      data.query ||
-      description
+      data.query || description
     );
 
     if (searchSummary) {
-
       searchSummary.textContent =
         "Personalised recommendations generated by Fashion AI Stylist.";
     }
 
-    document
-      .getElementById(
-        "results-section"
-      )
-      ?.scrollIntoView({
+    const resultsSection =
+      $("results-section");
+
+    if (resultsSection) {
+      resultsSection.scrollIntoView({
         behavior: "smooth",
         block: "start"
       });
+    }
 
   } catch (error) {
-
     console.error(
       "AI Stylist error:",
       error
@@ -896,102 +719,84 @@ async function runAIStylist() {
     );
 
   } finally {
-
     if (stylistButton) {
-
-      stylistButton.disabled =
-        false;
-
+      stylistButton.disabled = false;
       stylistButton.textContent =
         "Find My AI Matches";
     }
   }
 }
 
-/*
-=========================================================
-SEARCH HINTS
-=========================================================
-*/
+/* ========================================================
+   SEARCH HINTS
+======================================================== */
 
 function setupSearchHints() {
-
-  document
-    .querySelectorAll(
+  const buttons =
+    document.querySelectorAll(
       ".search-hints button"
-    )
-    .forEach(
-      (button) => {
-
-        button.addEventListener(
-          "click",
-          () => {
-
-            if (searchInput) {
-
-              searchInput.value =
-                button.textContent
-                  .trim();
-            }
-
-            runSearch();
-          }
-        );
-      }
     );
-}
 
-/*
-=========================================================
-EVENTS
-=========================================================
-*/
+  buttons.forEach(function(button) {
+    button.addEventListener(
+      "click",
+      function() {
 
-function setupEvents() {
-
-  searchButton?.addEventListener(
-    "click",
-    runSearch
-  );
-
-  searchInput?.addEventListener(
-    "keydown",
-    (event) => {
-
-      if (
-        event.key ===
-        "Enter"
-      ) {
-
-        event.preventDefault();
+        if (searchInput) {
+          searchInput.value =
+            button.textContent.trim();
+        }
 
         runSearch();
       }
-    }
-  );
+    );
+  });
+}
 
-  stylistButton?.addEventListener(
-    "click",
-    runAIStylist
-  );
+/* ========================================================
+   EVENTS
+======================================================== */
+
+function setupEvents() {
+  if (searchButton) {
+    searchButton.addEventListener(
+      "click",
+      runSearch
+    );
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener(
+      "keydown",
+      function(event) {
+
+        if (event.key === "Enter") {
+          event.preventDefault();
+          runSearch();
+        }
+
+      }
+    );
+  }
+
+  if (stylistButton) {
+    stylistButton.addEventListener(
+      "click",
+      runAIStylist
+    );
+  }
 
   setupSearchHints();
 }
 
-/*
-=========================================================
-HEALTH CHECK
-=========================================================
-*/
+/* ========================================================
+   HEALTH CHECK
+======================================================== */
 
 async function checkBackend() {
-
   try {
-
     const data =
-      await apiRequest(
-        "/api/health"
-      );
+      await apiRequest("/api/health");
 
     console.log(
       "Fashion AI backend:",
@@ -1001,7 +806,6 @@ async function checkBackend() {
     return true;
 
   } catch (error) {
-
     console.error(
       "Backend health check failed:",
       error
@@ -1011,35 +815,35 @@ async function checkBackend() {
   }
 }
 
-/*
-=========================================================
-INITIALIZE
-=========================================================
-*/
+/* ========================================================
+   INITIALIZE
+======================================================== */
 
 async function initialize() {
-
   console.log(
     "Fashion AI Discovery starting..."
   );
 
+  searchInput = $("searchInput");
+  searchButton = $("searchButton");
+  resultsContainer = $("results");
+  resultCount = $("resultCount");
+  searchSummary = $("searchSummary");
+  stylistButton = $("stylistButton");
+
   if (resultsContainer) {
+    resultsContainer.innerHTML =
+      '<div class="no-results">' +
 
-    resultsContainer.innerHTML = `
-      <div class="no-results">
+        '<div class="loading-spinner"></div>' +
 
-        <div class="loading-spinner"></div>
+        '<h3>Connecting to Fashion AI...</h3>' +
 
-        <h3>
-          Connecting to Fashion AI...
-        </h3>
+        '<p>' +
+          'Loading the intelligent fashion catalogue.' +
+        '</p>' +
 
-        <p>
-          Loading the intelligent fashion catalogue.
-        </p>
-
-      </div>
-    `;
+      '</div>';
   }
 
   setupEvents();
@@ -1048,7 +852,6 @@ async function initialize() {
     await checkBackend();
 
   if (!backendOnline) {
-
     showError(
       "Fashion AI backend is currently unavailable."
     );
@@ -1057,7 +860,6 @@ async function initialize() {
   }
 
   try {
-
     await loadProducts();
 
     if (allProducts.length) {
@@ -1067,39 +869,33 @@ async function initialize() {
       );
 
       if (resultCount) {
-
         resultCount.textContent =
           "AI catalogue ready";
       }
 
       if (searchSummary) {
-
         searchSummary.textContent =
-          `${allProducts.length} products available for AI discovery.`;
+          allProducts.length +
+          " products available for AI discovery.";
       }
 
     } else {
-
       showNoResults();
     }
 
   } catch (error) {
-
     showError(
       "Could not load the fashion catalogue."
     );
   }
 }
 
-/*
-=========================================================
-START APPLICATION
-=========================================================
-*/
+/* ========================================================
+   START
+======================================================== */
 
 if (
-  document.readyState ===
-  "loading"
+  document.readyState === "loading"
 ) {
 
   document.addEventListener(
@@ -1110,5 +906,5 @@ if (
 } else {
 
   initialize();
+
 }
-```
