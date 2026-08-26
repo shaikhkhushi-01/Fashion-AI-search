@@ -2625,3 +2625,133 @@ document.addEventListener(
     );
   }
 );
+
+/*
+=========================================================
+DAY 8 - EVALUATION PANEL
+=========================================================
+*/
+
+async function loadEvaluationReport() {
+
+  try {
+
+    const data =
+      await apiRequest(
+        "/api/evaluation"
+      );
+
+    console.log(
+      "===================================="
+    );
+
+    console.log(
+      "FASHION AI EVALUATION REPORT"
+    );
+
+    console.log(
+      "===================================="
+    );
+
+    console.table(
+      data.metrics
+    );
+
+    console.log(
+      "Queries evaluated:",
+      data.queriesEvaluated
+    );
+
+    console.log(
+      "Dataset size:",
+      data.datasetSize
+    );
+
+    return data;
+
+  } catch (error) {
+
+    console.error(
+      "Evaluation report unavailable:",
+      error
+    );
+
+    return null;
+  }
+}
+
+
+async function loadEdgeCaseReport() {
+
+  try {
+
+    const data =
+      await apiRequest(
+        "/api/evaluation/edge-cases"
+      );
+
+    console.log(
+      "===================================="
+    );
+
+    console.log(
+      "EDGE CASE TEST REPORT"
+    );
+
+    console.log(
+      "===================================="
+    );
+
+    console.table(
+      data.tests
+    );
+
+    console.log(
+      `Passed: ${data.passed}/${data.total}`
+    );
+
+    return data;
+
+  } catch (error) {
+
+    console.error(
+      "Edge-case report unavailable:",
+      error
+    );
+
+    return null;
+  }
+}
+
+
+/*
+=========================================================
+DAY 8 INITIALIZATION
+=========================================================
+*/
+
+document.addEventListener(
+  "DOMContentLoaded",
+  async () => {
+
+    console.log(
+      "Fashion AI Day 8 evaluation module ready."
+    );
+
+    /*
+    Small delay so backend has time
+    to finish initialization.
+    */
+
+    setTimeout(
+      async () => {
+
+        await loadEvaluationReport();
+
+        await loadEdgeCaseReport();
+
+      },
+      1500
+    );
+  }
+);
