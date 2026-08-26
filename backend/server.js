@@ -832,6 +832,83 @@ app.get(
 
 /*
 =========================================================
+DAY 8 - EVALUATION API
+=========================================================
+*/
+
+app.get(
+  "/api/evaluation",
+  (req, res) => {
+
+    try {
+
+      const report =
+        runEvaluation();
+
+      res.json({
+
+        status: "completed",
+
+        ...report
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        "Evaluation error:",
+        error
+      );
+
+      res.status(500).json({
+
+        status: "failed",
+
+        error:
+          "Evaluation could not be completed."
+      });
+    }
+  }
+);
+
+
+app.get(
+  "/api/evaluation/edge-cases",
+  (req, res) => {
+
+    try {
+
+      const report =
+        runEdgeCaseTests();
+
+      res.json({
+
+        status: "completed",
+
+        ...report
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        "Edge-case evaluation error:",
+        error
+      );
+
+      res.status(500).json({
+
+        status: "failed",
+
+        error:
+          "Edge-case tests failed."
+      });
+    }
+  }
+);
+
+/*
+=========================================================
 ALL PRODUCTS
 =========================================================
 */
