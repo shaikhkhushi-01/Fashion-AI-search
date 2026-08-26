@@ -1,13 +1,3 @@
-/*
-=========================================================
-FASHION AI DISCOVERY
-DAY 4
-PERSONALIZED AI FASHION API
-=========================================================
-*/
-
-"use strict";
-
 import express from "express";
 import cors from "cors";
 import fs from "fs";
@@ -15,36 +5,14 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 import {
-  personalizeProducts,
-  buildStylistQuery,
-  profileFromStylist
-} from "./services/personalization.js";
-
-/*
-=========================================================
-PATHS
-=========================================================
-*/
+  searchProducts
+} from "./services/aiSearch.js";
 
 const __filename =
   fileURLToPath(import.meta.url);
 
 const __dirname =
   path.dirname(__filename);
-
-const DATA_PATH =
-  path.join(
-    __dirname,
-    "..",
-    "data",
-    "products.json"
-  );
-
-/*
-=========================================================
-APP
-=========================================================
-*/
 
 const app =
   express();
@@ -66,57 +34,58 @@ app.use(
 
 app.use(
   express.json({
-    limit: "1mb"
+    limit: "2mb"
   })
 );
 
 /*
 =========================================================
-LOAD PRODUCTS
+PRODUCT DATA
 =========================================================
 */
 
+const productsPath =
+  path.join(
+    __dirname,
+    "..",
+    "data",
+    "products.json"
+  );
+
 let products = [];
 
-function loadProducts() {
-  try {
+try {
 
-    const raw =
+  products =
+    JSON.parse(
       fs.readFileSync(
-        DATA_PATH,
+        productsPath,
         "utf8"
-      );
-
-    const parsed =
-      JSON.parse(raw);
-
-    if (
-      !Array.isArray(parsed)
-    ) {
-      throw new Error(
-        "products.json must contain an array"
-      );
-    }
-
-    products =
-      parsed;
-
-    console.log(
-      `Loaded ${products.length} products`
+      )
     );
 
-  } catch (error) {
+  if (
+    !Array.isArray(products)
+  ) {
 
-    console.error(
-      "Unable to load products:",
-      error
+    throw new Error(
+      "products.json must contain an array"
     );
-
-    products = [];
   }
-}
 
-loadProducts();
+  console.log(
+    `Loaded ${products.length} products`
+  );
+
+} catch (error) {
+
+  console.error(
+    "Unable to load products.json:",
+    error
+  );
+
+  process.exit(1);
+}
 
 /*
 =========================================================
@@ -129,25 +98,27 @@ app.get(
   (req, res) => {
 
     res.json({
+
       status: "ok",
+
       service:
-        "fashion-ai-discovery",
-      version: "day-4",
+        "Fashion AI Discovery",
+
+      version:
+        "day-5-hybrid-retrieval",
+
       products:
         products.length,
-      features: [
-        "AI search",
-        "personalization",
-        "AI stylist",
-        "explainable recommendations"
-      ]
+
+      timestamp:
+        new Date().toISOString()
     });
   }
 );
 
 /*
 =========================================================
-PRODUCTS
+ALL PRODUCTS
 =========================================================
 */
 
@@ -156,6 +127,10 @@ app.get(
   (req, res) => {
 
     res.json({
+
+      count:
+        products.length,
+
       products
     });
   }
@@ -163,7 +138,7 @@ app.get(
 
 /*
 =========================================================
-SIMPLE SEARCH
+HYBRID SEARCH
 =========================================================
 */
 
@@ -171,467 +146,148 @@ app.post(
   "/api/search",
   (req, res) => {
 
-    const query =
-      String(
-        req.body?.query || ""
-      )
-        .trim()
-        .toLowerCase();
-
-    if (!query) {
-
-      return res.json({
-        results: products.slice(
-          0,
-          12
-        )
-      });
-    }
-
-    const words =
-      query
-        .split(/\s+/)
-        .filter(Boolean);
-
-    const scored =
-      products.map(
-        (product) => {
-
-          const searchable =
-            [
-              product.brand,
-              product.name,
-              product.category,
-              product.gender,
-              product.color,
-              product.description,
-              ...(Array.isArray(product.style)
-                ? product.style
-                : []),
-              ...(Array.isArray(product.occasion)
-                ? product.occasion
-                : []),
-              ...(Array.isArray(product.tags)
-                ? product.tags
-                : [])
-            ]
-              .join(" ")
-              .toLowerCase();
-
-          let score = 0;
-
-          const reasons = [];
-
-          for (
-            const word
-            of words
-          ) {
-
-            if (
-              searchable.includes(
-                word
-              )
-            ) {
-              score += 10;
-            }
-
-            if (
-              String(
-                product.name ||
-                ""
-              )
-                .toLowerCase()
-                .includes(word)
-            ) {
-              score += 10;
-            }
-
-            if (
-              String(
-                product.category ||
-                ""
-              )
-                .toLowerCase()
-                .includes(word)
-            ) {
-              score += 8;
-            }
-
-            if (
-              String(
-                product.color ||
-                ""
-              )
-                .toLowerCase()
-                .includes(word)
-            ) {
-              score += 8;
-            }
-          }
-
-          if (score > 0) {
-
-            reasons.push(
-              "Matches your natural-language fashion query"
-            );
-          }
-
-          return {
-            ...product,
-
-            matchScore:
-              Math.min(
-                100,
-                score
-              ),
-
-            score,
-
-            reasons
-          };
-        }
-      );
-
-    scored.sort(
-      (a, b) =>
-        b.score -
-        a.score
-    );
-
-    res.json({
-      query,
-      results:
-        scored
-          .filter(
-            (item) =>
-              item.score > 0
-          )
-          .slice(
-            0,
-            12
-          )
-    });
-  }
-);
-
-/*
-=========================================================
-PERSONALIZED RECOMMENDATIONS
-=========================================================
-*/
-
-app.post(
-  "/api/recommendations",
-  (req, res) => {
-
     try {
-
-      const profile =
-        req.body?.profile ||
-        {};
-
-      const limit =
-        Number(
-          req.body?.limit
-        ) || 12;
-
-      const recommendations =
-        personalizeProducts(
-          products,
-          profile,
-          limit
-        );
-
-      const results =
-        recommendations.map(
-          (product) => {
-
-            const personalizationScore =
-              Number(
-                product.personalizationScore ||
-                0
-              );
-
-            const matchScore =
-              Math.max(
-                0,
-                Math.min(
-                  100,
-                  50 +
-                    personalizationScore
-                )
-              );
-
-            return {
-              ...product,
-
-              matchScore,
-
-              score:
-                personalizationScore,
-
-              reasons:
-                product
-                  .personalizationReasons ||
-                []
-            };
-          }
-        );
-
-      res.json({
-        profile,
-        results,
-        count:
-          results.length
-      });
-
-    } catch (error) {
-
-      console.error(
-        "Recommendation error:",
-        error
-      );
-
-      res.status(500).json({
-        error:
-          "Could not generate personalized recommendations."
-      });
-    }
-  }
-);
-
-/*
-=========================================================
-AI STYLIST
-=========================================================
-*/
-
-app.post(
-  "/api/stylist",
-  (req, res) => {
-
-    try {
-
-      const stylist =
-        req.body || {};
 
       const query =
-        buildStylistQuery(
-          stylist
-        );
+        String(
+          req.body?.query ||
+          ""
+        ).trim();
 
       if (!query) {
 
-        return res.status(400)
+        return res
+          .status(400)
           .json({
+
             error:
-              "Please provide at least one styling preference."
+              "Search query is required",
+
+            results: []
           });
       }
 
-      const profile =
-        profileFromStylist(
-          stylist
+      const requestedLimit =
+        Number(
+          req.body?.limit
         );
 
-      /*
-      ---------------------------------------------------
-      Add free-text description to style matching
-      ---------------------------------------------------
-      */
+      const limit =
+        Number.isFinite(
+          requestedLimit
+        )
+          ? Math.min(
+              50,
+              Math.max(
+                1,
+                requestedLimit
+              )
+            )
+          : 20;
 
-      const description =
-        String(
-          stylist.description ||
-          ""
-        ).toLowerCase();
-
-      const enrichedProducts =
-        products.map(
-          (product) => {
-
-            let bonus = 0;
-
-            const searchable =
-              [
-                product.name,
-                product.category,
-                product.color,
-                product.description,
-                ...(Array.isArray(product.style)
-                  ? product.style
-                  : []),
-                ...(Array.isArray(product.occasion)
-                  ? product.occasion
-                  : []),
-                ...(Array.isArray(product.tags)
-                  ? product.tags
-                  : [])
-              ]
-                .join(" ")
-                .toLowerCase();
-
-            if (
-              description
-            ) {
-
-              const words =
-                description
-                  .split(/\s+/)
-                  .filter(
-                    (word) =>
-                      word.length > 2
-                  );
-
-              for (
-                const word
-                of words
-              ) {
-
-                if (
-                  searchable.includes(
-                    word
-                  )
-                ) {
-                  bonus += 3;
-                }
-              }
-            }
-
-            return {
-              ...product,
-
-              _stylistBonus:
-                bonus
-            };
+      const results =
+        searchProducts(
+          products,
+          query,
+          {
+            limit
           }
         );
 
-      const ranked =
-        personalizeProducts(
-          enrichedProducts,
-          profile,
-          12
-        );
+      const budget =
+        results.find(
+          (item) =>
+            item.detectedBudget
+        )?.detectedBudget ||
+        null;
 
-      const recommendations =
-        ranked
-          .map(
-            (product) => {
+      return res.json({
 
-              const baseScore =
-                Number(
-                  product.personalizationScore ||
-                  0
-                );
+        success: true,
 
-              const bonus =
-                Number(
-                  product._stylistBonus ||
-                  0
-                );
+        engine:
+          "hybrid-retrieval",
 
-              const finalScore =
-                baseScore +
-                bonus;
-
-              return {
-                ...product,
-
-                matchScore:
-                  Math.max(
-                    0,
-                    Math.min(
-                      100,
-                      50 +
-                        finalScore
-                    )
-                  ),
-
-                score:
-                  finalScore,
-
-                reasons: [
-                  ...(product
-                    .personalizationReasons ||
-                    []),
-                  ...(bonus > 0
-                    ? [
-                        "Matches details from your styling description"
-                      ]
-                    : [])
-                ],
-
-                _stylistBonus:
-                  undefined
-              };
-            }
-          )
-          .sort(
-            (a, b) =>
-              b.score -
-              a.score
-          );
-
-      res.json({
         query,
-        profile,
-        recommendations
+
+        budget,
+
+        totalCandidates:
+          products.length,
+
+        resultCount:
+          results.length,
+
+        weights: {
+
+          semantic:
+            0.45,
+
+          keyword:
+            0.20,
+
+          attributes:
+            0.20,
+
+          budget:
+            0.10,
+
+          metadata:
+            0.05
+        },
+
+        results
       });
 
     } catch (error) {
 
       console.error(
-        "AI Stylist error:",
+        "Hybrid search error:",
         error
       );
 
-      res.status(500).json({
-        error:
-          "AI Stylist failed to generate recommendations."
-      });
+      return res
+        .status(500)
+        .json({
+
+          error:
+            "Hybrid search failed",
+
+          results: []
+        });
     }
   }
 );
 
 /*
 =========================================================
-404
+ROOT
 =========================================================
 */
 
-app.use(
+app.get(
+  "/",
   (req, res) => {
 
-    res.status(404).json({
-      error:
-        "API endpoint not found"
-    });
-  }
-);
+    res.json({
 
-/*
-=========================================================
-ERROR HANDLER
-=========================================================
-*/
+      name:
+        "Fashion AI Discovery",
 
-app.use(
-  (
-    error,
-    req,
-    res,
-    next
-  ) => {
+      status:
+        "running",
 
-    console.error(
-      "Server error:",
-      error
-    );
+      engine:
+        "Hybrid Retrieval",
 
-    res.status(500).json({
-      error:
-        "Internal server error"
+      endpoints: [
+
+        "GET /api/health",
+
+        "GET /api/products",
+
+        "POST /api/search"
+      ]
     });
   }
 );
@@ -644,31 +300,14 @@ START
 
 app.listen(
   PORT,
-  "0.0.0.0",
   () => {
 
     console.log(
-      "=========================================="
+      `Fashion AI backend running on port ${PORT}`
     );
 
     console.log(
-      "Fashion AI Discovery API"
-    );
-
-    console.log(
-      `Running on port ${PORT}`
-    );
-
-    console.log(
-      `Products: ${products.length}`
-    );
-
-    console.log(
-      "Day 4 personalization enabled"
-    );
-
-    console.log(
-      "=========================================="
+      "Hybrid retrieval engine enabled."
     );
   }
 );
