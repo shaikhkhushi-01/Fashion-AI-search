@@ -1,12 +1,11 @@
 {
   "name": "fashion-ai-discovery-backend",
-  "version": "5.0.0",
-  "description": "Research-grade AI fashion discovery and hybrid ranking system",
+  "version": "8.0.0",
+  "description": "Research-oriented AI fashion discovery with advanced search and evaluation",
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "test": "node --test tests/ranking.test.js"
+    "start": "node server.js"
   },
   "engines": {
     "node": ">=20"
