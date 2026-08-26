@@ -2208,3 +2208,420 @@ if (
 
   initialize();
 }
+
+/*
+=========================================================
+DAY 7 - ADVANCED SEARCH FRONTEND
+=========================================================
+*/
+
+const advancedFilters = {
+  category: "",
+  gender: "",
+  color: "",
+  style: "",
+  occasion: "",
+  material: "",
+  minPrice: "",
+  maxPrice: "",
+  sort: "relevance"
+};
+
+/*
+=========================================================
+LOAD FILTER OPTIONS
+=========================================================
+*/
+
+async function loadAdvancedFilterOptions() {
+
+  try {
+
+    const data =
+      await apiRequest(
+        "/api/filters"
+      );
+
+    console.log(
+      "Advanced filter options:",
+      data
+    );
+
+    populateFilterOptions(
+      "categoryFilter",
+      data.categories || []
+    );
+
+    populateFilterOptions(
+      "genderFilter",
+      data.genders || []
+    );
+
+    populateFilterOptions(
+      "colorFilter",
+      data.colors || []
+    );
+
+    populateFilterOptions(
+      "styleFilter",
+      data.styles || []
+    );
+
+    populateFilterOptions(
+      "occasionFilter",
+      data.occasions || []
+    );
+
+    populateFilterOptions(
+      "materialFilter",
+      data.materials || []
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Could not load filter options:",
+      error
+    );
+  }
+}
+
+/*
+=========================================================
+POPULATE SELECT
+=========================================================
+*/
+
+function populateFilterOptions(
+  id,
+  values
+) {
+
+  const select =
+    document.getElementById(id);
+
+  if (!select) {
+    return;
+  }
+
+  const current =
+    select.value;
+
+  select.innerHTML =
+    `<option value="">All</option>`;
+
+  values.forEach(
+    value => {
+
+      const option =
+        document.createElement(
+          "option"
+        );
+
+      option.value =
+        value;
+
+      option.textContent =
+        value;
+
+      select.appendChild(
+        option
+      );
+    }
+  );
+
+  if (current) {
+    select.value =
+      current;
+  }
+}
+
+/*
+=========================================================
+READ FILTERS
+=========================================================
+*/
+
+function readAdvancedFilters() {
+
+  return {
+
+    category:
+      document.getElementById(
+        "categoryFilter"
+      )?.value || "",
+
+    gender:
+      document.getElementById(
+        "genderFilter"
+      )?.value || "",
+
+    color:
+      document.getElementById(
+        "colorFilter"
+      )?.value || "",
+
+    style:
+      document.getElementById(
+        "styleFilter"
+      )?.value || "",
+
+    occasion:
+      document.getElementById(
+        "occasionFilter"
+      )?.value || "",
+
+    material:
+      document.getElementById(
+        "materialFilter"
+      )?.value || "",
+
+    minPrice:
+      document.getElementById(
+        "minPriceFilter"
+      )?.value || "",
+
+    maxPrice:
+      document.getElementById(
+        "maxPriceFilter"
+      )?.value || "",
+
+    sort:
+      document.getElementById(
+        "sortFilter"
+      )?.value ||
+      "relevance"
+  };
+}
+
+/*
+=========================================================
+ADVANCED SEARCH
+=========================================================
+*/
+
+async function runAdvancedSearch() {
+
+  const query =
+    document.getElementById(
+      "searchInput"
+    )?.value
+      ?.trim() || "";
+
+  const filters =
+    readAdvancedFilters();
+
+  try {
+
+    showLoading(
+      "AI is applying advanced filters..."
+    );
+
+    const data =
+      await apiRequest(
+        "/api/search",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify({
+              query,
+              ...filters
+            })
+        }
+      );
+
+    const results =
+      Array.isArray(
+        data.results
+      )
+        ? data.results
+        : [];
+
+    if (!results.length) {
+
+      showNoResults();
+
+      return;
+    }
+
+    renderProducts(
+      results,
+      query
+    );
+
+    if (searchSummary) {
+
+      const activeFilters =
+        Object.entries(filters)
+          .filter(
+            ([key, value]) =>
+              key !== "sort" &&
+              value !== ""
+          )
+          .map(
+            ([key, value]) =>
+              `${key}: ${value}`
+          );
+
+      searchSummary.textContent =
+        activeFilters.length
+          ? `AI results for "${query || "all products"}" · ${activeFilters.join(" · ")}`
+          : `AI results for "${query || "all products"}"`;
+    }
+
+    document
+      .getElementById(
+        "results-section"
+      )
+      ?.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+
+  } catch (error) {
+
+    console.error(
+      "Advanced search error:",
+      error
+    );
+
+    showError(
+      error.message ||
+      "Advanced search failed."
+    );
+  }
+}
+
+/*
+=========================================================
+RESET FILTERS
+=========================================================
+*/
+
+function resetAdvancedFilters() {
+
+  const ids = [
+
+    "categoryFilter",
+    "genderFilter",
+    "colorFilter",
+    "styleFilter",
+    "occasionFilter",
+    "materialFilter",
+    "minPriceFilter",
+    "maxPriceFilter"
+  ];
+
+  ids.forEach(
+    id => {
+
+      const element =
+        document.getElementById(id);
+
+      if (element) {
+        element.value = "";
+      }
+    }
+  );
+
+  const sort =
+    document.getElementById(
+      "sortFilter"
+    );
+
+  if (sort) {
+    sort.value =
+      "relevance";
+  }
+
+  if (allProducts.length) {
+
+    renderProducts(
+      allProducts.slice(0, 6)
+    );
+  }
+
+  if (searchSummary) {
+
+    searchSummary.textContent =
+      `${allProducts.length} products available for AI discovery.`;
+  }
+}
+
+/*
+=========================================================
+DAY 7 EVENTS
+=========================================================
+*/
+
+function setupAdvancedSearchEvents() {
+
+  const advancedButton =
+    document.getElementById(
+      "advancedSearchButton"
+    );
+
+  const resetButton =
+    document.getElementById(
+      "resetFiltersButton"
+    );
+
+  advancedButton?.addEventListener(
+    "click",
+    runAdvancedSearch
+  );
+
+  resetButton?.addEventListener(
+    "click",
+    resetAdvancedFilters
+  );
+
+  [
+    "categoryFilter",
+    "genderFilter",
+    "colorFilter",
+    "styleFilter",
+    "occasionFilter",
+    "materialFilter",
+    "sortFilter"
+  ].forEach(
+    id => {
+
+      document
+        .getElementById(id)
+        ?.addEventListener(
+          "change",
+          () => {
+
+            runAdvancedSearch();
+          }
+        );
+    }
+  );
+}
+
+/*
+=========================================================
+START DAY 7 FEATURES
+=========================================================
+*/
+
+document.addEventListener(
+  "DOMContentLoaded",
+  async () => {
+
+    setupAdvancedSearchEvents();
+
+    await loadAdvancedFilterOptions();
+
+    console.log(
+      "Fashion AI Day 7 advanced search ready."
+    );
+  }
+);
