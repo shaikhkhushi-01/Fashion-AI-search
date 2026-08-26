@@ -560,6 +560,240 @@
 
     </section>
 
+    <!-- =====================================================
+     DAY 7 - ADVANCED AI SEARCH FILTERS
+===================================================== -->
+
+<section class="advanced-search">
+
+  <div class="container">
+
+    <div class="advanced-search-header">
+
+      <p class="eyebrow">
+        ADVANCED DISCOVERY
+      </p>
+
+      <h2>
+        Refine your AI search
+      </h2>
+
+      <p>
+        Combine natural-language search with fashion,
+        price, colour, style and occasion filters.
+      </p>
+
+    </div>
+
+
+    <div class="filter-grid">
+
+      <!-- CATEGORY -->
+
+      <div class="filter-group">
+
+        <label for="categoryFilter">
+          Category
+        </label>
+
+        <select id="categoryFilter">
+
+          <option value="">
+            All Categories
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <!-- GENDER -->
+
+      <div class="filter-group">
+
+        <label for="genderFilter">
+          Gender
+        </label>
+
+        <select id="genderFilter">
+
+          <option value="">
+            All Genders
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <!-- COLOR -->
+
+      <div class="filter-group">
+
+        <label for="colorFilter">
+          Colour
+        </label>
+
+        <select id="colorFilter">
+
+          <option value="">
+            All Colours
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <!-- STYLE -->
+
+      <div class="filter-group">
+
+        <label for="styleFilter">
+          Style
+        </label>
+
+        <select id="styleFilter">
+
+          <option value="">
+            All Styles
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <!-- OCCASION -->
+
+      <div class="filter-group">
+
+        <label for="occasionFilter">
+          Occasion
+        </label>
+
+        <select id="occasionFilter">
+
+          <option value="">
+            All Occasions
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <!-- MATERIAL -->
+
+      <div class="filter-group">
+
+        <label for="materialFilter">
+          Material
+        </label>
+
+        <select id="materialFilter">
+
+          <option value="">
+            All Materials
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <!-- MIN PRICE -->
+
+      <div class="filter-group">
+
+        <label for="minPriceFilter">
+          Minimum Price
+        </label>
+
+        <input
+          id="minPriceFilter"
+          type="number"
+          min="0"
+          placeholder="₹0"
+        >
+
+      </div>
+
+
+      <!-- MAX PRICE -->
+
+      <div class="filter-group">
+
+        <label for="maxPriceFilter">
+          Maximum Price
+        </label>
+
+        <input
+          id="maxPriceFilter"
+          type="number"
+          min="0"
+          placeholder="₹10000"
+        >
+
+      </div>
+
+
+      <!-- SORT -->
+
+      <div class="filter-group">
+
+        <label for="sortFilter">
+          Sort Results
+        </label>
+
+        <select id="sortFilter">
+
+          <option value="relevance">
+            AI Relevance
+          </option>
+
+          <option value="price-low">
+            Price: Low to High
+          </option>
+
+          <option value="price-high">
+            Price: High to Low
+          </option>
+
+          <option value="newest">
+            Newest
+          </option>
+
+        </select>
+
+      </div>
+
+    </div>
+
+
+    <!-- ACTIONS -->
+
+    <div class="filter-actions">
+
+      <button
+        id="advancedSearchButton"
+        type="button"
+      >
+        Apply AI Filters
+      </button>
+
+      <button
+        id="resetFiltersButton"
+        type="button"
+      >
+        Reset Filters
+      </button>
+
+    </div>
+
+  </div>
+
+</section>
 
     <section
       id="results-section"
