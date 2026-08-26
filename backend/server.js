@@ -10,6 +10,10 @@ import cors from "cors";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import {
+  runEvaluation,
+  runEdgeCaseTests
+} from "./evaluation.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
