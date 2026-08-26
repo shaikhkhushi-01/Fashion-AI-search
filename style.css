@@ -618,3 +618,148 @@ footer p {
     grid-template-columns: 1fr;
   }
 }
+
+/* =====================================================
+   DAY 6 - PERSONALIZATION
+===================================================== */
+
+.preferences-section {
+  width: min(1100px, 92%);
+  margin: 50px auto;
+  padding: 32px;
+  border-radius: 24px;
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.06);
+}
+
+.preferences-header {
+  margin-bottom: 28px;
+}
+
+.section-kicker {
+  display: inline-block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.preferences-header h2 {
+  margin: 0 0 10px;
+  font-size: 30px;
+}
+
+.preferences-header p {
+  margin: 0;
+  max-width: 700px;
+  line-height: 1.6;
+  color: #666;
+}
+
+.preferences-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.preference-group {
+  padding: 20px;
+  border-radius: 16px;
+  background: #fafafa;
+  border: 1px solid #ededed;
+}
+
+.preference-group > label:first-child {
+  display: block;
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+
+.preference-group select,
+.preference-group input[type="number"] {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid #dcdcdc;
+  border-radius: 10px;
+  background: #fff;
+  font: inherit;
+}
+
+.preference-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.preference-options label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 12px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.preference-options input {
+  accent-color: #111;
+}
+
+.price-range {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.preferences-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.preferences-actions button {
+  padding: 12px 22px;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+#savePreferences {
+  background: #111;
+  color: #fff;
+}
+
+#resetPreferences {
+  background: #eee;
+  color: #222;
+}
+
+@media (max-width: 700px) {
+
+  .preferences-section {
+    padding: 22px;
+  }
+
+  .preferences-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .preferences-header h2 {
+    font-size: 24px;
+  }
+
+  .price-range {
+    grid-template-columns: 1fr;
+  }
+
+  .preferences-actions {
+    flex-direction: column;
+  }
+
+}
