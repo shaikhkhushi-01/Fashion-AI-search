@@ -1,8 +1,7 @@
 /*
 =========================================================
 FASHION AI DISCOVERY
-DAY 4 FRONTEND
-PERSONALIZATION + AI STYLIST
+DAY 5 - HYBRID RETRIEVAL FRONTEND
 =========================================================
 */
 
@@ -58,30 +57,6 @@ let currentQuery = "";
 
 let isSearching = false;
 
-let userProfile = {
-  gender: "",
-
-  preferredColors: [],
-
-  preferredStyles: [],
-
-  preferredCategories: [],
-
-  preferredOccasions: [],
-
-  preferredMaterials: [],
-
-  dislikedColors: [],
-
-  dislikedStyles: [],
-
-  budget: null,
-
-  likedProductIds: [],
-
-  dislikedProductIds: []
-};
-
 /*
 =========================================================
 ESCAPE
@@ -89,56 +64,12 @@ ESCAPE
 */
 
 function escapeHTML(value) {
-
-  return String(
-    value ?? ""
-  )
-    .replace(
-      /&/g,
-      "&amp;"
-    )
-    .replace(
-      /</g,
-      "&lt;"
-    )
-    .replace(
-      />/g,
-      "&gt;"
-    )
-    .replace(
-      /"/g,
-      "&quot;"
-    )
-    .replace(
-      /'/g,
-      "&#039;"
-    );
-}
-
-/*
-=========================================================
-ARRAY
-=========================================================
-*/
-
-function safeArray(value) {
-
-  if (
-    Array.isArray(value)
-  ) {
-    return value;
-  }
-
-  if (
-    typeof value === "string" &&
-    value.trim()
-  ) {
-    return [
-      value
-    ];
-  }
-
-  return [];
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 /*
@@ -147,16 +78,10 @@ PRICE
 =========================================================
 */
 
-function formatPrice(
-  price
-) {
+function formatPrice(price) {
+  const value = Number(price);
 
-  const value =
-    Number(price);
-
-  if (
-    !Number.isFinite(value)
-  ) {
+  if (!Number.isFinite(value)) {
     return escapeHTML(
       price || ""
     );
@@ -169,17 +94,34 @@ function formatPrice(
 
 /*
 =========================================================
-PRODUCT VISUAL
+ARRAY
 =========================================================
 */
 
-function productVisual(
-  product
-) {
+function safeArray(value) {
+  if (Array.isArray(value)) {
+    return value;
+  }
 
+  if (
+    typeof value === "string" &&
+    value.trim()
+  ) {
+    return [value];
+  }
+
+  return [];
+}
+
+/*
+=========================================================
+VISUAL
+=========================================================
+*/
+
+function productVisual(product) {
   return `
     <div class="product-visual">
-
       <div class="visual-grid"></div>
 
       <div class="visual-content">
@@ -203,7 +145,6 @@ function productVisual(
         </small>
 
       </div>
-
     </div>
   `;
 }
@@ -215,12 +156,9 @@ LOADING
 */
 
 function showLoading(
-  message
+  message = "AI is working..."
 ) {
-
-  if (
-    !resultsContainer
-  ) {
+  if (!resultsContainer) {
     return;
   }
 
@@ -230,14 +168,11 @@ function showLoading(
       <div class="loading-spinner"></div>
 
       <h3>
-        ${escapeHTML(
-          message ||
-          "AI is working..."
-        )}
+        ${escapeHTML(message)}
       </h3>
 
       <p>
-        Fashion AI is analysing your preferences.
+        Fashion AI is analysing your request.
       </p>
 
     </div>
@@ -255,13 +190,8 @@ ERROR
 =========================================================
 */
 
-function showError(
-  message
-) {
-
-  if (
-    !resultsContainer
-  ) {
+function showError(message) {
+  if (!resultsContainer) {
     return;
   }
 
@@ -269,7 +199,7 @@ function showError(
     <div class="no-results">
 
       <h3>
-        AI service unavailable
+        Fashion AI unavailable
       </h3>
 
       <p>
@@ -295,10 +225,7 @@ NO RESULTS
 */
 
 function showNoResults() {
-
-  if (
-    !resultsContainer
-  ) {
+  if (!resultsContainer) {
     return;
   }
 
@@ -306,11 +233,11 @@ function showNoResults() {
     <div class="no-results">
 
       <h3>
-        No strong matches found.
+        No strong fashion matches found.
       </h3>
 
       <p>
-        Try changing your style, colour,
+        Try another colour, style,
         occasion or budget.
       </p>
 
@@ -332,19 +259,17 @@ PRODUCT CARD
 function createProductCard(
   product
 ) {
-
-  const score =
-    Math.max(
-      0,
-      Math.min(
-        100,
-        Number(
-          product.matchScore ??
-          product.score ??
-          0
-        )
+  const score = Math.max(
+    0,
+    Math.min(
+      100,
+      Number(
+        product.matchScore ??
+        product.score ??
+        0
       )
-    );
+    )
+  );
 
   const reasons =
     safeArray(
@@ -353,38 +278,28 @@ function createProductCard(
 
   const styles =
     safeArray(
-      product.style
+      product.style ||
+      product.styles
     );
 
   const occasions =
     safeArray(
-      product.occasion
+      product.occasion ||
+      product.occasions
     );
 
   const materials =
     safeArray(
-      product.material
+      product.material ||
+      product.materials
     );
-
-  const productId =
-    Number(product.id);
-
-  const liked =
-    userProfile.likedProductIds
-      .includes(productId);
-
-  const disliked =
-    userProfile.dislikedProductIds
-      .includes(productId);
 
   return `
     <article class="product-card">
 
       <div class="product-image-wrap">
 
-        ${productVisual(
-          product
-        )}
+        ${productVisual(product)}
 
         <div class="ai-match-badge">
           ${Math.round(score)}% AI MATCH
@@ -435,20 +350,17 @@ function createProductCard(
         <div class="product-meta">
 
           ${
-            product.color
+            product.color ||
+            product.colour
               ? `
                 <div class="product-meta-item">
-
-                  <span>
-                    Colour
-                  </span>
-
+                  <span>Colour</span>
                   <strong>
                     ${escapeHTML(
-                      product.color
+                      product.color ||
+                      product.colour
                     )}
                   </strong>
-
                 </div>
               `
               : ""
@@ -458,11 +370,7 @@ function createProductCard(
             materials.length
               ? `
                 <div class="product-meta-item">
-
-                  <span>
-                    Material
-                  </span>
-
+                  <span>Material</span>
                   <strong>
                     ${escapeHTML(
                       materials
@@ -470,7 +378,6 @@ function createProductCard(
                         .join(", ")
                     )}
                   </strong>
-
                 </div>
               `
               : ""
@@ -480,11 +387,7 @@ function createProductCard(
             styles.length
               ? `
                 <div class="product-meta-item">
-
-                  <span>
-                    Style
-                  </span>
-
+                  <span>Style</span>
                   <strong>
                     ${escapeHTML(
                       styles
@@ -492,7 +395,6 @@ function createProductCard(
                         .join(", ")
                     )}
                   </strong>
-
                 </div>
               `
               : ""
@@ -502,11 +404,7 @@ function createProductCard(
             occasions.length
               ? `
                 <div class="product-meta-item">
-
-                  <span>
-                    Occasion
-                  </span>
-
+                  <span>Occasion</span>
                   <strong>
                     ${escapeHTML(
                       occasions
@@ -514,7 +412,6 @@ function createProductCard(
                         .join(", ")
                     )}
                   </strong>
-
                 </div>
               `
               : ""
@@ -528,25 +425,22 @@ function createProductCard(
               <div class="product-reason">
 
                 <strong>
-                  Why AI recommended this
+                  Why AI selected this
                 </strong>
 
                 <ul>
-
                   ${reasons
                     .slice(0, 3)
                     .map(
-                      (reason) =>
-                        `
-                          <li>
-                            ${escapeHTML(
-                              reason
-                            )}
-                          </li>
-                        `
+                      (reason) => `
+                        <li>
+                          ${escapeHTML(
+                            reason
+                          )}
+                        </li>
+                      `
                     )
                     .join("")}
-
                 </ul>
 
               </div>
@@ -559,7 +453,7 @@ function createProductCard(
           <div class="match-score-header">
 
             <span>
-              AI relevance
+              Hybrid relevance
             </span>
 
             <strong>
@@ -581,34 +475,6 @@ function createProductCard(
 
         </div>
 
-        <div class="product-feedback">
-
-          <button
-            type="button"
-            class="feedback-btn ${
-              liked
-                ? "active"
-                : ""
-            }"
-            onclick="likeProduct(${productId})"
-          >
-            ♥ Like
-          </button>
-
-          <button
-            type="button"
-            class="feedback-btn ${
-              disliked
-                ? "active"
-                : ""
-            }"
-            onclick="dislikeProduct(${productId})"
-          >
-            ✕ Not for me
-          </button>
-
-        </div>
-
       </div>
 
     </article>
@@ -625,10 +491,9 @@ function renderProducts(
   products,
   query = ""
 ) {
-
   if (
     !Array.isArray(products) ||
-    products.length === 0
+    !products.length
   ) {
     showNoResults();
     return;
@@ -639,31 +504,26 @@ function renderProducts(
 
   resultsContainer.innerHTML =
     products
-      .map(
-        createProductCard
-      )
+      .map(createProductCard)
       .join("");
 
   if (resultCount) {
-
     resultCount.textContent =
       `${products.length} AI matches`;
   }
 
   if (
-    searchSummary
+    searchSummary &&
+    query
   ) {
-
     searchSummary.textContent =
-      query
-        ? `AI recommendations for "${query}"`
-        : "Personalised fashion recommendations";
+      `Hybrid AI results for "${query}"`;
   }
 }
 
 /*
 =========================================================
-API
+API REQUEST
 =========================================================
 */
 
@@ -671,7 +531,6 @@ async function apiRequest(
   endpoint,
   options = {}
 ) {
-
   const controller =
     new AbortController();
 
@@ -683,7 +542,6 @@ async function apiRequest(
     );
 
   try {
-
     const response =
       await fetch(
         `${API_BASE_URL}${endpoint}`,
@@ -697,19 +555,13 @@ async function apiRequest(
     let data = {};
 
     try {
-
       data =
         await response.json();
-
     } catch {
-
       data = {};
     }
 
-    if (
-      !response.ok
-    ) {
-
+    if (!response.ok) {
       throw new Error(
         data.error ||
         `Request failed (${response.status})`
@@ -717,12 +569,8 @@ async function apiRequest(
     }
 
     return data;
-
   } finally {
-
-    clearTimeout(
-      timeout
-    );
+    clearTimeout(timeout);
   }
 }
 
@@ -733,7 +581,6 @@ LOAD PRODUCTS
 */
 
 async function loadProducts() {
-
   const data =
     await apiRequest(
       "/api/products"
@@ -758,7 +605,6 @@ SEARCH
 async function searchFashion(
   query
 ) {
-
   return apiRequest(
     "/api/search",
     {
@@ -784,10 +630,7 @@ RUN SEARCH
 */
 
 async function runSearch() {
-
-  if (
-    isSearching
-  ) {
+  if (isSearching) {
     return;
   }
 
@@ -797,18 +640,18 @@ async function runSearch() {
       : "";
 
   if (!query) {
-
-    await loadPersonalizedRecommendations();
+    if (allProducts.length) {
+      renderProducts(
+        allProducts.slice(0, 6)
+      );
+    }
 
     return;
   }
 
-  isSearching =
-    true;
+  isSearching = true;
 
-  if (
-    searchButton
-  ) {
+  if (searchButton) {
     searchButton.disabled =
       true;
   }
@@ -817,11 +660,10 @@ async function runSearch() {
     query;
 
   showLoading(
-    "Understanding your fashion request..."
+    "Finding the best fashion matches..."
   );
 
   try {
-
     const data =
       await searchFashion(
         query
@@ -839,25 +681,40 @@ async function runSearch() {
       query
     );
 
-  } catch (error) {
+    if (
+      data.budget &&
+      searchSummary
+    ) {
+      searchSummary.textContent =
+        `Hybrid AI results for "${query}" · budget: ₹${formatPrice(
+          data.budget
+        )}`;
+    }
 
+    document
+      .getElementById(
+        "results-section"
+      )
+      ?.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+  } catch (error) {
     console.error(
-      "Search error:",
+      "AI Search Error:",
       error
     );
 
     showError(
-      error.message
+      error.name ===
+        "AbortError"
+        ? "Request timed out. Please try again."
+        : error.message
     );
-
   } finally {
+    isSearching = false;
 
-    isSearching =
-      false;
-
-    if (
-      searchButton
-    ) {
+    if (searchButton) {
       searchButton.disabled =
         false;
     }
@@ -871,13 +728,7 @@ PERSONALIZED RECOMMENDATIONS
 */
 
 async function loadPersonalizedRecommendations() {
-
-  showLoading(
-    "Creating your personalised fashion feed..."
-  );
-
   try {
-
     const data =
       await apiRequest(
         "/api/recommendations",
@@ -891,10 +742,12 @@ async function loadPersonalizedRecommendations() {
 
           body:
             JSON.stringify({
-              profile:
-                userProfile,
-
-              limit: 12
+              occasion: "",
+              style: "",
+              comfort: "",
+              color: "",
+              coverage: "",
+              description: ""
             })
         }
       );
@@ -906,26 +759,19 @@ async function loadPersonalizedRecommendations() {
         ? data.results
         : [];
 
-    renderProducts(
-      results
-    );
-
-    if (
-      searchSummary
-    ) {
-
-      searchSummary.textContent =
-        "Personalised recommendations based on your fashion profile.";
+    if (results.length) {
+      renderProducts(
+        results,
+        "personalized fashion"
+      );
     }
-
   } catch (error) {
-
-    console.error(
-      "Personalization error:",
-      error
-    );
-
-    showError(
+    /*
+    Recommendation failure should NOT
+    break the complete website.
+    */
+    console.warn(
+      "Personalization unavailable:",
       error.message
     );
   }
@@ -933,191 +779,33 @@ async function loadPersonalizedRecommendations() {
 
 /*
 =========================================================
-LIKE
-=========================================================
-*/
-
-function likeProduct(
-  productId
-) {
-
-  const id =
-    Number(productId);
-
-  if (
-    !userProfile
-      .likedProductIds
-      .includes(id)
-  ) {
-
-    userProfile
-      .likedProductIds
-      .push(id);
-  }
-
-  userProfile
-    .dislikedProductIds =
-      userProfile
-        .dislikedProductIds
-        .filter(
-          (item) =>
-            item !== id
-        );
-
-  saveProfile();
-
-  loadPersonalizedRecommendations();
-}
-
-/*
-=========================================================
-DISLIKE
-=========================================================
-*/
-
-function dislikeProduct(
-  productId
-) {
-
-  const id =
-    Number(productId);
-
-  if (
-    !userProfile
-      .dislikedProductIds
-      .includes(id)
-  ) {
-
-    userProfile
-      .dislikedProductIds
-      .push(id);
-  }
-
-  userProfile
-    .likedProductIds =
-      userProfile
-        .likedProductIds
-        .filter(
-          (item) =>
-            item !== id
-        );
-
-  saveProfile();
-
-  loadPersonalizedRecommendations();
-}
-
-/*
-=========================================================
-PROFILE STORAGE
-=========================================================
-*/
-
-function saveProfile() {
-
-  try {
-
-    localStorage.setItem(
-      "fashionAIProfile",
-      JSON.stringify(
-        userProfile
-      )
-    );
-
-  } catch (error) {
-
-    console.warn(
-      "Could not save profile:",
-      error
-    );
-  }
-}
-
-function loadProfile() {
-
-  try {
-
-    const saved =
-      localStorage.getItem(
-        "fashionAIProfile"
-      );
-
-    if (!saved) {
-      return;
-    }
-
-    const parsed =
-      JSON.parse(
-        saved
-      );
-
-    if (
-      parsed &&
-      typeof parsed ===
-        "object"
-    ) {
-
-      userProfile = {
-        ...userProfile,
-        ...parsed
-      };
-    }
-
-  } catch (error) {
-
-    console.warn(
-      "Could not load profile:",
-      error
-    );
-  }
-}
-
-/*
-=========================================================
-STYLIST
+AI STYLIST
 =========================================================
 */
 
 async function runAIStylist() {
-
-  const getValue =
+  const value =
     (id) =>
-      $(id)?.value?.trim() ||
-      "";
+      $(id)?.value?.trim() || "";
 
   const occasion =
-    getValue(
-      "stylistOccasion"
-    );
+    value("stylistOccasion");
 
   const style =
-    getValue(
-      "stylistStyle"
-    );
+    value("stylistStyle");
 
   const comfort =
-    getValue(
-      "stylistComfort"
-    );
+    value("stylistComfort");
 
   const color =
-    getValue(
-      "stylistColor"
-    );
+    value("stylistColor");
 
   const coverage =
-    getValue(
-      "stylistCoverage"
-    );
+    value("stylistCoverage");
 
   const description =
-    getValue(
+    value(
       "stylistDescription"
-    );
-
-  const budget =
-    getValue(
-      "stylistBudget"
     );
 
   const hasInput =
@@ -1127,23 +815,18 @@ async function runAIStylist() {
       comfort,
       color,
       coverage,
-      description,
-      budget
+      description
     ].some(Boolean);
 
   if (!hasInput) {
-
     alert(
-      "Please describe the look you want."
+      "Please describe your desired look."
     );
 
     return;
   }
 
-  if (
-    stylistButton
-  ) {
-
+  if (stylistButton) {
     stylistButton.disabled =
       true;
 
@@ -1152,11 +835,10 @@ async function runAIStylist() {
   }
 
   showLoading(
-    "Building your personalised look..."
+    "Building your personalised recommendations..."
   );
 
   try {
-
     const data =
       await apiRequest(
         "/api/stylist",
@@ -1175,8 +857,7 @@ async function runAIStylist() {
               comfort,
               color,
               coverage,
-              description,
-              budget
+              description
             })
         }
       );
@@ -1193,32 +874,18 @@ async function runAIStylist() {
       data.query ||
         description
     );
-
-    if (
-      searchSummary
-    ) {
-
-      searchSummary.textContent =
-        "AI Stylist created a personalised fashion selection for you.";
-    }
-
   } catch (error) {
-
     console.error(
       "AI Stylist error:",
       error
     );
 
     showError(
-      error.message
+      error.message ||
+      "AI Stylist failed."
     );
-
   } finally {
-
-    if (
-      stylistButton
-    ) {
-
+    if (stylistButton) {
       stylistButton.disabled =
         false;
 
@@ -1235,26 +902,18 @@ SEARCH HINTS
 */
 
 function setupSearchHints() {
-
   document
     .querySelectorAll(
       ".search-hints button"
     )
     .forEach(
       (button) => {
-
         button.addEventListener(
           "click",
           () => {
-
-            if (
-              searchInput
-            ) {
-
+            if (searchInput) {
               searchInput.value =
-                button
-                  .textContent
-                  .trim();
+                button.textContent.trim();
             }
 
             runSearch();
@@ -1271,7 +930,6 @@ EVENTS
 */
 
 function setupEvents() {
-
   searchButton?.addEventListener(
     "click",
     runSearch
@@ -1280,14 +938,11 @@ function setupEvents() {
   searchInput?.addEventListener(
     "keydown",
     (event) => {
-
       if (
         event.key ===
         "Enter"
       ) {
-
         event.preventDefault();
-
         runSearch();
       }
     }
@@ -1303,14 +958,12 @@ function setupEvents() {
 
 /*
 =========================================================
-BACKEND CHECK
+HEALTH
 =========================================================
 */
 
 async function checkBackend() {
-
   try {
-
     const data =
       await apiRequest(
         "/api/health"
@@ -1322,11 +975,9 @@ async function checkBackend() {
     );
 
     return true;
-
   } catch (error) {
-
     console.error(
-      "Backend unavailable:",
+      "Backend health check failed:",
       error
     );
 
@@ -1336,27 +987,39 @@ async function checkBackend() {
 
 /*
 =========================================================
-INIT
+INITIALIZE
 =========================================================
 */
 
 async function initialize() {
-
   console.log(
-    "Fashion AI Discovery Day 4 starting..."
+    "Fashion AI Discovery Day 5 starting..."
   );
 
-  loadProfile();
-
   setupEvents();
+
+  if (resultsContainer) {
+    resultsContainer.innerHTML = `
+      <div class="no-results">
+
+        <div class="loading-spinner"></div>
+
+        <h3>
+          Connecting to Fashion AI...
+        </h3>
+
+        <p>
+          Loading the fashion catalogue.
+        </p>
+
+      </div>
+    `;
+  }
 
   const backendOnline =
     await checkBackend();
 
-  if (
-    !backendOnline
-  ) {
-
+  if (!backendOnline) {
     showError(
       "Fashion AI backend is unavailable."
     );
@@ -1365,13 +1028,36 @@ async function initialize() {
   }
 
   try {
-
     await loadProducts();
 
+    if (allProducts.length) {
+      renderProducts(
+        allProducts.slice(0, 6)
+      );
+
+      if (resultCount) {
+        resultCount.textContent =
+          "AI catalogue ready";
+      }
+
+      if (searchSummary) {
+        searchSummary.textContent =
+          `${allProducts.length} products available for AI discovery.`;
+      }
+    } else {
+      showNoResults();
+    }
+
+    /*
+    This endpoint now exists in Day 5 backend.
+    If it fails, the catalogue still works.
+    */
     await loadPersonalizedRecommendations();
 
+    console.log(
+      "Fashion AI Discovery Day 5 ready."
+    );
   } catch (error) {
-
     console.error(
       "Initialization error:",
       error
@@ -1393,13 +1079,10 @@ if (
   document.readyState ===
   "loading"
 ) {
-
   document.addEventListener(
     "DOMContentLoaded",
     initialize
   );
-
 } else {
-
   initialize();
 }
