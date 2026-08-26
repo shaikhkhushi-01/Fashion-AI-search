@@ -1,7 +1,7 @@
 /*
 =========================================================
 FASHION AI DISCOVERY
-DAY 5 - HYBRID RETRIEVAL FRONTEND
+DAY 6 - PERSONALIZATION & USER PREFERENCES
 =========================================================
 */
 
@@ -18,12 +18,18 @@ const API_BASE_URL =
 
 /*
 =========================================================
-DOM
+DOM HELPERS
 =========================================================
 */
 
 const $ = (id) =>
   document.getElementById(id);
+
+/*
+=========================================================
+DOM ELEMENTS
+=========================================================
+*/
 
 const searchInput =
   $("searchInput");
@@ -57,13 +63,53 @@ let currentQuery = "";
 
 let isSearching = false;
 
+let isSavingPreferences = false;
+
 /*
 =========================================================
-ESCAPE
+STORAGE
+=========================================================
+*/
+
+const PREFERENCES_STORAGE_KEY =
+  "fashion_ai_user_preferences_v1";
+
+/*
+=========================================================
+DEFAULT USER PROFILE
+=========================================================
+*/
+
+const DEFAULT_PREFERENCES = {
+
+  gender: "",
+
+  categories: [],
+
+  colors: [],
+
+  styles: [],
+
+  occasions: [],
+
+  materials: [],
+
+  minPrice: 0,
+
+  maxPrice: 10000,
+
+  budget: 10000
+
+};
+
+/*
+=========================================================
+HTML ESCAPE
 =========================================================
 */
 
 function escapeHTML(value) {
+
   return String(value ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -74,31 +120,12 @@ function escapeHTML(value) {
 
 /*
 =========================================================
-PRICE
-=========================================================
-*/
-
-function formatPrice(price) {
-  const value = Number(price);
-
-  if (!Number.isFinite(value)) {
-    return escapeHTML(
-      price || ""
-    );
-  }
-
-  return value.toLocaleString(
-    "en-IN"
-  );
-}
-
-/*
-=========================================================
-ARRAY
+ARRAY NORMALIZER
 =========================================================
 */
 
 function safeArray(value) {
+
   if (Array.isArray(value)) {
     return value;
   }
@@ -115,13 +142,45 @@ function safeArray(value) {
 
 /*
 =========================================================
-VISUAL
+PRICE FORMATTER
+=========================================================
+*/
+
+function formatPrice(price) {
+
+  const value =
+    Number(price);
+
+  if (!Number.isFinite(value)) {
+    return escapeHTML(price || "");
+  }
+
+  return value.toLocaleString("en-IN");
+}
+
+/*
+=========================================================
+PRODUCT VISUAL
 =========================================================
 */
 
 function productVisual(product) {
+
+  const category =
+    String(
+      product.category ||
+      "Fashion"
+    );
+
+  const name =
+    String(
+      product.name ||
+      "Fashion Product"
+    );
+
   return `
     <div class="product-visual">
+
       <div class="visual-grid"></div>
 
       <div class="visual-content">
@@ -131,20 +190,15 @@ function productVisual(product) {
         </span>
 
         <strong>
-          ${escapeHTML(
-            product.category ||
-            "Fashion"
-          )}
+          ${escapeHTML(category)}
         </strong>
 
         <small>
-          ${escapeHTML(
-            product.name ||
-            "Fashion Product"
-          )}
+          ${escapeHTML(name)}
         </small>
 
       </div>
+
     </div>
   `;
 }
@@ -155,9 +209,8 @@ LOADING
 =========================================================
 */
 
-function showLoading(
-  message = "AI is working..."
-) {
+function showLoading(message) {
+
   if (!resultsContainer) {
     return;
   }
@@ -168,7 +221,10 @@ function showLoading(
       <div class="loading-spinner"></div>
 
       <h3>
-        ${escapeHTML(message)}
+        ${escapeHTML(
+          message ||
+          "AI is working..."
+        )}
       </h3>
 
       <p>
@@ -191,6 +247,7 @@ ERROR
 */
 
 function showError(message) {
+
   if (!resultsContainer) {
     return;
   }
@@ -199,13 +256,13 @@ function showError(message) {
     <div class="no-results">
 
       <h3>
-        Fashion AI unavailable
+        AI service unavailable
       </h3>
 
       <p>
         ${escapeHTML(
           message ||
-          "Something went wrong."
+          "Something went wrong. Please try again."
         )}
       </p>
 
@@ -225,6 +282,7 @@ NO RESULTS
 */
 
 function showNoResults() {
+
   if (!resultsContainer) {
     return;
   }
@@ -256,43 +314,36 @@ PRODUCT CARD
 =========================================================
 */
 
-function createProductCard(
-  product
-) {
-  const score = Math.max(
-    0,
-    Math.min(
-      100,
-      Number(
-        product.matchScore ??
-        product.score ??
-        0
+function createProductCard(product) {
+
+  const score =
+    Math.max(
+      0,
+      Math.min(
+        100,
+        Number(
+          product.personalizedScore ??
+          product.matchScore ??
+          product.score ??
+          0
+        )
       )
-    )
-  );
+    );
 
   const reasons =
     safeArray(
+      product.personalizationReasons ||
       product.reasons
     );
 
   const styles =
-    safeArray(
-      product.style ||
-      product.styles
-    );
+    safeArray(product.style);
 
   const occasions =
-    safeArray(
-      product.occasion ||
-      product.occasions
-    );
+    safeArray(product.occasion);
 
   const materials =
-    safeArray(
-      product.material ||
-      product.materials
-    );
+    safeArray(product.material);
 
   return `
     <article class="product-card">
@@ -342,23 +393,19 @@ function createProductCard(
         </p>
 
         <div class="product-price">
-          ₹${formatPrice(
-            product.price
-          )}
+          ₹${formatPrice(product.price)}
         </div>
 
         <div class="product-meta">
 
           ${
-            product.color ||
-            product.colour
+            product.color
               ? `
                 <div class="product-meta-item">
                   <span>Colour</span>
                   <strong>
                     ${escapeHTML(
-                      product.color ||
-                      product.colour
+                      product.color
                     )}
                   </strong>
                 </div>
@@ -430,7 +477,7 @@ function createProductCard(
 
                 <ul>
                   ${reasons
-                    .slice(0, 3)
+                    .slice(0, 4)
                     .map(
                       (reason) => `
                         <li>
@@ -453,7 +500,7 @@ function createProductCard(
           <div class="match-score-header">
 
             <span>
-              Hybrid relevance
+              Personalised relevance
             </span>
 
             <strong>
@@ -466,9 +513,7 @@ function createProductCard(
 
             <div
               class="match-score-fill"
-              style="width:${Math.round(
-                score
-              )}%"
+              style="width:${Math.round(score)}%"
             ></div>
 
           </div>
@@ -483,7 +528,7 @@ function createProductCard(
 
 /*
 =========================================================
-RENDER
+RENDER PRODUCTS
 =========================================================
 */
 
@@ -491,23 +536,30 @@ function renderProducts(
   products,
   query = ""
 ) {
+
   if (
     !Array.isArray(products) ||
-    !products.length
+    products.length === 0
   ) {
+
     showNoResults();
+
     return;
   }
 
   currentResults =
     products;
 
-  resultsContainer.innerHTML =
-    products
-      .map(createProductCard)
-      .join("");
+  if (resultsContainer) {
+
+    resultsContainer.innerHTML =
+      products
+        .map(createProductCard)
+        .join("");
+  }
 
   if (resultCount) {
+
     resultCount.textContent =
       `${products.length} AI matches`;
   }
@@ -516,8 +568,9 @@ function renderProducts(
     searchSummary &&
     query
   ) {
+
     searchSummary.textContent =
-      `Hybrid AI results for "${query}"`;
+      `AI-ranked results for "${query}"`;
   }
 }
 
@@ -531,17 +584,18 @@ async function apiRequest(
   endpoint,
   options = {}
 ) {
+
   const controller =
     new AbortController();
 
   const timeout =
     setTimeout(
-      () =>
-        controller.abort(),
+      () => controller.abort(),
       30000
     );
 
   try {
+
     const response =
       await fetch(
         `${API_BASE_URL}${endpoint}`,
@@ -555,13 +609,17 @@ async function apiRequest(
     let data = {};
 
     try {
+
       data =
         await response.json();
+
     } catch {
+
       data = {};
     }
 
     if (!response.ok) {
+
       throw new Error(
         data.error ||
         `Request failed (${response.status})`
@@ -569,7 +627,9 @@ async function apiRequest(
     }
 
     return data;
+
   } finally {
+
     clearTimeout(timeout);
   }
 }
@@ -581,6 +641,7 @@ LOAD PRODUCTS
 */
 
 async function loadProducts() {
+
   const data =
     await apiRequest(
       "/api/products"
@@ -605,9 +666,11 @@ SEARCH
 async function searchFashion(
   query
 ) {
+
   return apiRequest(
     "/api/search",
     {
+
       method: "POST",
 
       headers: {
@@ -625,11 +688,947 @@ async function searchFashion(
 
 /*
 =========================================================
-RUN SEARCH
+PREFERENCES
+=========================================================
+*/
+
+function normalizePreferences(
+  preferences
+) {
+
+  const source =
+    preferences || {};
+
+  return {
+
+    gender:
+      String(
+        source.gender || ""
+      ),
+
+    categories:
+      safeArray(
+        source.categories
+      ),
+
+    colors:
+      safeArray(
+        source.colors
+      ),
+
+    styles:
+      safeArray(
+        source.styles
+      ),
+
+    occasions:
+      safeArray(
+        source.occasions
+      ),
+
+    materials:
+      safeArray(
+        source.materials
+      ),
+
+    minPrice:
+      Math.max(
+        0,
+        Number(
+          source.minPrice ??
+          0
+        )
+      ),
+
+    maxPrice:
+      Math.max(
+        0,
+        Number(
+          source.maxPrice ??
+          10000
+        )
+      ),
+
+    budget:
+      Math.max(
+        0,
+        Number(
+          source.budget ??
+          10000
+        )
+      )
+  };
+}
+
+/*
+=========================================================
+LOAD SAVED PREFERENCES
+=========================================================
+*/
+
+function loadPreferences() {
+
+  try {
+
+    const saved =
+      localStorage.getItem(
+        PREFERENCES_STORAGE_KEY
+      );
+
+    if (!saved) {
+
+      return {
+        ...DEFAULT_PREFERENCES
+      };
+    }
+
+    return normalizePreferences(
+      JSON.parse(saved)
+    );
+
+  } catch (error) {
+
+    console.warn(
+      "Could not load preferences:",
+      error
+    );
+
+    return {
+      ...DEFAULT_PREFERENCES
+    };
+  }
+}
+
+/*
+=========================================================
+SAVE PREFERENCES
+=========================================================
+*/
+
+function savePreferences(
+  preferences
+) {
+
+  const normalized =
+    normalizePreferences(
+      preferences
+    );
+
+  try {
+
+    localStorage.setItem(
+      PREFERENCES_STORAGE_KEY,
+      JSON.stringify(
+        normalized
+      )
+    );
+
+    return true;
+
+  } catch (error) {
+
+    console.error(
+      "Preference storage error:",
+      error
+    );
+
+    return false;
+  }
+}
+
+/*
+=========================================================
+GET PREFERENCE INPUT
+=========================================================
+*/
+
+function getPreferenceValue(
+  id
+) {
+
+  return (
+    $(id)?.value?.trim() ||
+    ""
+  );
+}
+
+/*
+=========================================================
+GET CHECKED VALUES
+=========================================================
+*/
+
+function getCheckedValues(
+  selector
+) {
+
+  return [
+    ...document.querySelectorAll(
+      selector
+    )
+  ]
+    .filter(
+      (element) =>
+        element.checked
+    )
+    .map(
+      (element) =>
+        element.value.trim()
+    )
+    .filter(Boolean);
+}
+
+/*
+=========================================================
+COLLECT USER PREFERENCES
+=========================================================
+*/
+
+function collectPreferences() {
+
+  const preferences = {
+
+    gender:
+      getPreferenceValue(
+        "preferenceGender"
+      ),
+
+    categories:
+      getCheckedValues(
+        'input[name="preferenceCategory"]'
+      ),
+
+    colors:
+      getCheckedValues(
+        'input[name="preferenceColor"]'
+      ),
+
+    styles:
+      getCheckedValues(
+        'input[name="preferenceStyle"]'
+      ),
+
+    occasions:
+      getCheckedValues(
+        'input[name="preferenceOccasion"]'
+      ),
+
+    materials:
+      getCheckedValues(
+        'input[name="preferenceMaterial"]'
+      ),
+
+    minPrice:
+      Number(
+        getPreferenceValue(
+          "preferenceMinPrice"
+        ) || 0
+      ),
+
+    maxPrice:
+      Number(
+        getPreferenceValue(
+          "preferenceMaxPrice"
+        ) || 10000
+      ),
+
+    budget:
+      Number(
+        getPreferenceValue(
+          "preferenceBudget"
+        ) || 10000
+      )
+  };
+
+  return normalizePreferences(
+    preferences
+  );
+}
+
+/*
+=========================================================
+APPLY SAVED PREFERENCES TO UI
+=========================================================
+*/
+
+function applyPreferencesToUI(
+  preferences
+) {
+
+  const normalized =
+    normalizePreferences(
+      preferences
+    );
+
+  const gender =
+    $("preferenceGender");
+
+  if (gender) {
+
+    gender.value =
+      normalized.gender;
+  }
+
+  const minPrice =
+    $("preferenceMinPrice");
+
+  if (minPrice) {
+
+    minPrice.value =
+      normalized.minPrice;
+  }
+
+  const maxPrice =
+    $("preferenceMaxPrice");
+
+  if (maxPrice) {
+
+    maxPrice.value =
+      normalized.maxPrice;
+  }
+
+  const budget =
+    $("preferenceBudget");
+
+  if (budget) {
+
+    budget.value =
+      normalized.budget;
+  }
+
+  document
+    .querySelectorAll(
+      'input[name="preferenceCategory"]'
+    )
+    .forEach(
+      (input) => {
+
+        input.checked =
+          normalized.categories
+            .includes(
+              input.value
+            );
+      }
+    );
+
+  document
+    .querySelectorAll(
+      'input[name="preferenceColor"]'
+    )
+    .forEach(
+      (input) => {
+
+        input.checked =
+          normalized.colors
+            .includes(
+              input.value
+            );
+      }
+    );
+
+  document
+    .querySelectorAll(
+      'input[name="preferenceStyle"]'
+    )
+    .forEach(
+      (input) => {
+
+        input.checked =
+          normalized.styles
+            .includes(
+              input.value
+            );
+      }
+    );
+
+  document
+    .querySelectorAll(
+      'input[name="preferenceOccasion"]'
+    )
+    .forEach(
+      (input) => {
+
+        input.checked =
+          normalized.occasions
+            .includes(
+              input.value
+            );
+      }
+    );
+
+  document
+    .querySelectorAll(
+      'input[name="preferenceMaterial"]'
+    )
+    .forEach(
+      (input) => {
+
+        input.checked =
+          normalized.materials
+            .includes(
+              input.value
+            );
+      }
+    );
+}
+
+/*
+=========================================================
+PERSONALIZATION SCORE
+=========================================================
+*/
+
+function calculatePersonalizationScore(
+  product,
+  preferences
+) {
+
+  const p =
+    normalizePreferences(
+      preferences
+    );
+
+  let score = 0;
+
+  let totalWeight = 0;
+
+  const reasons = [];
+
+  /*
+  -----------------------------------------------
+  CATEGORY
+  -----------------------------------------------
+  */
+
+  if (p.categories.length) {
+
+    totalWeight += 20;
+
+    if (
+      p.categories
+        .some(
+          (value) =>
+            String(
+              product.category || ""
+            ).toLowerCase() ===
+            value.toLowerCase()
+        )
+    ) {
+
+      score += 20;
+
+      reasons.push(
+        "Matches your preferred category"
+      );
+    }
+  }
+
+  /*
+  -----------------------------------------------
+  COLOR
+  -----------------------------------------------
+  */
+
+  if (p.colors.length) {
+
+    totalWeight += 15;
+
+    if (
+      p.colors
+        .some(
+          (value) =>
+            String(
+              product.color || ""
+            ).toLowerCase() ===
+            value.toLowerCase()
+        )
+    ) {
+
+      score += 15;
+
+      reasons.push(
+        "Matches your preferred colour"
+      );
+    }
+  }
+
+  /*
+  -----------------------------------------------
+  STYLE
+  -----------------------------------------------
+  */
+
+  if (p.styles.length) {
+
+    totalWeight += 20;
+
+    const productStyles =
+      safeArray(
+        product.style
+      )
+        .map(
+          (x) =>
+            String(x).toLowerCase()
+        );
+
+    const styleMatches =
+      p.styles.filter(
+        (style) =>
+          productStyles.includes(
+            String(style).toLowerCase()
+          )
+      );
+
+    if (styleMatches.length) {
+
+      score +=
+        Math.min(
+          20,
+          styleMatches.length * 10
+        );
+
+      reasons.push(
+        `Matches preferred style: ${styleMatches.join(", ")}`
+      );
+    }
+  }
+
+  /*
+  -----------------------------------------------
+  OCCASION
+  -----------------------------------------------
+  */
+
+  if (p.occasions.length) {
+
+    totalWeight += 15;
+
+    const productOccasions =
+      safeArray(
+        product.occasion
+      )
+        .map(
+          (x) =>
+            String(x).toLowerCase()
+        );
+
+    const matches =
+      p.occasions.filter(
+        (occasion) =>
+          productOccasions.includes(
+            String(
+              occasion
+            ).toLowerCase()
+          )
+      );
+
+    if (matches.length) {
+
+      score +=
+        Math.min(
+          15,
+          matches.length * 7.5
+        );
+
+      reasons.push(
+        "Suitable for your preferred occasion"
+      );
+    }
+  }
+
+  /*
+  -----------------------------------------------
+  MATERIAL
+  -----------------------------------------------
+  */
+
+  if (p.materials.length) {
+
+    totalWeight += 10;
+
+    const productMaterials =
+      safeArray(
+        product.material
+      )
+        .map(
+          (x) =>
+            String(x).toLowerCase()
+        );
+
+    const matches =
+      p.materials.filter(
+        (material) =>
+          productMaterials.includes(
+            String(
+              material
+            ).toLowerCase()
+          )
+      );
+
+    if (matches.length) {
+
+      score += 10;
+
+      reasons.push(
+        "Matches your preferred material"
+      );
+    }
+  }
+
+  /*
+  -----------------------------------------------
+  GENDER
+  -----------------------------------------------
+  */
+
+  if (p.gender) {
+
+    totalWeight += 10;
+
+    const productGender =
+      String(
+        product.gender || ""
+      ).toLowerCase();
+
+    const preferredGender =
+      p.gender.toLowerCase();
+
+    if (
+      productGender ===
+        preferredGender ||
+      productGender ===
+        "unisex"
+    ) {
+
+      score += 10;
+
+      reasons.push(
+        "Matches your profile preference"
+      );
+    }
+  }
+
+  /*
+  -----------------------------------------------
+  BUDGET
+  -----------------------------------------------
+  */
+
+  if (
+    Number.isFinite(
+      Number(product.price)
+    )
+  ) {
+
+    totalWeight += 10;
+
+    const price =
+      Number(
+        product.price
+      );
+
+    const minPrice =
+      Number(
+        p.minPrice
+      );
+
+    const maxPrice =
+      Number(
+        p.maxPrice
+      );
+
+    const budget =
+      Number(
+        p.budget
+      );
+
+    if (
+      price >= minPrice &&
+      price <= maxPrice &&
+      price <= budget
+    ) {
+
+      score += 10;
+
+      reasons.push(
+        "Fits your preferred budget"
+      );
+
+    } else if (
+      price <= budget
+    ) {
+
+      score += 6;
+
+      reasons.push(
+        "Within your maximum budget"
+      );
+    }
+  }
+
+  /*
+  -----------------------------------------------
+  FINAL SCORE
+  -----------------------------------------------
+  */
+
+  if (!totalWeight) {
+
+    return {
+      score: 0,
+      reasons: []
+    };
+  }
+
+  return {
+
+    score:
+      Math.round(
+        (score /
+          totalWeight) *
+          100
+      ),
+
+    reasons:
+      [...new Set(
+        reasons
+      )]
+  };
+}
+
+/*
+=========================================================
+PERSONALIZE PRODUCTS
+=========================================================
+*/
+
+function personalizeProducts(
+  products,
+  preferences
+) {
+
+  if (
+    !Array.isArray(
+      products
+    )
+  ) {
+
+    return [];
+  }
+
+  const normalized =
+    normalizePreferences(
+      preferences
+    );
+
+  return products
+    .map(
+      (product) => {
+
+        const result =
+          calculatePersonalizationScore(
+            product,
+            normalized
+          );
+
+        return {
+
+          ...product,
+
+          personalizedScore:
+            result.score,
+
+          personalizationReasons:
+            result.reasons
+        };
+      }
+    )
+    .sort(
+      (a, b) => {
+
+        const scoreDifference =
+          Number(
+            b.personalizedScore
+          ) -
+          Number(
+            a.personalizedScore
+          );
+
+        if (
+          scoreDifference !== 0
+        ) {
+
+          return scoreDifference;
+        }
+
+        return (
+          Number(
+            a.price || 0
+          ) -
+          Number(
+            b.price || 0
+          )
+        );
+      }
+    );
+}
+
+/*
+=========================================================
+PERSONALIZED HOME FEED
+=========================================================
+*/
+
+function renderPersonalizedFeed() {
+
+  if (!allProducts.length) {
+    return;
+  }
+
+  const preferences =
+    loadPreferences();
+
+  const hasPreferences =
+    preferences.gender ||
+    preferences.categories.length ||
+    preferences.colors.length ||
+    preferences.styles.length ||
+    preferences.occasions.length ||
+    preferences.materials.length ||
+    preferences.budget <
+      10000 ||
+    preferences.minPrice > 0;
+
+  if (!hasPreferences) {
+
+    renderProducts(
+      allProducts.slice(0, 6)
+    );
+
+    if (searchSummary) {
+
+      searchSummary.textContent =
+        `${allProducts.length} products available. Set your preferences for personalised recommendations.`;
+    }
+
+    return;
+  }
+
+  const personalized =
+    personalizeProducts(
+      allProducts,
+      preferences
+    );
+
+  renderProducts(
+    personalized.slice(0, 8)
+  );
+
+  if (searchSummary) {
+
+    searchSummary.textContent =
+      "Personalised recommendations based on your preferences.";
+  }
+
+  if (resultCount) {
+
+    resultCount.textContent =
+      "Personalised feed";
+  }
+}
+
+/*
+=========================================================
+SAVE USER PREFERENCES
+=========================================================
+*/
+
+function saveUserPreferences() {
+
+  if (isSavingPreferences) {
+    return;
+  }
+
+  isSavingPreferences =
+    true;
+
+  try {
+
+    const preferences =
+      collectPreferences();
+
+    const saved =
+      savePreferences(
+        preferences
+      );
+
+    if (!saved) {
+
+      alert(
+        "Could not save preferences on this device."
+      );
+
+      return;
+    }
+
+    applyPreferencesToUI(
+      preferences
+    );
+
+    alert(
+      "Your fashion preferences have been saved."
+    );
+
+    renderPersonalizedFeed();
+
+  } finally {
+
+    isSavingPreferences =
+      false;
+  }
+}
+
+/*
+=========================================================
+RESET USER PREFERENCES
+=========================================================
+*/
+
+function resetUserPreferences() {
+
+  try {
+
+    localStorage.removeItem(
+      PREFERENCES_STORAGE_KEY
+    );
+
+  } catch (error) {
+
+    console.warn(
+      "Could not clear preferences:",
+      error
+    );
+  }
+
+  applyPreferencesToUI(
+    DEFAULT_PREFERENCES
+  );
+
+  renderPersonalizedFeed();
+
+  alert(
+    "Your fashion preferences have been reset."
+  );
+}
+
+/*
+=========================================================
+PERSONALIZED SEARCH
 =========================================================
 */
 
 async function runSearch() {
+
   if (isSearching) {
     return;
   }
@@ -640,18 +1639,19 @@ async function runSearch() {
       : "";
 
   if (!query) {
-    if (allProducts.length) {
-      renderProducts(
-        allProducts.slice(0, 6)
-      );
-    }
+
+    currentQuery = "";
+
+    renderPersonalizedFeed();
 
     return;
   }
 
-  isSearching = true;
+  isSearching =
+    true;
 
   if (searchButton) {
+
     searchButton.disabled =
       true;
   }
@@ -660,10 +1660,11 @@ async function runSearch() {
     query;
 
   showLoading(
-    "Finding the best fashion matches..."
+    "Understanding your fashion request..."
   );
 
   try {
+
     const data =
       await searchFashion(
         query
@@ -676,8 +1677,50 @@ async function runSearch() {
         ? data.results
         : [];
 
+    if (!results.length) {
+
+      showNoResults();
+
+      return;
+    }
+
+    /*
+    AI search result + user preference
+    personalization reranking
+    */
+
+    const preferences =
+      loadPreferences();
+
+    const personalized =
+      personalizeProducts(
+        results,
+        preferences
+      );
+
+    /*
+    If no preferences exist,
+    preserve original AI ranking.
+    */
+
+    const hasPreferences =
+      preferences.gender ||
+      preferences.categories.length ||
+      preferences.colors.length ||
+      preferences.styles.length ||
+      preferences.occasions.length ||
+      preferences.materials.length ||
+      preferences.budget <
+        10000 ||
+      preferences.minPrice > 0;
+
+    const finalResults =
+      hasPreferences
+        ? personalized
+        : results;
+
     renderProducts(
-      results,
+      finalResults,
       query
     );
 
@@ -685,10 +1728,9 @@ async function runSearch() {
       data.budget &&
       searchSummary
     ) {
+
       searchSummary.textContent =
-        `Hybrid AI results for "${query}" · budget: ₹${formatPrice(
-          data.budget
-        )}`;
+        `AI-ranked results for "${query}" · budget detected: ₹${formatPrice(data.budget)}`;
     }
 
     document
@@ -696,10 +1738,14 @@ async function runSearch() {
         "results-section"
       )
       ?.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
+        behavior:
+          "smooth",
+        block:
+          "start"
       });
+
   } catch (error) {
+
     console.error(
       "AI Search Error:",
       error
@@ -708,72 +1754,20 @@ async function runSearch() {
     showError(
       error.name ===
         "AbortError"
-        ? "Request timed out. Please try again."
+        ? "AI request timed out. Please try again."
         : error.message
     );
+
   } finally {
-    isSearching = false;
+
+    isSearching =
+      false;
 
     if (searchButton) {
+
       searchButton.disabled =
         false;
     }
-  }
-}
-
-/*
-=========================================================
-PERSONALIZED RECOMMENDATIONS
-=========================================================
-*/
-
-async function loadPersonalizedRecommendations() {
-  try {
-    const data =
-      await apiRequest(
-        "/api/recommendations",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-
-          body:
-            JSON.stringify({
-              occasion: "",
-              style: "",
-              comfort: "",
-              color: "",
-              coverage: "",
-              description: ""
-            })
-        }
-      );
-
-    const results =
-      Array.isArray(
-        data.results
-      )
-        ? data.results
-        : [];
-
-    if (results.length) {
-      renderProducts(
-        results,
-        "personalized fashion"
-      );
-    }
-  } catch (error) {
-    /*
-    Recommendation failure should NOT
-    break the complete website.
-    */
-    console.warn(
-      "Personalization unavailable:",
-      error.message
-    );
   }
 }
 
@@ -784,27 +1778,38 @@ AI STYLIST
 */
 
 async function runAIStylist() {
-  const value =
+
+  const getValue =
     (id) =>
       $(id)?.value?.trim() || "";
 
   const occasion =
-    value("stylistOccasion");
+    getValue(
+      "stylistOccasion"
+    );
 
   const style =
-    value("stylistStyle");
+    getValue(
+      "stylistStyle"
+    );
 
   const comfort =
-    value("stylistComfort");
+    getValue(
+      "stylistComfort"
+    );
 
   const color =
-    value("stylistColor");
+    getValue(
+      "stylistColor"
+    );
 
   const coverage =
-    value("stylistCoverage");
+    getValue(
+      "stylistCoverage"
+    );
 
   const description =
-    value(
+    getValue(
       "stylistDescription"
     );
 
@@ -819,14 +1824,16 @@ async function runAIStylist() {
     ].some(Boolean);
 
   if (!hasInput) {
+
     alert(
-      "Please describe your desired look."
+      "Please describe at least one part of your desired look."
     );
 
     return;
   }
 
   if (stylistButton) {
+
     stylistButton.disabled =
       true;
 
@@ -835,14 +1842,16 @@ async function runAIStylist() {
   }
 
   showLoading(
-    "Building your personalised recommendations..."
+    "Building your personalised fashion recommendations..."
   );
 
   try {
+
     const data =
       await apiRequest(
         "/api/stylist",
         {
+
           method: "POST",
 
           headers: {
@@ -852,12 +1861,14 @@ async function runAIStylist() {
 
           body:
             JSON.stringify({
+
               occasion,
               style,
               comfort,
               color,
               coverage,
               description
+
             })
         }
       );
@@ -869,12 +1880,47 @@ async function runAIStylist() {
         ? data.recommendations
         : [];
 
+    if (!recommendations.length) {
+
+      showNoResults();
+
+      return;
+    }
+
+    const preferences =
+      loadPreferences();
+
+    const personalized =
+      personalizeProducts(
+        recommendations,
+        preferences
+      );
+
     renderProducts(
-      recommendations,
+      personalized,
       data.query ||
-        description
+      description
     );
+
+    if (searchSummary) {
+
+      searchSummary.textContent =
+        "AI Stylist recommendations personalised to your profile.";
+    }
+
+    document
+      .getElementById(
+        "results-section"
+      )
+      ?.scrollIntoView({
+        behavior:
+          "smooth",
+        block:
+          "start"
+      });
+
   } catch (error) {
+
     console.error(
       "AI Stylist error:",
       error
@@ -882,10 +1928,13 @@ async function runAIStylist() {
 
     showError(
       error.message ||
-      "AI Stylist failed."
+      "AI Stylist could not complete the request."
     );
+
   } finally {
+
     if (stylistButton) {
+
       stylistButton.disabled =
         false;
 
@@ -902,21 +1951,79 @@ SEARCH HINTS
 */
 
 function setupSearchHints() {
+
   document
     .querySelectorAll(
       ".search-hints button"
     )
     .forEach(
       (button) => {
+
         button.addEventListener(
           "click",
           () => {
+
             if (searchInput) {
+
               searchInput.value =
-                button.textContent.trim();
+                button.textContent
+                  .trim();
             }
 
             runSearch();
+          }
+        );
+      }
+    );
+}
+
+/*
+=========================================================
+PREFERENCE EVENTS
+=========================================================
+*/
+
+function setupPreferenceEvents() {
+
+  const saveButton =
+    $("savePreferences");
+
+  const resetButton =
+    $("resetPreferences");
+
+  saveButton?.addEventListener(
+    "click",
+    saveUserPreferences
+  );
+
+  resetButton?.addEventListener(
+    "click",
+    resetUserPreferences
+  );
+
+  /*
+  Auto-save when user changes
+  preferences.
+  */
+
+  document
+    .querySelectorAll(
+      ".preference-input"
+    )
+    .forEach(
+      (input) => {
+
+        input.addEventListener(
+          "change",
+          () => {
+
+            const preferences =
+              collectPreferences();
+
+            savePreferences(
+              preferences
+            );
+
           }
         );
       }
@@ -930,6 +2037,7 @@ EVENTS
 */
 
 function setupEvents() {
+
   searchButton?.addEventListener(
     "click",
     runSearch
@@ -938,11 +2046,14 @@ function setupEvents() {
   searchInput?.addEventListener(
     "keydown",
     (event) => {
+
       if (
         event.key ===
         "Enter"
       ) {
+
         event.preventDefault();
+
         runSearch();
       }
     }
@@ -954,16 +2065,20 @@ function setupEvents() {
   );
 
   setupSearchHints();
+
+  setupPreferenceEvents();
 }
 
 /*
 =========================================================
-HEALTH
+BACKEND HEALTH
 =========================================================
 */
 
 async function checkBackend() {
+
   try {
+
     const data =
       await apiRequest(
         "/api/health"
@@ -975,7 +2090,9 @@ async function checkBackend() {
     );
 
     return true;
+
   } catch (error) {
+
     console.error(
       "Backend health check failed:",
       error
@@ -992,13 +2109,13 @@ INITIALIZE
 */
 
 async function initialize() {
+
   console.log(
-    "Fashion AI Discovery Day 5 starting..."
+    "Fashion AI Discovery Day 6 starting..."
   );
 
-  setupEvents();
-
   if (resultsContainer) {
+
     resultsContainer.innerHTML = `
       <div class="no-results">
 
@@ -1009,57 +2126,59 @@ async function initialize() {
         </h3>
 
         <p>
-          Loading the fashion catalogue.
+          Loading your personalised fashion experience.
         </p>
 
       </div>
     `;
   }
 
+  /*
+  Load saved profile first.
+  */
+
+  const preferences =
+    loadPreferences();
+
+  applyPreferencesToUI(
+    preferences
+  );
+
+  setupEvents();
+
   const backendOnline =
     await checkBackend();
 
   if (!backendOnline) {
+
     showError(
-      "Fashion AI backend is unavailable."
+      "Fashion AI backend is currently unavailable."
     );
 
     return;
   }
 
   try {
+
     await loadProducts();
 
     if (allProducts.length) {
-      renderProducts(
-        allProducts.slice(0, 6)
+
+      renderPersonalizedFeed();
+
+      console.log(
+        "Fashion AI Discovery Day 6 ready."
       );
 
-      if (resultCount) {
-        resultCount.textContent =
-          "AI catalogue ready";
-      }
-
-      if (searchSummary) {
-        searchSummary.textContent =
-          `${allProducts.length} products available for AI discovery.`;
-      }
     } else {
+
       showNoResults();
     }
 
-    /*
-    This endpoint now exists in Day 5 backend.
-    If it fails, the catalogue still works.
-    */
-    await loadPersonalizedRecommendations();
-
-    console.log(
-      "Fashion AI Discovery Day 5 ready."
-    );
   } catch (error) {
+
     console.error(
-      "Initialization error:",
+      "Catalogue loading error:",
       error
     );
 
@@ -1071,7 +2190,7 @@ async function initialize() {
 
 /*
 =========================================================
-START
+START APPLICATION
 =========================================================
 */
 
@@ -1079,10 +2198,13 @@ if (
   document.readyState ===
   "loading"
 ) {
+
   document.addEventListener(
     "DOMContentLoaded",
     initialize
   );
+
 } else {
+
   initialize();
 }
