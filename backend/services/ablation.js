@@ -1,5 +1,3 @@
-"use strict";
-
 /*
 =========================================================
 FASHION AI DISCOVERY
@@ -15,55 +13,38 @@ Experiments:
 5. Full Hybrid
 
 All systems use the SAME evaluation benchmark.
-
-This makes comparison scientifically fair.
 =========================================================
 */
 
-const {
+import {
   tokenize,
   keywordScore,
   attributeScore,
-  budgetScore,
   metadataScore,
   calculateHybridScore
-} = require("./aiSearch");
+} from "./aiSearch.js";
 
-
-/*
-=========================================================
-UTILITY
-=========================================================
-*/
 
 function clamp(value) {
   return Math.max(
     0,
-    Math.min(1, Number(value) || 0)
+    Math.min(
+      1,
+      Number(value) || 0
+    )
   );
 }
 
 
-function round(value, digits = 4) {
+function round(
+  value,
+  digits = 4
+) {
   return Number(
     Number(value).toFixed(digits)
   );
 }
 
-
-/*
-=========================================================
-SEMANTIC SCORE
-=========================================================
-
-Uses the same semantic fields supported by the
-existing retrieval engine.
-
-If no real semantic score exists,
-the existing engine's conservative fallback
-is used.
-=========================================================
-*/
 
 function semanticScore(
   query,
@@ -91,10 +72,6 @@ function semanticScore(
     }
   }
 
-  /*
-  Fallback mirrors the current retrieval engine.
-  */
-
   return clamp(
     keywordScore(
       tokenize(query),
@@ -103,12 +80,6 @@ function semanticScore(
   );
 }
 
-
-/*
-=========================================================
-KEYWORD BASELINE
-=========================================================
-*/
 
 function keywordOnlyScore(
   query,
@@ -121,12 +92,6 @@ function keywordOnlyScore(
 }
 
 
-/*
-=========================================================
-ATTRIBUTE BASELINE
-=========================================================
-*/
-
 function attributeOnlyScore(
   query,
   product
@@ -138,12 +103,6 @@ function attributeOnlyScore(
 }
 
 
-/*
-=========================================================
-SEMANTIC BASELINE
-=========================================================
-*/
-
 function semanticOnlyScore(
   query,
   product
@@ -154,32 +113,6 @@ function semanticOnlyScore(
   );
 }
 
-
-/*
-=========================================================
-HYBRID WITHOUT BUDGET
-=========================================================
-
-Removes budget component.
-
-Original:
-
-semantic      45%
-keyword       20%
-attributes    20%
-budget        10%
-metadata       5%
-
-Redistribution:
-
-semantic      50%
-keyword       22%
-attributes    22%
-metadata       6%
-
-Weights sum to 100%.
-=========================================================
-*/
 
 function hybridWithoutBudgetScore(
   query,
@@ -220,15 +153,6 @@ function hybridWithoutBudgetScore(
 }
 
 
-/*
-=========================================================
-FULL HYBRID
-=========================================================
-
-Uses the exact existing hybrid engine score.
-=========================================================
-*/
-
 function fullHybridScore(
   query,
   product
@@ -239,12 +163,6 @@ function fullHybridScore(
   ).finalScore;
 }
 
-
-/*
-=========================================================
-EXPERIMENT DEFINITIONS
-=========================================================
-*/
 
 const EXPERIMENTS = {
 
@@ -304,12 +222,6 @@ const EXPERIMENTS = {
   }
 };
 
-
-/*
-=========================================================
-GENERIC RETRIEVAL
-=========================================================
-*/
 
 function retrieveWithExperiment(
   products,
@@ -390,12 +302,6 @@ function retrieveWithExperiment(
 }
 
 
-/*
-=========================================================
-RUN ALL EXPERIMENTS
-=========================================================
-*/
-
 function runAllExperiments(
   products,
   query,
@@ -420,19 +326,14 @@ function runAllExperiments(
 }
 
 
-/*
-=========================================================
-EXPERIMENT SUMMARY
-=========================================================
-*/
-
 function describeExperiments() {
   return Object.entries(
     EXPERIMENTS
   ).map(
     ([key, value]) => ({
       key,
-      name: value.name,
+      name:
+        value.name,
       description:
         value.description
     })
@@ -440,13 +341,7 @@ function describeExperiments() {
 }
 
 
-/*
-=========================================================
-EXPORTS
-=========================================================
-*/
-
-module.exports = {
+export {
   EXPERIMENTS,
   semanticScore,
   keywordOnlyScore,
