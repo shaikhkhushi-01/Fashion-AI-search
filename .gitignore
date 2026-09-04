@@ -11,3 +11,8 @@ __pycache__/
 
 .vscode/
 .idea/
+node_modules/
+.env
+.DS_Store
+
+backend/evaluation-results/*.json
