@@ -1,320 +1,627 @@
-/*
-=========================================================
-FASHION AI DISCOVERY
-DAY 1 - EVALUATION FOUNDATION
-=========================================================
-*/
+/**
+ * ============================================================
+ * FASHION AI DISCOVERY
+ * DAY 10 — RESEARCH-GRADE EVALUATION FRAMEWORK
+ * ============================================================
+ *
+ * Metrics:
+ * - Precision@K
+ * - Recall@K
+ * - F1@K
+ * - MRR@K
+ * - NDCG@K
+ *
+ * Supports:
+ * - Binary relevance
+ * - Graded relevance
+ * - Per-query evaluation
+ * - Aggregate evaluation
+ * - Baseline comparison
+ * ============================================================
+ */
 
-function normalize(value) {
 
-  return String(value ?? "")
-    .toLowerCase()
-    .trim();
+/* ============================================================
+   UTILITY FUNCTIONS
+============================================================ */
+
+function normalizeId(value) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  return String(value);
 }
 
-/*
-=========================================================
-RELEVANCE
-=========================================================
-*/
 
-export function isRelevant(
-  product,
-  expected
-) {
-
-  if (!product) {
-    return false;
-  }
-
-  const expectedIds =
-    Array.isArray(
-      expected.productIds
-    )
-      ? expected.productIds
-      : [];
-
-  if (
-    expectedIds.includes(
-      product.id
-    )
-  ) {
-    return true;
-  }
-
-  const expectedCategories =
-    Array.isArray(
-      expected.categories
-    )
-      ? expected.categories
-      : [];
-
-  if (
-    expectedCategories.length &&
-    expectedCategories.some(
-      (category) =>
-        normalize(
-          product.category
-        ) ===
-        normalize(category)
-    )
-  ) {
-
-    return true;
-  }
-
-  return false;
+function unique(values) {
+  return [...new Set(values)];
 }
 
-/*
-=========================================================
-PRECISION@K
-=========================================================
-*/
 
-export function precisionAtK(
-  results,
-  expected,
-  k = 5
-) {
+/* ============================================================
+   RELEVANCE
+============================================================ */
 
-  const topK =
-    results.slice(
-      0,
-      k
+/**
+ * Convert a relevance object into a normalized map.
+ *
+ * Example:
+ *
+ * {
+ *   "1": 3,
+ *   "2": 2,
+ *   "3": 0
+ * }
+ */
+function normalizeRelevance(relevance) {
+  const map = {};
+
+  if (!relevance) {
+    return map;
+  }
+
+  if (Array.isArray(relevance)) {
+    relevance.forEach((item) => {
+      if (typeof item === "object") {
+        const id = normalizeId(
+          item.id ?? item.productId
+        );
+
+        const score = Number(
+          item.relevance ?? item.score ?? 1
+        );
+
+        if (id !== null) {
+          map[id] = score;
+        }
+      } else {
+        map[normalizeId(item)] = 1;
+      }
+    });
+
+    return map;
+  }
+
+  if (typeof relevance === "object") {
+    Object.entries(relevance).forEach(
+      ([id, score]) => {
+        map[normalizeId(id)] = Number(score);
+      }
     );
+  }
 
-  if (!topK.length) {
+  return map;
+}
+
+
+/**
+ * Relevant means relevance > 0.
+ */
+function isRelevant(score) {
+  return Number(score) > 0;
+}
+
+
+/* ============================================================
+   PRECISION@K
+============================================================ */
+
+/**
+ * Precision@K
+ *
+ * Precision@K =
+ * relevant retrieved items / K
+ *
+ * We use min(K, retrieved length) when the result list
+ * contains fewer than K items.
+ */
+function precisionAtK(retrieved, relevance, k) {
+  const ranking = retrieved
+    .map(normalizeId)
+    .filter(Boolean)
+    .slice(0, k);
+
+  if (ranking.length === 0) {
     return 0;
   }
 
-  const relevant =
-    topK.filter(
-      (product) =>
-        isRelevant(
-          product,
-          expected
-        )
-    ).length;
+  const relevantRetrieved = ranking.filter(
+    (id) => isRelevant(relevance[id])
+  ).length;
+
+  return relevantRetrieved / ranking.length;
+}
+
+
+/* ============================================================
+   RECALL@K
+============================================================ */
+
+/**
+ * Recall@K
+ *
+ * Recall@K =
+ * relevant retrieved items / all relevant items
+ */
+function recallAtK(retrieved, relevance, k) {
+  const ranking = retrieved
+    .map(normalizeId)
+    .filter(Boolean)
+    .slice(0, k);
+
+  const relevantIds = Object.entries(relevance)
+    .filter(([, score]) => isRelevant(score))
+    .map(([id]) => id);
+
+  if (relevantIds.length === 0) {
+    return 0;
+  }
+
+  const hits = ranking.filter(
+    (id) => isRelevant(relevance[id])
+  ).length;
+
+  return hits / relevantIds.length;
+}
+
+
+/* ============================================================
+   F1@K
+============================================================ */
+
+function f1AtK(retrieved, relevance, k) {
+  const precision = precisionAtK(
+    retrieved,
+    relevance,
+    k
+  );
+
+  const recall = recallAtK(
+    retrieved,
+    relevance,
+    k
+  );
+
+  if (precision + recall === 0) {
+    return 0;
+  }
 
   return (
-    relevant /
-    topK.length
+    2 *
+    precision *
+    recall
+  ) / (
+    precision + recall
   );
 }
 
-/*
-=========================================================
-RECALL@K
-=========================================================
-*/
 
-export function recallAtK(
-  results,
-  expected,
-  k = 5
+/* ============================================================
+   MRR@K
+============================================================ */
+
+/**
+ * Mean Reciprocal Rank for one query.
+ *
+ * RR =
+ * 1 / rank of first relevant result
+ */
+function reciprocalRankAtK(
+  retrieved,
+  relevance,
+  k
 ) {
+  const ranking = retrieved
+    .map(normalizeId)
+    .filter(Boolean)
+    .slice(0, k);
 
-  const expectedIds =
-    Array.isArray(
-      expected.productIds
-    )
-      ? expected.productIds
-      : [];
+  for (let i = 0; i < ranking.length; i++) {
+    if (isRelevant(relevance[ranking[i]])) {
+      return 1 / (i + 1);
+    }
+  }
 
-  if (
-    !expectedIds.length
-  ) {
+  return 0;
+}
+
+
+/* ============================================================
+   NDCG@K
+============================================================ */
+
+/**
+ * Discounted cumulative gain.
+ *
+ * DCG =
+ * Σ ((2^rel - 1) / log2(rank + 1))
+ */
+function dcgAtK(retrieved, relevance, k) {
+  const ranking = retrieved
+    .map(normalizeId)
+    .filter(Boolean)
+    .slice(0, k);
+
+  let dcg = 0;
+
+  ranking.forEach((id, index) => {
+    const rel = Number(
+      relevance[id] || 0
+    );
+
+    const rank = index + 1;
+
+    dcg += (
+      (Math.pow(2, rel) - 1) /
+      Math.log2(rank + 1)
+    );
+  });
+
+  return dcg;
+}
+
+
+/**
+ * Ideal DCG.
+ */
+function idealDcgAtK(relevance, k) {
+  const scores = Object.values(relevance)
+    .map(Number)
+    .filter((score) => score > 0)
+    .sort((a, b) => b - a)
+    .slice(0, k);
+
+  let idcg = 0;
+
+  scores.forEach((rel, index) => {
+    const rank = index + 1;
+
+    idcg += (
+      (Math.pow(2, rel) - 1) /
+      Math.log2(rank + 1)
+    );
+  });
+
+  return idcg;
+}
+
+
+/**
+ * Normalized Discounted Cumulative Gain.
+ */
+function ndcgAtK(retrieved, relevance, k) {
+  const dcg = dcgAtK(
+    retrieved,
+    relevance,
+    k
+  );
+
+  const idcg = idealDcgAtK(
+    relevance,
+    k
+  );
+
+  if (idcg === 0) {
     return 0;
   }
 
-  const topK =
-    results.slice(
-      0,
+  return dcg / idcg;
+}
+
+
+/* ============================================================
+   SINGLE QUERY EVALUATION
+============================================================ */
+
+function evaluateQuery({
+  query,
+  retrieved,
+  relevance,
+  k = 5
+}) {
+  const normalizedRelevance =
+    normalizeRelevance(relevance);
+
+  const ranking = retrieved
+    .map(normalizeId)
+    .filter(Boolean);
+
+  const precision =
+    precisionAtK(
+      ranking,
+      normalizedRelevance,
       k
     );
 
-  const retrieved =
-    topK.filter(
-      (product) =>
-        expectedIds.includes(
-          product.id
-        )
-    ).length;
-
-  return (
-    retrieved /
-    expectedIds.length
-  );
-}
-
-/*
-=========================================================
-HIT RATE
-=========================================================
-*/
-
-export function hitAtK(
-  results,
-  expected,
-  k = 5
-) {
-
-  return results
-    .slice(0, k)
-    .some(
-      (product) =>
-        isRelevant(
-          product,
-          expected
-        )
-    )
-    ? 1
-    : 0;
-}
-
-/*
-=========================================================
-MRR
-=========================================================
-*/
-
-export function reciprocalRank(
-  results,
-  expected
-) {
-
-  const index =
-    results.findIndex(
-      (product) =>
-        isRelevant(
-          product,
-          expected
-        )
+  const recall =
+    recallAtK(
+      ranking,
+      normalizedRelevance,
+      k
     );
 
-  if (index === -1) {
-    return 0;
-  }
+  const f1 =
+    f1AtK(
+      ranking,
+      normalizedRelevance,
+      k
+    );
 
-  return 1 /
-    (index + 1);
-}
+  const rr =
+    reciprocalRankAtK(
+      ranking,
+      normalizedRelevance,
+      k
+    );
 
-/*
-=========================================================
-QUERY EVALUATION
-=========================================================
-*/
+  const ndcg =
+    ndcgAtK(
+      ranking,
+      normalizedRelevance,
+      k
+    );
 
-export function evaluateQuery(
-  results,
-  expected
-) {
+  const relevantRetrieved =
+    ranking
+      .slice(0, k)
+      .filter(
+        (id) =>
+          isRelevant(
+            normalizedRelevance[id]
+          )
+      );
 
   return {
-    precisionAt5:
-      precisionAtK(
-        results,
-        expected,
-        5
-      ),
+    query,
 
-    recallAt5:
-      recallAtK(
-        results,
-        expected,
-        5
-      ),
+    k,
 
-    hitAt5:
-      hitAtK(
-        results,
-        expected,
-        5
-      ),
+    retrievedCount:
+      ranking.length,
+
+    relevantCount:
+      Object.values(normalizedRelevance)
+        .filter(isRelevant)
+        .length,
+
+    relevantRetrievedCount:
+      relevantRetrieved.length,
+
+    precisionAtK:
+      Number(precision.toFixed(6)),
+
+    recallAtK:
+      Number(recall.toFixed(6)),
+
+    f1AtK:
+      Number(f1.toFixed(6)),
 
     reciprocalRank:
-      reciprocalRank(
-        results,
-        expected
-      )
+      Number(rr.toFixed(6)),
+
+    ndcgAtK:
+      Number(ndcg.toFixed(6)),
+
+    retrievedTopK:
+      ranking.slice(0, k),
+
+    relevantRetrievedIds:
+      relevantRetrieved
   };
 }
 
-/*
-=========================================================
-AGGREGATE METRICS
-=========================================================
-*/
 
-export function aggregateMetrics(
-  evaluations
-) {
+/* ============================================================
+   AGGREGATION
+============================================================ */
 
-  if (
-    !evaluations.length
-  ) {
+function mean(values) {
+  if (!values.length) {
+    return 0;
+  }
 
+  return (
+    values.reduce(
+      (sum, value) =>
+        sum + Number(value || 0),
+      0
+    ) / values.length
+  );
+}
+
+
+function aggregateResults(results) {
+  if (!results.length) {
     return {
-      queries: 0,
-      precisionAt5: 0,
-      recallAt5: 0,
-      hitAt5: 0,
-      meanReciprocalRank: 0
+      queryCount: 0,
+      precisionAtK: 0,
+      recallAtK: 0,
+      f1AtK: 0,
+      mrrAtK: 0,
+      ndcgAtK: 0
     };
   }
 
-  const total =
-    evaluations.length;
-
-  const sum = (
-    key
-  ) =>
-    evaluations.reduce(
-      (value, item) =>
-        value +
-        Number(
-          item[key] || 0
-        ),
-      0
-    );
-
   return {
+    queryCount: results.length,
 
-    queries:
-      total,
-
-    precisionAt5:
+    precisionAtK:
       Number(
-        (
-          sum("precisionAt5") /
-          total
-        ).toFixed(4)
+        mean(
+          results.map(
+            (item) =>
+              item.precisionAtK
+          )
+        ).toFixed(6)
       ),
 
-    recallAt5:
+    recallAtK:
       Number(
-        (
-          sum("recallAt5") /
-          total
-        ).toFixed(4)
+        mean(
+          results.map(
+            (item) =>
+              item.recallAtK
+          )
+        ).toFixed(6)
       ),
 
-    hitAt5:
+    f1AtK:
       Number(
-        (
-          sum("hitAt5") /
-          total
-        ).toFixed(4)
+        mean(
+          results.map(
+            (item) =>
+              item.f1AtK
+          )
+        ).toFixed(6)
       ),
 
-    meanReciprocalRank:
+    mrrAtK:
       Number(
-        (
-          sum("reciprocalRank") /
-          total
-        ).toFixed(4)
+        mean(
+          results.map(
+            (item) =>
+              item.reciprocalRank
+          )
+        ).toFixed(6)
+      ),
+
+    ndcgAtK:
+      Number(
+        mean(
+          results.map(
+            (item) =>
+              item.ndcgAtK
+          )
+        ).toFixed(6)
       )
   };
 }
+
+
+/* ============================================================
+   DATASET EVALUATION
+============================================================ */
+
+function evaluateDataset(
+  cases,
+  k = 5
+) {
+  const results = cases.map(
+    (testCase) => {
+
+      const retrieved =
+        testCase.retrieved ||
+        testCase.results ||
+        testCase.ranking ||
+        [];
+
+      const relevance =
+        testCase.relevance ||
+        testCase.relevant ||
+        {};
+
+      return evaluateQuery({
+        query:
+          testCase.query,
+
+        retrieved,
+
+        relevance,
+
+        k
+      });
+    }
+  );
+
+  return {
+    metadata: {
+      evaluationVersion:
+        "day-10-v1",
+
+      metricK:
+        k,
+
+      generatedAt:
+        new Date().toISOString()
+    },
+
+    aggregate:
+      aggregateResults(results),
+
+    queries:
+      results
+  };
+}
+
+
+/* ============================================================
+   MODEL / SYSTEM COMPARISON
+============================================================ */
+
+function compareSystems(
+  systems,
+  cases,
+  k = 5
+) {
+  const comparison = {};
+
+  Object.entries(systems).forEach(
+    ([name, resolver]) => {
+
+      const evaluatedCases =
+        cases.map((testCase) => {
+
+          const retrieved =
+            resolver(testCase);
+
+          return {
+            ...testCase,
+            retrieved
+          };
+        });
+
+      const evaluation =
+        evaluateDataset(
+          evaluatedCases,
+          k
+        );
+
+      comparison[name] =
+        evaluation.aggregate;
+    }
+  );
+
+  return comparison;
+}
+
+
+/* ============================================================
+   EXPORTS
+============================================================ */
+
+module.exports = {
+  normalizeRelevance,
+
+  precisionAtK,
+
+  recallAtK,
+
+  f1AtK,
+
+  reciprocalRankAtK,
+
+  dcgAtK,
+
+  idealDcgAtK,
+
+  ndcgAtK,
+
+  evaluateQuery,
+
+  aggregateResults,
+
+  evaluateDataset,
+
+  compareSystems
+};
