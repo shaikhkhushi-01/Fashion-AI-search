@@ -1,0 +1,62 @@
+name: Fashion AI Research CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  validate-and-test:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version:
+          - 20
+          - 22
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Run smoke test
+        working-directory: backend
+        run: npm run smoke
+
+      - name: Run evaluation
+        working-directory: backend
+        run: npm run evaluate
+
+      - name: Run ablation
+        working-directory: backend
+        run: npm run ablation
+
+      - name: Run robustness
+        working-directory: backend
+        run: npm run robustness
+
+      - name: Run reproducibility check
+        working-directory: backend
+        run: npm run reproducibility
+
+      - name: Upload experiment reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: fashion-ai-research-reports-node-${{ matrix.node-version }}
+          path: backend/evaluation-results/
