@@ -1,23 +1,67 @@
-# Experiments
+# Fashion AI Discovery
 
-This directory contains reproducible experiments for the Fashion AI Discovery project.
+An AI-powered fashion discovery and recommendation system combining
+semantic retrieval, keyword matching, attribute reasoning,
+budget-aware ranking, personalization and explainable recommendations.
 
-Planned experiments:
+---
 
-1. Lexical baseline
-2. Semantic embedding search
-3. Hybrid lexical + semantic search
-4. Ranking model
-5. Personalization
-6. Ablation studies
-7. Evaluation metrics
+## Overview
 
-Every experiment should record:
+Fashion search is often treated as a keyword-matching problem.
 
-- dataset version
-- model/version
-- configuration
-- evaluation metric
-- results
-- date
-- random seed where applicable
+This project explores a more intelligent fashion discovery pipeline where
+natural-language user queries are converted into structured retrieval
+signals and ranked against a fashion catalogue.
+
+The system combines:
+
+- semantic similarity
+- keyword relevance
+- fashion attribute matching
+- budget awareness
+- metadata signals
+- hybrid ranking
+- personalization
+- AI stylist recommendations
+- evaluation metrics
+- ablation experiments
+- robustness testing
+- reproducibility checks
+
+The goal is not to build a full ecommerce clone.
+
+The primary focus is the AI search and recommendation layer.
+
+---
+
+## Research Pipeline
+
+```text
+User Query
+    |
+    v
+Query Understanding
+    |
+    v
+Semantic Retrieval
+    |
+    +---- Keyword Retrieval
+    |
+    +---- Attribute Matching
+    |
+    +---- Budget Matching
+    |
+    +---- Metadata Signals
+    |
+    v
+Hybrid Candidate Ranking
+    |
+    v
+Personalization
+    |
+    v
+AI Stylist / Explanation
+    |
+    v
+Ranked Fashion Results
