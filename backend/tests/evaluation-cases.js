@@ -1,5 +1,3 @@
-"use strict";
-
 /*
 =========================================================
 FASHION AI DISCOVERY
@@ -186,4 +184,4 @@ const evaluationCases = [
 
 ];
 
-module.exports = evaluationCases;
+export default evaluationCases;
