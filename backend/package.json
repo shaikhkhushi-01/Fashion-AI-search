@@ -8,7 +8,9 @@
     "test": "node tests/evaluate.js",
     "evaluate": "node tests/evaluate.js",
     "ablation": "node tests/ablation.js",
-    "robustness": "node tests/robustness.js"
+    "robustness": "node tests/robustness.js",
+    "reproducibility": "node tests/reproducibility.js",
+    "smoke": "node tests/smoke.js"
   },
   "dependencies": {
     "@huggingface/transformers": "^3.7.2",
