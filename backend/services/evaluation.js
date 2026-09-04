@@ -1,5 +1,3 @@
-"use strict";
-
 /*
 =========================================================
 FASHION AI DISCOVERY
@@ -12,16 +10,6 @@ Metrics:
 3. F1@K
 4. MRR@K
 5. NDCG@K
-
-This module evaluates ranked retrieval results
-against human-curated relevance judgments.
-=========================================================
-*/
-
-
-/*
-=========================================================
-NORMALIZATION
 =========================================================
 */
 
@@ -33,13 +21,6 @@ function normalizeId(value) {
   return String(value).trim();
 }
 
-
-/*
-=========================================================
-UNIQUE IDS
-=========================================================
-*/
-
 function uniqueIds(values) {
   return [
     ...new Set(
@@ -49,13 +30,6 @@ function uniqueIds(values) {
     )
   ];
 }
-
-
-/*
-=========================================================
-RELEVANCE NORMALIZATION
-=========================================================
-*/
 
 function normalizeRelevance(value) {
   const score = Number(value);
@@ -69,13 +43,6 @@ function normalizeRelevance(value) {
     Math.min(3, score)
   );
 }
-
-
-/*
-=========================================================
-RELEVANCE MAP
-=========================================================
-*/
 
 function buildRelevanceMap(relevance) {
   const map = new Map();
@@ -108,13 +75,6 @@ function buildRelevanceMap(relevance) {
   return map;
 }
 
-
-/*
-=========================================================
-RELEVANCE CHECK
-=========================================================
-*/
-
 function isRelevant(
   productId,
   relevanceMap
@@ -127,21 +87,6 @@ function isRelevant(
     ) > 0
   );
 }
-
-
-/*
-=========================================================
-PRECISION@K
-=========================================================
-
-Precision@K =
-relevant retrieved items / K
-
-If fewer than K results are returned,
-the denominator is the number of retrieved
-results actually available.
-=========================================================
-*/
 
 function precisionAtK(
   retrievedIds,
@@ -167,13 +112,6 @@ function precisionAtK(
 
   return relevantCount / results.length;
 }
-
-
-/*
-=========================================================
-RECALL@K
-=========================================================
-*/
 
 function recallAtK(
   retrievedIds,
@@ -209,13 +147,6 @@ function recallAtK(
     relevantTotal
   );
 }
-
-
-/*
-=========================================================
-F1@K
-=========================================================
-*/
 
 function f1AtK(
   retrievedIds,
@@ -254,18 +185,6 @@ function f1AtK(
   );
 }
 
-
-/*
-=========================================================
-MRR@K
-=========================================================
-
-Mean Reciprocal Rank for a single query.
-
-Uses the first relevant result.
-=========================================================
-*/
-
 function reciprocalRankAtK(
   retrievedIds,
   relevanceMap,
@@ -292,21 +211,6 @@ function reciprocalRankAtK(
 
   return 0;
 }
-
-
-/*
-=========================================================
-DCG@K
-=========================================================
-
-Uses graded relevance:
-
-0 = irrelevant
-1 = weakly relevant
-2 = relevant
-3 = highly relevant
-=========================================================
-*/
 
 function dcgAtK(
   retrievedIds,
@@ -343,13 +247,6 @@ function dcgAtK(
   return dcg;
 }
 
-
-/*
-=========================================================
-IDEAL DCG@K
-=========================================================
-*/
-
 function idealDcgAtK(
   relevanceMap,
   k
@@ -385,13 +282,6 @@ function idealDcgAtK(
   return idcg;
 }
 
-
-/*
-=========================================================
-NDCG@K
-=========================================================
-*/
-
 function ndcgAtK(
   retrievedIds,
   relevanceMap,
@@ -416,13 +306,6 @@ function ndcgAtK(
 
   return dcg / idcg;
 }
-
-
-/*
-=========================================================
-SINGLE QUERY EVALUATION
-=========================================================
-*/
 
 function evaluateQuery({
   query,
@@ -497,13 +380,6 @@ function evaluateQuery({
   };
 }
 
-
-/*
-=========================================================
-MEAN
-=========================================================
-*/
-
 function mean(values) {
   const valid =
     values.filter(
@@ -526,13 +402,6 @@ function mean(values) {
     valid.length
   );
 }
-
-
-/*
-=========================================================
-AGGREGATE QUERY RESULTS
-=========================================================
-*/
 
 function aggregateResults(
   queryResults,
@@ -603,13 +472,6 @@ function aggregateResults(
 
   return aggregate;
 }
-
-
-/*
-=========================================================
-EVALUATE DATASET
-=========================================================
-*/
 
 function evaluateDataset({
   cases,
@@ -687,18 +549,12 @@ function evaluateDataset({
   };
 }
 
-
-/*
-=========================================================
-EXPORTS
-=========================================================
-*/
-
-module.exports = {
+export {
   normalizeId,
   uniqueIds,
   normalizeRelevance,
   buildRelevanceMap,
+  isRelevant,
   precisionAtK,
   recallAtK,
   f1AtK,
