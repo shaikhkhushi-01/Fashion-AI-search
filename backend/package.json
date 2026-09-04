@@ -1,18 +1,16 @@
 {
   "name": "fashion-ai-discovery-backend",
-  "version": "8.0.0",
-  "description": "Research-oriented AI fashion discovery with advanced search and evaluation",
-  "type": "module",
+  "version": "1.0.0",
+  "description": "AI-powered fashion discovery backend",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
-  },
-  "engines": {
-    "node": ">=20"
+    "start": "node server.js",
+    "test": "node tests/evaluate.js",
+    "evaluate": "node tests/evaluate.js"
   },
   "dependencies": {
     "@huggingface/transformers": "^3.7.2",
     "cors": "^2.8.5",
-    "express": "^5.1.0"
+    "express": "^4.21.2"
   }
 }
