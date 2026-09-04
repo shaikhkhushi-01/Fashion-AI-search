@@ -1,236 +1,189 @@
-/**
- * ============================================================
- * DAY 10 — EVALUATION DATASET
- * ============================================================
- *
- * Each query contains:
- *
- * relevance score:
- *
- * 3 = highly relevant
- * 2 = relevant
- * 1 = weakly relevant
- * 0 = irrelevant
- *
- * This is a manually curated research evaluation set.
- * ============================================================
- */
+"use strict";
 
-module.exports = [
+/*
+=========================================================
+FASHION AI DISCOVERY
+DAY 10 — EVALUATION BENCHMARK
+=========================================================
+
+Relevance scale:
+
+3 = Highly relevant
+2 = Relevant
+1 = Weakly relevant
+0 = Irrelevant
+=========================================================
+*/
+
+const evaluationCases = [
 
   {
     id: "q01",
+    query: "black oversized shirt",
 
-    query:
-      "white sneakers for college",
-
-    relevance: {
-      "5": 3,
-      "14": 1,
-      "2": 1
-    }
+    relevance: [
+      { productId: 2, relevance: 3 },
+      { productId: 4, relevance: 1 },
+      { productId: 6, relevance: 1 },
+      { productId: 12, relevance: 2 },
+      { productId: 14, relevance: 1 }
+    ]
   },
-
 
   {
     id: "q02",
+    query: "white casual shirt",
 
-    query:
-      "minimal black outfit under 5000",
-
-    relevance: {
-      "4": 3,
-      "2": 3,
-      "17": 2,
-      "14": 1
-    }
+    relevance: [
+      { productId: 1, relevance: 3 },
+      { productId: 2, relevance: 3 },
+      { productId: 14, relevance: 1 },
+      { productId: 16, relevance: 1 }
+    ]
   },
-
 
   {
     id: "q03",
+    query: "summer dress",
 
-    query:
-      "elegant black dress for evening",
-
-    relevance: {
-      "6": 2,
-      "17": 2,
-      "7": 3,
-      "20": 3
-    }
+    relevance: [
+      { productId: 3, relevance: 3 },
+      { productId: 7, relevance: 1 },
+      { productId: 16, relevance: 2 },
+      { productId: 20, relevance: 1 }
+    ]
   },
-
 
   {
     id: "q04",
+    query: "black trousers",
 
-    query:
-      "comfortable summer outfit",
-
-    relevance: {
-      "1": 3,
-      "3": 3,
-      "16": 3,
-      "14": 2
-    }
+    relevance: [
+      { productId: 4, relevance: 3 },
+      { productId: 6, relevance: 1 },
+      { productId: 17, relevance: 1 }
+    ]
   },
-
 
   {
     id: "q05",
+    query: "comfortable sneakers",
 
-    query:
-      "black shirt for everyday wear",
-
-    relevance: {
-      "2": 3,
-      "14": 2,
-      "1": 1
-    }
+    relevance: [
+      { productId: 5, relevance: 3 },
+      { productId: 14, relevance: 1 },
+      { productId: 19, relevance: 1 }
+    ]
   },
-
 
   {
     id: "q06",
+    query: "black blazer for office",
 
-    query:
-      "formal outfit for office",
-
-    relevance: {
-      "6": 3,
-      "15": 3,
-      "4": 2,
-      "11": 2
-    }
+    relevance: [
+      { productId: 6, relevance: 3 },
+      { productId: 4, relevance: 1 },
+      { productId: 15, relevance: 1 }
+    ]
   },
-
 
   {
     id: "q07",
+    query: "elegant evening dress",
 
-    query:
-      "traditional outfit for wedding",
-
-    relevance: {
-      "10": 3,
-      "9": 3,
-      "13": 3,
-      "18": 2,
-      "20": 2
-    }
+    relevance: [
+      { productId: 7, relevance: 3 },
+      { productId: 20, relevance: 3 },
+      { productId: 17, relevance: 2 },
+      { productId: 6, relevance: 1 }
+    ]
   },
-
 
   {
     id: "q08",
+    query: "blue denim jeans",
 
-    query:
-      "warm winter coat for travel",
-
-    relevance: {
-      "11": 3,
-      "19": 1
-    }
+    relevance: [
+      { productId: 8, relevance: 3 },
+      { productId: 4, relevance: 1 }
+    ]
   },
-
 
   {
     id: "q09",
+    query: "modest black abaya",
 
-    query:
-      "oversized casual streetwear",
-
-    relevance: {
-      "2": 3,
-      "12": 3,
-      "19": 2
-    }
+    relevance: [
+      { productId: 9, relevance: 3 },
+      { productId: 6, relevance: 1 }
+    ]
   },
-
 
   {
     id: "q10",
+    query: "red silk saree",
 
-    query:
-      "luxury evening outfit",
-
-    relevance: {
-      "7": 3,
-      "20": 3,
-      "10": 2,
-      "13": 2,
-      "15": 1
-    }
+    relevance: [
+      { productId: 10, relevance: 3 },
+      { productId: 7, relevance: 1 },
+      { productId: 20, relevance: 1 }
+    ]
   },
-
 
   {
     id: "q11",
+    query: "winter coat",
 
-    query:
-      "simple cotton t shirt",
-
-    relevance: {
-      "14": 3,
-      "2": 2,
-      "12": 2
-    }
+    relevance: [
+      { productId: 11, relevance: 3 },
+      { productId: 19, relevance: 1 }
+    ]
   },
-
 
   {
     id: "q12",
+    query: "white oversized hoodie",
 
-    query:
-      "blue denim jeans",
-
-    relevance: {
-      "8": 3
-    }
+    relevance: [
+      { productId: 12, relevance: 3 },
+      { productId: 2, relevance: 2 },
+      { productId: 14, relevance: 1 }
+    ]
   },
-
 
   {
     id: "q13",
+    query: "traditional kurta",
 
-    query:
-      "comfortable clothes for college",
-
-    relevance: {
-      "2": 3,
-      "12": 3,
-      "14": 3,
-      "5": 2
-    }
+    relevance: [
+      { productId: 18, relevance: 3 },
+      { productId: 13, relevance: 2 },
+      { productId: 9, relevance: 1 }
+    ]
   },
-
 
   {
     id: "q14",
+    query: "formal navy suit",
 
-    query:
-      "minimal white clothing",
-
-    relevance: {
-      "1": 3,
-      "5": 2,
-      "12": 3,
-      "14": 2
-    }
+    relevance: [
+      { productId: 15, relevance: 3 },
+      { productId: 6, relevance: 1 },
+      { productId: 11, relevance: 1 }
+    ]
   },
-
 
   {
     id: "q15",
+    query: "party skirt",
 
-    query:
-      "festive traditional menswear",
-
-    relevance: {
-      "18": 3,
-      "15": 2
-    }
+    relevance: [
+      { productId: 17, relevance: 3 },
+      { productId: 7, relevance: 1 },
+      { productId: 13, relevance: 1 }
+    ]
   }
 
 ];
+
+module.exports = evaluationCases;
