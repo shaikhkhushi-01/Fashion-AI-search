@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "test": "node tests/evaluate.js",
-    "evaluate": "node tests/evaluate.js"
+    "evaluate": "node tests/evaluate.js",
     "ablation": "node tests/ablation.js"
   },
   "dependencies": {
