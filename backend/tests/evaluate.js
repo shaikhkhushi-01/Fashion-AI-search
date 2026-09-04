@@ -1,5 +1,3 @@
-"use strict";
-
 /*
 =========================================================
 FASHION AI DISCOVERY
@@ -7,19 +5,32 @@ DAY 10 — REAL SEARCH EVALUATION RUNNER
 =========================================================
 */
 
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
-const {
+import {
   searchProducts
-} = require("../services/aiSearch");
+} from "../services/aiSearch.js";
 
-const {
+import {
   evaluateDataset
-} = require("../services/evaluation");
+} from "../services/evaluation.js";
 
-const evaluationCases =
-  require("./evaluation-cases");
+import evaluationCases from "./evaluation-cases.js";
+
+
+/*
+=========================================================
+ES MODULE PATH SETUP
+=========================================================
+*/
+
+const __filename =
+  fileURLToPath(import.meta.url);
+
+const __dirname =
+  path.dirname(__filename);
 
 
 /*
@@ -77,16 +88,11 @@ const K_VALUES = [
 
 /*
 =========================================================
-RUN REAL SEARCH ENGINE
-=========================================================
-
-This directly calls the existing hybrid retrieval
-engine from services/aiSearch.js.
+REAL SEARCH ENGINE
 =========================================================
 */
 
 function retrieve(query) {
-
   return searchProducts(
     products,
     query,
@@ -105,6 +111,7 @@ RUN EVALUATION
 */
 
 console.log("");
+
 console.log(
   "=============================================="
 );
@@ -166,7 +173,6 @@ console.log(
 
 
 for (const k of K_VALUES) {
-
   const metrics =
     report.aggregate[`@${k}`];
 
@@ -225,7 +231,6 @@ for (
   const result
   of report.queries
 ) {
-
   const top5 =
     result.retrievedIds
       .slice(0, 5)
