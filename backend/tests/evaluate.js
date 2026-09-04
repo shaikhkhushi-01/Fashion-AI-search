@@ -1,117 +1,210 @@
-/*
-=========================================================
-FASHION AI DISCOVERY
-DAY 1 - EVALUATION RUNNER
-=========================================================
-*/
+/**
+ * ============================================================
+ * DAY 10 — RUN EVALUATION
+ * ============================================================
+ *
+ * Usage:
+ *
+ * node tests/evaluate.js
+ *
+ * Output:
+ *
+ * - Console metrics
+ * - Per-query metrics
+ * - JSON evaluation report
+ *
+ * ============================================================
+ */
 
-import {
-  searchProducts
-} from "../services/aiSearch.js";
+const fs = require("fs");
+const path = require("path");
 
-import {
-  evaluateQuery,
-  aggregateMetrics
-} from "../services/evaluation.js";
+const {
+  evaluateDataset
+} = require("../services/evaluation");
 
-import {
-  evaluationCases
-} from "./evaluation-cases.js";
+const testCases =
+  require("./evaluation-cases");
 
-console.log(
-  "\n=========================================="
-);
 
-console.log(
-  "FASHION AI - BASELINE EVALUATION"
-);
+/* ============================================================
+   CONFIG
+============================================================ */
 
-console.log(
-  "==========================================\n"
-);
+const K_VALUES = [
+  1,
+  3,
+  5,
+  10
+];
 
-const evaluations = [];
 
-for (
-  const testCase of
-  evaluationCases
-) {
-
-  const search =
-    searchProducts(
-      testCase.query,
-      {
-        limit: 5
-      }
-    );
-
-  const metrics =
-    evaluateQuery(
-      search.results,
-      testCase
-    );
-
-  evaluations.push(
-    metrics
+const OUTPUT_DIR =
+  path.join(
+    __dirname,
+    "..",
+    "evaluation-results"
   );
 
-  const top =
-    search.results[0];
+
+/* ============================================================
+   DIRECTORY
+============================================================ */
+
+if (!fs.existsSync(OUTPUT_DIR)) {
+  fs.mkdirSync(
+    OUTPUT_DIR,
+    {
+      recursive: true
+    }
+  );
+}
+
+
+/* ============================================================
+   EVALUATION
+============================================================ */
+
+const reports = {};
+
+
+console.log("");
+console.log(
+  "============================================================"
+);
+
+console.log(
+  "FASHION AI DISCOVERY — DAY 10 EVALUATION"
+);
+
+console.log(
+  "============================================================"
+);
+
+console.log("");
+
+console.log(
+  `Evaluation queries: ${testCases.length}`
+);
+
+console.log(
+  `K values: ${K_VALUES.join(", ")}`
+);
+
+console.log("");
+
+
+/* ============================================================
+   RUN EACH K
+============================================================ */
+
+K_VALUES.forEach((k) => {
+
+  const report =
+    evaluateDataset(
+      testCases,
+      k
+    );
+
+  reports[`k${k}`] =
+    report;
+
 
   console.log(
-    `${testCase.id} | ${testCase.query}`
+    `-------------------- K=${k} --------------------`
   );
 
   console.log(
-    `Top result: ${
-      top
-        ? `${top.name} (${top.matchScore}%)`
-        : "None"
+    `Precision@${k}: ${
+      report.aggregate.precisionAtK
     }`
   );
 
   console.log(
-    `P@5: ${metrics.precisionAt5}`
+    `Recall@${k}: ${
+      report.aggregate.recallAtK
+    }`
   );
 
   console.log(
-    `R@5: ${metrics.recallAt5}`
+    `F1@${k}: ${
+      report.aggregate.f1AtK
+    }`
   );
 
   console.log(
-    `Hit@5: ${metrics.hitAt5}`
+    `MRR@${k}: ${
+      report.aggregate.mrrAtK
+    }`
   );
 
   console.log(
-    `RR: ${metrics.reciprocalRank}`
+    `NDCG@${k}: ${
+      report.aggregate.ndcgAtK
+    }`
   );
 
-  console.log(
-    "------------------------------------------"
+  console.log("");
+
+});
+
+
+/* ============================================================
+   SAVE JSON
+============================================================ */
+
+const output = {
+
+  evaluationVersion:
+    "day-10-v1",
+
+  generatedAt:
+    new Date().toISOString(),
+
+  dataset: {
+    queryCount:
+      testCases.length
+  },
+
+  kValues:
+    K_VALUES,
+
+  reports
+
+};
+
+
+const outputPath =
+  path.join(
+    OUTPUT_DIR,
+    "evaluation-report.json"
   );
-}
 
-const finalMetrics =
-  aggregateMetrics(
-    evaluations
-  );
 
-console.log(
-  "\n=========================================="
+fs.writeFileSync(
+  outputPath,
+  JSON.stringify(
+    output,
+    null,
+    2
+  )
 );
 
-console.log(
-  "AGGREGATE RESULTS"
-);
 
 console.log(
-  "=========================================="
-);
-
-console.table(
-  finalMetrics
+  "============================================================"
 );
 
 console.log(
-  "\nBaseline evaluation completed.\n"
+  "Evaluation completed successfully."
 );
+
+console.log(
+  `Report saved to: ${outputPath}`
+);
+
+console.log(
+  "============================================================"
+);
+
+console.log("");
