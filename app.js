@@ -1,7 +1,22 @@
 /*
 =========================================================
 FASHION AI DISCOVERY
-DAY 6 - PERSONALIZATION & USER PREFERENCES
+DAY 8 - USER PERSONALIZATION
+=========================================================
+Features:
+- Natural language fashion search
+- Semantic/hybrid backend search
+- User preference profile
+- Personalized ranking
+- Search history
+- Interaction learning
+- Budget preference
+- Style preference
+- Colour preference
+- Occasion preference
+- Category preference
+- Explainable personalization
+- Local persistence
 =========================================================
 */
 
@@ -9,12 +24,21 @@ DAY 6 - PERSONALIZATION & USER PREFERENCES
 
 /*
 =========================================================
-API
+CONFIG
 =========================================================
 */
 
 const API_BASE_URL =
   "https://fashion-ai-search-lj6s.onrender.com";
+
+const STORAGE_KEY =
+  "fashion_ai_user_profile_v8";
+
+const MAX_HISTORY =
+  30;
+
+const MAX_INTERACTIONS =
+  100;
 
 /*
 =========================================================
@@ -24,12 +48,6 @@ DOM HELPERS
 
 const $ = (id) =>
   document.getElementById(id);
-
-/*
-=========================================================
-DOM ELEMENTS
-=========================================================
-*/
 
 const searchInput =
   $("searchInput");
@@ -63,16 +81,8 @@ let currentQuery = "";
 
 let isSearching = false;
 
-let isSavingPreferences = false;
-
-/*
-=========================================================
-STORAGE
-=========================================================
-*/
-
-const PREFERENCES_STORAGE_KEY =
-  "fashion_ai_user_preferences_v1";
+let userProfile =
+  loadUserProfile();
 
 /*
 =========================================================
@@ -80,27 +90,144 @@ DEFAULT USER PROFILE
 =========================================================
 */
 
-const DEFAULT_PREFERENCES = {
+function createDefaultProfile() {
 
-  gender: "",
+  return {
 
-  categories: [],
+    version: 1,
 
-  colors: [],
+    preferences: {
 
-  styles: [],
+      styles: [],
 
-  occasions: [],
+      colors: [],
 
-  materials: [],
+      occasions: [],
 
-  minPrice: 0,
+      categories: [],
 
-  maxPrice: 10000,
+      materials: [],
 
-  budget: 10000
+      budget: null
 
-};
+    },
+
+    searchHistory: [],
+
+    interactions: {
+
+      views: {},
+
+      likes: {},
+
+      clicks: {},
+
+      searches: {}
+
+    },
+
+    createdAt:
+      new Date().toISOString(),
+
+    updatedAt:
+      new Date().toISOString()
+  };
+}
+
+/*
+=========================================================
+LOAD PROFILE
+=========================================================
+*/
+
+function loadUserProfile() {
+
+  try {
+
+    const raw =
+      localStorage.getItem(
+        STORAGE_KEY
+      );
+
+    if (!raw) {
+
+      return createDefaultProfile();
+    }
+
+    const parsed =
+      JSON.parse(raw);
+
+    const defaults =
+      createDefaultProfile();
+
+    return {
+
+      ...defaults,
+
+      ...parsed,
+
+      preferences: {
+
+        ...defaults.preferences,
+
+        ...(parsed.preferences || {})
+
+      },
+
+      interactions: {
+
+        ...defaults.interactions,
+
+        ...(parsed.interactions || {})
+
+      },
+
+      searchHistory:
+        Array.isArray(
+          parsed.searchHistory
+        )
+          ? parsed.searchHistory
+          : []
+
+    };
+
+  } catch (error) {
+
+    console.warn(
+      "Could not load user profile:",
+      error
+    );
+
+    return createDefaultProfile();
+  }
+}
+
+/*
+=========================================================
+SAVE PROFILE
+=========================================================
+*/
+
+function saveUserProfile() {
+
+  try {
+
+    userProfile.updatedAt =
+      new Date().toISOString();
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(userProfile)
+    );
+
+  } catch (error) {
+
+    console.warn(
+      "Could not save user profile:",
+      error
+    );
+  }
+}
 
 /*
 =========================================================
@@ -120,29 +247,7 @@ function escapeHTML(value) {
 
 /*
 =========================================================
-ARRAY NORMALIZER
-=========================================================
-*/
-
-function safeArray(value) {
-
-  if (Array.isArray(value)) {
-    return value;
-  }
-
-  if (
-    typeof value === "string" &&
-    value.trim()
-  ) {
-    return [value];
-  }
-
-  return [];
-}
-
-/*
-=========================================================
-PRICE FORMATTER
+PRICE
 =========================================================
 */
 
@@ -152,10 +257,115 @@ function formatPrice(price) {
     Number(price);
 
   if (!Number.isFinite(value)) {
-    return escapeHTML(price || "");
+
+    return escapeHTML(
+      price || ""
+    );
   }
 
-  return value.toLocaleString("en-IN");
+  return value.toLocaleString(
+    "en-IN"
+  );
+}
+
+/*
+=========================================================
+ARRAY NORMALIZER
+=========================================================
+*/
+
+function safeArray(value) {
+
+  if (Array.isArray(value)) {
+
+    return value;
+  }
+
+  if (
+    typeof value === "string" &&
+    value.trim()
+  ) {
+
+    return value
+      .split(",")
+      .map(
+        item => item.trim()
+      )
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+/*
+=========================================================
+NORMALIZE TEXT
+=========================================================
+*/
+
+function normalizeText(value) {
+
+  return String(
+    value || ""
+  )
+    .toLowerCase()
+    .trim();
+}
+
+/*
+=========================================================
+TOKENIZE
+=========================================================
+*/
+
+function tokenize(value) {
+
+  return normalizeText(value)
+    .replace(
+      /[^a-z0-9\s-]/g,
+      " "
+    )
+    .split(/\s+/)
+    .filter(
+      token => token.length > 1
+    );
+}
+
+/*
+=========================================================
+PRODUCT TEXT
+=========================================================
+*/
+
+function productText(product) {
+
+  return [
+
+    product.name,
+
+    product.brand,
+
+    product.category,
+
+    product.description,
+
+    product.color,
+
+    product.colour,
+
+    product.style,
+
+    product.occasion,
+
+    product.material,
+
+    product.gender
+
+  ]
+    .flatMap(
+      value => safeArray(value)
+    )
+    .join(" ");
 }
 
 /*
@@ -205,17 +415,565 @@ function productVisual(product) {
 
 /*
 =========================================================
+PERSONALIZATION SCORE
+=========================================================
+*/
+
+function calculatePersonalizationScore(
+  product
+) {
+
+  const preferences =
+    userProfile.preferences;
+
+  let score = 0;
+
+  let matchedSignals = 0;
+
+  let totalSignals = 0;
+
+  const text =
+    normalizeText(
+      productText(product)
+    );
+
+  /*
+  -------------------------
+  STYLE
+  -------------------------
+  */
+
+  if (
+    preferences.styles.length
+  ) {
+
+    totalSignals++;
+
+    const matched =
+      preferences.styles.some(
+        style =>
+          text.includes(
+            normalizeText(style)
+          )
+      );
+
+    if (matched) {
+
+      score += 20;
+
+      matchedSignals++;
+    }
+  }
+
+  /*
+  -------------------------
+  COLOR
+  -------------------------
+  */
+
+  if (
+    preferences.colors.length
+  ) {
+
+    totalSignals++;
+
+    const productColor =
+      normalizeText(
+        product.color ||
+        product.colour
+      );
+
+    const matched =
+      preferences.colors.some(
+        color =>
+          productColor.includes(
+            normalizeText(color)
+          ) ||
+          text.includes(
+            normalizeText(color)
+          )
+      );
+
+    if (matched) {
+
+      score += 18;
+
+      matchedSignals++;
+    }
+  }
+
+  /*
+  -------------------------
+  OCCASION
+  -------------------------
+  */
+
+  if (
+    preferences.occasions.length
+  ) {
+
+    totalSignals++;
+
+    const matched =
+      preferences.occasions.some(
+        occasion =>
+          text.includes(
+            normalizeText(
+              occasion
+            )
+          )
+      );
+
+    if (matched) {
+
+      score += 18;
+
+      matchedSignals++;
+    }
+  }
+
+  /*
+  -------------------------
+  CATEGORY
+  -------------------------
+  */
+
+  if (
+    preferences.categories.length
+  ) {
+
+    totalSignals++;
+
+    const category =
+      normalizeText(
+        product.category
+      );
+
+    const matched =
+      preferences.categories.some(
+        item =>
+          category.includes(
+            normalizeText(item)
+          )
+      );
+
+    if (matched) {
+
+      score += 15;
+
+      matchedSignals++;
+    }
+  }
+
+  /*
+  -------------------------
+  MATERIAL
+  -------------------------
+  */
+
+  if (
+    preferences.materials.length
+  ) {
+
+    totalSignals++;
+
+    const matched =
+      preferences.materials.some(
+        material =>
+          text.includes(
+            normalizeText(material)
+          )
+      );
+
+    if (matched) {
+
+      score += 10;
+
+      matchedSignals++;
+    }
+  }
+
+  /*
+  -------------------------
+  BUDGET
+  -------------------------
+  */
+
+  if (
+    Number.isFinite(
+      Number(
+        preferences.budget
+      )
+    )
+  ) {
+
+    totalSignals++;
+
+    const productPrice =
+      Number(
+        product.price
+      );
+
+    const budget =
+      Number(
+        preferences.budget
+      );
+
+    if (
+      Number.isFinite(
+        productPrice
+      )
+    ) {
+
+      if (
+        productPrice <=
+        budget
+      ) {
+
+        score += 12;
+
+        matchedSignals++;
+
+      } else {
+
+        const difference =
+          productPrice -
+          budget;
+
+        const penalty =
+          Math.min(
+            12,
+            (difference /
+              Math.max(
+                budget,
+                1
+              )) * 12
+          );
+
+        score -= penalty;
+      }
+    }
+  }
+
+  /*
+  -------------------------
+  INTERACTION SIGNAL
+  -------------------------
+  */
+
+  const productId =
+    getProductId(product);
+
+  const interactions =
+    userProfile.interactions;
+
+  const views =
+    Number(
+      interactions.views[
+        productId
+      ] || 0
+    );
+
+  const likes =
+    Number(
+      interactions.likes[
+        productId
+      ] || 0
+    );
+
+  const clicks =
+    Number(
+      interactions.clicks[
+        productId
+      ] || 0
+    );
+
+  score +=
+    Math.min(
+      10,
+      views * 1
+    );
+
+  score +=
+    Math.min(
+      15,
+      likes * 5
+    );
+
+  score +=
+    Math.min(
+      8,
+      clicks * 2
+    );
+
+  /*
+  -------------------------
+  NORMALIZED SCORE
+  -------------------------
+  */
+
+  const normalized =
+    Math.max(
+      0,
+      Math.min(
+        100,
+        score
+      )
+    );
+
+  return {
+
+    score:
+      normalized,
+
+    matchedSignals,
+
+    totalSignals
+
+  };
+}
+
+/*
+=========================================================
+PRODUCT ID
+=========================================================
+*/
+
+function getProductId(product) {
+
+  return String(
+    product.id ??
+    product.productId ??
+    product.sku ??
+    product.name ??
+    Math.random()
+  );
+}
+
+/*
+=========================================================
+PERSONALIZED RANKING
+=========================================================
+*/
+
+function personalizeResults(
+  products
+) {
+
+  if (
+    !Array.isArray(products)
+  ) {
+
+    return [];
+  }
+
+  return products
+    .map(
+      (product, index) => {
+
+        const baseScore =
+          Number(
+            product.matchScore ??
+            product.score ??
+            product.relevanceScore ??
+            0
+          );
+
+        const safeBaseScore =
+          Number.isFinite(
+            baseScore
+          )
+            ? Math.max(
+                0,
+                Math.min(
+                  100,
+                  baseScore
+                )
+              )
+            : 0;
+
+        const personalization =
+          calculatePersonalizationScore(
+            product
+          );
+
+        /*
+        Research-oriented weighted
+        hybrid ranking.
+
+        70% retrieval score
+        30% personalization
+        */
+
+        const finalScore =
+          (
+            safeBaseScore * 0.70
+          ) +
+          (
+            personalization.score *
+            0.30
+          );
+
+        return {
+
+          ...product,
+
+          originalMatchScore:
+            safeBaseScore,
+
+          personalizationScore:
+            personalization.score,
+
+          finalPersonalizedScore:
+            finalScore,
+
+          personalizationSignals:
+            personalization,
+
+          originalRank:
+            index + 1
+
+        };
+      }
+    )
+    .sort(
+      (
+        a,
+        b
+      ) =>
+        b.finalPersonalizedScore -
+        a.finalPersonalizedScore
+    );
+}
+
+/*
+=========================================================
+PERSONALIZATION EXPLANATION
+=========================================================
+*/
+
+function getPersonalizationExplanation(
+  product
+) {
+
+  const signals =
+    product.personalizationSignals;
+
+  if (!signals) {
+
+    return "";
+  }
+
+  const reasons = [];
+
+  const preferences =
+    userProfile.preferences;
+
+  const text =
+    normalizeText(
+      productText(product)
+    );
+
+  if (
+    preferences.styles.some(
+      style =>
+        text.includes(
+          normalizeText(style)
+        )
+    )
+  ) {
+
+    reasons.push(
+      "matches your preferred style"
+    );
+  }
+
+  const productColor =
+    normalizeText(
+      product.color ||
+      product.colour
+    );
+
+  if (
+    preferences.colors.some(
+      color =>
+        productColor.includes(
+          normalizeText(color)
+        )
+    )
+  ) {
+
+    reasons.push(
+      "matches your colour preference"
+    );
+  }
+
+  if (
+    Number.isFinite(
+      Number(
+        preferences.budget
+      )
+    ) &&
+    Number(
+      product.price
+    ) <=
+      Number(
+        preferences.budget
+      )
+  ) {
+
+    reasons.push(
+      "fits your preferred budget"
+    );
+  }
+
+  if (
+    preferences.categories.some(
+      category =>
+        normalizeText(
+          product.category
+        ).includes(
+          normalizeText(
+            category
+          )
+        )
+    )
+  ) {
+
+    reasons.push(
+      "matches your preferred category"
+    );
+  }
+
+  if (!reasons.length) {
+
+    return "Personalized using your search and interaction history.";
+  }
+
+  return (
+    "Personalized because it " +
+    reasons.join(", ") +
+    "."
+  );
+}
+
+/*
+=========================================================
 LOADING
 =========================================================
 */
 
-function showLoading(message) {
+function showLoading(
+  message
+) {
 
   if (!resultsContainer) {
+
     return;
   }
 
   resultsContainer.innerHTML = `
+
     <div class="no-results">
 
       <div class="loading-spinner"></div>
@@ -235,6 +993,7 @@ function showLoading(message) {
   `;
 
   if (resultCount) {
+
     resultCount.textContent =
       "AI working";
   }
@@ -246,13 +1005,17 @@ ERROR
 =========================================================
 */
 
-function showError(message) {
+function showError(
+  message
+) {
 
   if (!resultsContainer) {
+
     return;
   }
 
   resultsContainer.innerHTML = `
+
     <div class="no-results">
 
       <h3>
@@ -270,6 +1033,7 @@ function showError(message) {
   `;
 
   if (resultCount) {
+
     resultCount.textContent =
       "Error";
   }
@@ -284,10 +1048,12 @@ NO RESULTS
 function showNoResults() {
 
   if (!resultsContainer) {
+
     return;
   }
 
   resultsContainer.innerHTML = `
+
     <div class="no-results">
 
       <h3>
@@ -303,6 +1069,7 @@ function showNoResults() {
   `;
 
   if (resultCount) {
+
     resultCount.textContent =
       "0 matches";
   }
@@ -314,7 +1081,9 @@ PRODUCT CARD
 =========================================================
 */
 
-function createProductCard(product) {
+function createProductCard(
+  product
+) {
 
   const score =
     Math.max(
@@ -322,7 +1091,7 @@ function createProductCard(product) {
       Math.min(
         100,
         Number(
-          product.personalizedScore ??
+          product.finalPersonalizedScore ??
           product.matchScore ??
           product.score ??
           0
@@ -332,21 +1101,38 @@ function createProductCard(product) {
 
   const reasons =
     safeArray(
-      product.personalizationReasons ||
       product.reasons
     );
 
   const styles =
-    safeArray(product.style);
+    safeArray(
+      product.style
+    );
 
   const occasions =
-    safeArray(product.occasion);
+    safeArray(
+      product.occasion
+    );
 
   const materials =
-    safeArray(product.material);
+    safeArray(
+      product.material
+    );
+
+  const productId =
+    getProductId(product);
+
+  const personalizationText =
+    getPersonalizationExplanation(
+      product
+    );
 
   return `
-    <article class="product-card">
+
+    <article
+      class="product-card"
+      data-product-id="${escapeHTML(productId)}"
+    >
 
       <div class="product-image-wrap">
 
@@ -393,21 +1179,30 @@ function createProductCard(product) {
         </p>
 
         <div class="product-price">
-          ₹${formatPrice(product.price)}
+          ₹${formatPrice(
+            product.price
+          )}
         </div>
 
         <div class="product-meta">
 
           ${
-            product.color
+            product.color ||
+            product.colour
               ? `
                 <div class="product-meta-item">
-                  <span>Colour</span>
+
+                  <span>
+                    Colour
+                  </span>
+
                   <strong>
                     ${escapeHTML(
-                      product.color
+                      product.color ||
+                      product.colour
                     )}
                   </strong>
+
                 </div>
               `
               : ""
@@ -417,14 +1212,22 @@ function createProductCard(product) {
             materials.length
               ? `
                 <div class="product-meta-item">
-                  <span>Material</span>
+
+                  <span>
+                    Material
+                  </span>
+
                   <strong>
                     ${escapeHTML(
                       materials
-                        .slice(0, 2)
+                        .slice(
+                          0,
+                          2
+                        )
                         .join(", ")
                     )}
                   </strong>
+
                 </div>
               `
               : ""
@@ -434,14 +1237,22 @@ function createProductCard(product) {
             styles.length
               ? `
                 <div class="product-meta-item">
-                  <span>Style</span>
+
+                  <span>
+                    Style
+                  </span>
+
                   <strong>
                     ${escapeHTML(
                       styles
-                        .slice(0, 2)
+                        .slice(
+                          0,
+                          2
+                        )
                         .join(", ")
                     )}
                   </strong>
+
                 </div>
               `
               : ""
@@ -451,14 +1262,22 @@ function createProductCard(product) {
             occasions.length
               ? `
                 <div class="product-meta-item">
-                  <span>Occasion</span>
+
+                  <span>
+                    Occasion
+                  </span>
+
                   <strong>
                     ${escapeHTML(
                       occasions
-                        .slice(0, 2)
+                        .slice(
+                          0,
+                          2
+                        )
                         .join(", ")
                     )}
                   </strong>
+
                 </div>
               `
               : ""
@@ -476,10 +1295,14 @@ function createProductCard(product) {
                 </strong>
 
                 <ul>
+
                   ${reasons
-                    .slice(0, 4)
+                    .slice(
+                      0,
+                      3
+                    )
                     .map(
-                      (reason) => `
+                      reason => `
                         <li>
                           ${escapeHTML(
                             reason
@@ -488,6 +1311,7 @@ function createProductCard(product) {
                       `
                     )
                     .join("")}
+
                 </ul>
 
               </div>
@@ -495,12 +1319,28 @@ function createProductCard(product) {
             : ""
         }
 
+        <div
+          class="product-reason personalization-reason"
+        >
+
+          <strong>
+            ✨ Personalization
+          </strong>
+
+          <p>
+            ${escapeHTML(
+              personalizationText
+            )}
+          </p>
+
+        </div>
+
         <div class="match-score">
 
           <div class="match-score-header">
 
             <span>
-              Personalised relevance
+              Personalized relevance
             </span>
 
             <strong>
@@ -520,6 +1360,14 @@ function createProductCard(product) {
 
         </div>
 
+        <button
+          class="personalization-like"
+          data-like-product="${escapeHTML(productId)}"
+          type="button"
+        >
+          ♡ Prefer this style
+        </button>
+
       </div>
 
     </article>
@@ -534,7 +1382,8 @@ RENDER PRODUCTS
 
 function renderProducts(
   products,
-  query = ""
+  query = "",
+  personalize = true
 ) {
 
   if (
@@ -547,21 +1396,31 @@ function renderProducts(
     return;
   }
 
-  currentResults =
+  let finalProducts =
     products;
 
-  if (resultsContainer) {
+  if (personalize) {
 
-    resultsContainer.innerHTML =
-      products
-        .map(createProductCard)
-        .join("");
+    finalProducts =
+      personalizeResults(
+        products
+      );
   }
+
+  currentResults =
+    finalProducts;
+
+  resultsContainer.innerHTML =
+    finalProducts
+      .map(
+        createProductCard
+      )
+      .join("");
 
   if (resultCount) {
 
     resultCount.textContent =
-      `${products.length} AI matches`;
+      `${finalProducts.length} personalized matches`;
   }
 
   if (
@@ -570,8 +1429,10 @@ function renderProducts(
   ) {
 
     searchSummary.textContent =
-      `AI-ranked results for "${query}"`;
+      `Personalized AI results for "${query}"`;
   }
+
+  setupProductInteractions();
 }
 
 /*
@@ -590,7 +1451,8 @@ async function apiRequest(
 
   const timeout =
     setTimeout(
-      () => controller.abort(),
+      () =>
+        controller.abort(),
       30000
     );
 
@@ -600,9 +1462,12 @@ async function apiRequest(
       await fetch(
         `${API_BASE_URL}${endpoint}`,
         {
+
           ...options,
+
           signal:
             controller.signal
+
         }
       );
 
@@ -616,6 +1481,7 @@ async function apiRequest(
     } catch {
 
       data = {};
+
     }
 
     if (!response.ok) {
@@ -659,7 +1525,7 @@ async function loadProducts() {
 
 /*
 =========================================================
-SEARCH
+AI SEARCH
 =========================================================
 */
 
@@ -671,954 +1537,482 @@ async function searchFashion(
     "/api/search",
     {
 
-      method: "POST",
+      method:
+        "POST",
 
       headers: {
+
         "Content-Type":
           "application/json"
+
       },
 
       body:
         JSON.stringify({
           query
         })
+
     }
   );
 }
 
 /*
 =========================================================
-PREFERENCES
+SEARCH HISTORY
 =========================================================
 */
 
-function normalizePreferences(
-  preferences
+function recordSearch(
+  query
 ) {
 
-  const source =
-    preferences || {};
+  const cleanQuery =
+    normalizeText(query);
 
-  return {
+  if (!cleanQuery) {
 
-    gender:
-      String(
-        source.gender || ""
-      ),
-
-    categories:
-      safeArray(
-        source.categories
-      ),
-
-    colors:
-      safeArray(
-        source.colors
-      ),
-
-    styles:
-      safeArray(
-        source.styles
-      ),
-
-    occasions:
-      safeArray(
-        source.occasions
-      ),
-
-    materials:
-      safeArray(
-        source.materials
-      ),
-
-    minPrice:
-      Math.max(
-        0,
-        Number(
-          source.minPrice ??
-          0
-        )
-      ),
-
-    maxPrice:
-      Math.max(
-        0,
-        Number(
-          source.maxPrice ??
-          10000
-        )
-      ),
-
-    budget:
-      Math.max(
-        0,
-        Number(
-          source.budget ??
-          10000
-        )
-      )
-  };
-}
-
-/*
-=========================================================
-LOAD SAVED PREFERENCES
-=========================================================
-*/
-
-function loadPreferences() {
-
-  try {
-
-    const saved =
-      localStorage.getItem(
-        PREFERENCES_STORAGE_KEY
-      );
-
-    if (!saved) {
-
-      return {
-        ...DEFAULT_PREFERENCES
-      };
-    }
-
-    return normalizePreferences(
-      JSON.parse(saved)
-    );
-
-  } catch (error) {
-
-    console.warn(
-      "Could not load preferences:",
-      error
-    );
-
-    return {
-      ...DEFAULT_PREFERENCES
-    };
-  }
-}
-
-/*
-=========================================================
-SAVE PREFERENCES
-=========================================================
-*/
-
-function savePreferences(
-  preferences
-) {
-
-  const normalized =
-    normalizePreferences(
-      preferences
-    );
-
-  try {
-
-    localStorage.setItem(
-      PREFERENCES_STORAGE_KEY,
-      JSON.stringify(
-        normalized
-      )
-    );
-
-    return true;
-
-  } catch (error) {
-
-    console.error(
-      "Preference storage error:",
-      error
-    );
-
-    return false;
-  }
-}
-
-/*
-=========================================================
-GET PREFERENCE INPUT
-=========================================================
-*/
-
-function getPreferenceValue(
-  id
-) {
-
-  return (
-    $(id)?.value?.trim() ||
-    ""
-  );
-}
-
-/*
-=========================================================
-GET CHECKED VALUES
-=========================================================
-*/
-
-function getCheckedValues(
-  selector
-) {
-
-  return [
-    ...document.querySelectorAll(
-      selector
-    )
-  ]
-    .filter(
-      (element) =>
-        element.checked
-    )
-    .map(
-      (element) =>
-        element.value.trim()
-    )
-    .filter(Boolean);
-}
-
-/*
-=========================================================
-COLLECT USER PREFERENCES
-=========================================================
-*/
-
-function collectPreferences() {
-
-  const preferences = {
-
-    gender:
-      getPreferenceValue(
-        "preferenceGender"
-      ),
-
-    categories:
-      getCheckedValues(
-        'input[name="preferenceCategory"]'
-      ),
-
-    colors:
-      getCheckedValues(
-        'input[name="preferenceColor"]'
-      ),
-
-    styles:
-      getCheckedValues(
-        'input[name="preferenceStyle"]'
-      ),
-
-    occasions:
-      getCheckedValues(
-        'input[name="preferenceOccasion"]'
-      ),
-
-    materials:
-      getCheckedValues(
-        'input[name="preferenceMaterial"]'
-      ),
-
-    minPrice:
-      Number(
-        getPreferenceValue(
-          "preferenceMinPrice"
-        ) || 0
-      ),
-
-    maxPrice:
-      Number(
-        getPreferenceValue(
-          "preferenceMaxPrice"
-        ) || 10000
-      ),
-
-    budget:
-      Number(
-        getPreferenceValue(
-          "preferenceBudget"
-        ) || 10000
-      )
-  };
-
-  return normalizePreferences(
-    preferences
-  );
-}
-
-/*
-=========================================================
-APPLY SAVED PREFERENCES TO UI
-=========================================================
-*/
-
-function applyPreferencesToUI(
-  preferences
-) {
-
-  const normalized =
-    normalizePreferences(
-      preferences
-    );
-
-  const gender =
-    $("preferenceGender");
-
-  if (gender) {
-
-    gender.value =
-      normalized.gender;
-  }
-
-  const minPrice =
-    $("preferenceMinPrice");
-
-  if (minPrice) {
-
-    minPrice.value =
-      normalized.minPrice;
-  }
-
-  const maxPrice =
-    $("preferenceMaxPrice");
-
-  if (maxPrice) {
-
-    maxPrice.value =
-      normalized.maxPrice;
-  }
-
-  const budget =
-    $("preferenceBudget");
-
-  if (budget) {
-
-    budget.value =
-      normalized.budget;
-  }
-
-  document
-    .querySelectorAll(
-      'input[name="preferenceCategory"]'
-    )
-    .forEach(
-      (input) => {
-
-        input.checked =
-          normalized.categories
-            .includes(
-              input.value
-            );
-      }
-    );
-
-  document
-    .querySelectorAll(
-      'input[name="preferenceColor"]'
-    )
-    .forEach(
-      (input) => {
-
-        input.checked =
-          normalized.colors
-            .includes(
-              input.value
-            );
-      }
-    );
-
-  document
-    .querySelectorAll(
-      'input[name="preferenceStyle"]'
-    )
-    .forEach(
-      (input) => {
-
-        input.checked =
-          normalized.styles
-            .includes(
-              input.value
-            );
-      }
-    );
-
-  document
-    .querySelectorAll(
-      'input[name="preferenceOccasion"]'
-    )
-    .forEach(
-      (input) => {
-
-        input.checked =
-          normalized.occasions
-            .includes(
-              input.value
-            );
-      }
-    );
-
-  document
-    .querySelectorAll(
-      'input[name="preferenceMaterial"]'
-    )
-    .forEach(
-      (input) => {
-
-        input.checked =
-          normalized.materials
-            .includes(
-              input.value
-            );
-      }
-    );
-}
-
-/*
-=========================================================
-PERSONALIZATION SCORE
-=========================================================
-*/
-
-function calculatePersonalizationScore(
-  product,
-  preferences
-) {
-
-  const p =
-    normalizePreferences(
-      preferences
-    );
-
-  let score = 0;
-
-  let totalWeight = 0;
-
-  const reasons = [];
-
-  /*
-  -----------------------------------------------
-  CATEGORY
-  -----------------------------------------------
-  */
-
-  if (p.categories.length) {
-
-    totalWeight += 20;
-
-    if (
-      p.categories
-        .some(
-          (value) =>
-            String(
-              product.category || ""
-            ).toLowerCase() ===
-            value.toLowerCase()
-        )
-    ) {
-
-      score += 20;
-
-      reasons.push(
-        "Matches your preferred category"
-      );
-    }
-  }
-
-  /*
-  -----------------------------------------------
-  COLOR
-  -----------------------------------------------
-  */
-
-  if (p.colors.length) {
-
-    totalWeight += 15;
-
-    if (
-      p.colors
-        .some(
-          (value) =>
-            String(
-              product.color || ""
-            ).toLowerCase() ===
-            value.toLowerCase()
-        )
-    ) {
-
-      score += 15;
-
-      reasons.push(
-        "Matches your preferred colour"
-      );
-    }
-  }
-
-  /*
-  -----------------------------------------------
-  STYLE
-  -----------------------------------------------
-  */
-
-  if (p.styles.length) {
-
-    totalWeight += 20;
-
-    const productStyles =
-      safeArray(
-        product.style
-      )
-        .map(
-          (x) =>
-            String(x).toLowerCase()
-        );
-
-    const styleMatches =
-      p.styles.filter(
-        (style) =>
-          productStyles.includes(
-            String(style).toLowerCase()
-          )
-      );
-
-    if (styleMatches.length) {
-
-      score +=
-        Math.min(
-          20,
-          styleMatches.length * 10
-        );
-
-      reasons.push(
-        `Matches preferred style: ${styleMatches.join(", ")}`
-      );
-    }
-  }
-
-  /*
-  -----------------------------------------------
-  OCCASION
-  -----------------------------------------------
-  */
-
-  if (p.occasions.length) {
-
-    totalWeight += 15;
-
-    const productOccasions =
-      safeArray(
-        product.occasion
-      )
-        .map(
-          (x) =>
-            String(x).toLowerCase()
-        );
-
-    const matches =
-      p.occasions.filter(
-        (occasion) =>
-          productOccasions.includes(
-            String(
-              occasion
-            ).toLowerCase()
-          )
-      );
-
-    if (matches.length) {
-
-      score +=
-        Math.min(
-          15,
-          matches.length * 7.5
-        );
-
-      reasons.push(
-        "Suitable for your preferred occasion"
-      );
-    }
-  }
-
-  /*
-  -----------------------------------------------
-  MATERIAL
-  -----------------------------------------------
-  */
-
-  if (p.materials.length) {
-
-    totalWeight += 10;
-
-    const productMaterials =
-      safeArray(
-        product.material
-      )
-        .map(
-          (x) =>
-            String(x).toLowerCase()
-        );
-
-    const matches =
-      p.materials.filter(
-        (material) =>
-          productMaterials.includes(
-            String(
-              material
-            ).toLowerCase()
-          )
-      );
-
-    if (matches.length) {
-
-      score += 10;
-
-      reasons.push(
-        "Matches your preferred material"
-      );
-    }
-  }
-
-  /*
-  -----------------------------------------------
-  GENDER
-  -----------------------------------------------
-  */
-
-  if (p.gender) {
-
-    totalWeight += 10;
-
-    const productGender =
-      String(
-        product.gender || ""
-      ).toLowerCase();
-
-    const preferredGender =
-      p.gender.toLowerCase();
-
-    if (
-      productGender ===
-        preferredGender ||
-      productGender ===
-        "unisex"
-    ) {
-
-      score += 10;
-
-      reasons.push(
-        "Matches your profile preference"
-      );
-    }
-  }
-
-  /*
-  -----------------------------------------------
-  BUDGET
-  -----------------------------------------------
-  */
-
-  if (
-    Number.isFinite(
-      Number(product.price)
-    )
-  ) {
-
-    totalWeight += 10;
-
-    const price =
-      Number(
-        product.price
-      );
-
-    const minPrice =
-      Number(
-        p.minPrice
-      );
-
-    const maxPrice =
-      Number(
-        p.maxPrice
-      );
-
-    const budget =
-      Number(
-        p.budget
-      );
-
-    if (
-      price >= minPrice &&
-      price <= maxPrice &&
-      price <= budget
-    ) {
-
-      score += 10;
-
-      reasons.push(
-        "Fits your preferred budget"
-      );
-
-    } else if (
-      price <= budget
-    ) {
-
-      score += 6;
-
-      reasons.push(
-        "Within your maximum budget"
-      );
-    }
-  }
-
-  /*
-  -----------------------------------------------
-  FINAL SCORE
-  -----------------------------------------------
-  */
-
-  if (!totalWeight) {
-
-    return {
-      score: 0,
-      reasons: []
-    };
-  }
-
-  return {
-
-    score:
-      Math.round(
-        (score /
-          totalWeight) *
-          100
-      ),
-
-    reasons:
-      [...new Set(
-        reasons
-      )]
-  };
-}
-
-/*
-=========================================================
-PERSONALIZE PRODUCTS
-=========================================================
-*/
-
-function personalizeProducts(
-  products,
-  preferences
-) {
-
-  if (
-    !Array.isArray(
-      products
-    )
-  ) {
-
-    return [];
-  }
-
-  const normalized =
-    normalizePreferences(
-      preferences
-    );
-
-  return products
-    .map(
-      (product) => {
-
-        const result =
-          calculatePersonalizationScore(
-            product,
-            normalized
-          );
-
-        return {
-
-          ...product,
-
-          personalizedScore:
-            result.score,
-
-          personalizationReasons:
-            result.reasons
-        };
-      }
-    )
-    .sort(
-      (a, b) => {
-
-        const scoreDifference =
-          Number(
-            b.personalizedScore
-          ) -
-          Number(
-            a.personalizedScore
-          );
-
-        if (
-          scoreDifference !== 0
-        ) {
-
-          return scoreDifference;
-        }
-
-        return (
-          Number(
-            a.price || 0
-          ) -
-          Number(
-            b.price || 0
-          )
-        );
-      }
-    );
-}
-
-/*
-=========================================================
-PERSONALIZED HOME FEED
-=========================================================
-*/
-
-function renderPersonalizedFeed() {
-
-  if (!allProducts.length) {
     return;
   }
 
-  const preferences =
-    loadPreferences();
+  userProfile.searchHistory =
+    userProfile.searchHistory.filter(
+      item =>
+        normalizeText(
+          item.query
+        ) !== cleanQuery
+    );
 
-  const hasPreferences =
-    preferences.gender ||
-    preferences.categories.length ||
-    preferences.colors.length ||
-    preferences.styles.length ||
-    preferences.occasions.length ||
-    preferences.materials.length ||
-    preferences.budget <
-      10000 ||
-    preferences.minPrice > 0;
+  userProfile.searchHistory.unshift({
 
-  if (!hasPreferences) {
+    query: cleanQuery,
+
+    timestamp:
+      new Date().toISOString()
+
+  });
+
+  userProfile.searchHistory =
+    userProfile.searchHistory.slice(
+      0,
+      MAX_HISTORY
+    );
+
+  userProfile.interactions.searches[
+    cleanQuery
+  ] =
+    Number(
+      userProfile.interactions
+        .searches[
+          cleanQuery
+        ] || 0
+    ) + 1;
+
+  /*
+  Automatically learn basic preferences
+  from repeated searches.
+  */
+
+  learnPreferencesFromQuery(
+    query
+  );
+
+  saveUserProfile();
+}
+
+/*
+=========================================================
+LEARN FROM QUERY
+=========================================================
+*/
+
+function learnPreferencesFromQuery(
+  query
+) {
+
+  const tokens =
+    tokenize(query);
+
+  const fashionVocabulary = {
+
+    styles: [
+
+      "casual",
+      "formal",
+      "streetwear",
+      "oversized",
+      "minimal",
+      "boho",
+      "vintage",
+      "ethnic",
+      "party",
+      "smart",
+      "sporty",
+      "summer",
+      "winter",
+      "western",
+      "traditional"
+
+    ],
+
+    colors: [
+
+      "black",
+      "white",
+      "red",
+      "blue",
+      "green",
+      "pink",
+      "yellow",
+      "purple",
+      "brown",
+      "beige",
+      "grey",
+      "gray",
+      "orange",
+      "maroon",
+      "navy"
+
+    ],
+
+    occasions: [
+
+      "college",
+      "office",
+      "wedding",
+      "party",
+      "date",
+      "travel",
+      "gym",
+      "festival",
+      "casual",
+      "work"
+
+    ],
+
+    categories: [
+
+      "shirt",
+      "tshirt",
+      "t-shirt",
+      "dress",
+      "jeans",
+      "trousers",
+      "pants",
+      "kurta",
+      "saree",
+      "top",
+      "skirt",
+      "jacket",
+      "hoodie",
+      "sweater",
+      "blazer",
+      "shoes",
+      "sneakers"
+
+    ]
+
+  };
+
+  Object.entries(
+    fashionVocabulary
+  ).forEach(
+    (
+      [
+        type,
+        vocabulary
+      ]
+    ) => {
+
+      vocabulary.forEach(
+        word => {
+
+          if (
+            tokens.includes(word)
+          ) {
+
+            addPreference(
+              type,
+              word
+            );
+          }
+
+        }
+      );
+
+    }
+  );
+}
+
+/*
+=========================================================
+ADD PREFERENCE
+=========================================================
+*/
+
+function addPreference(
+  type,
+  value
+) {
+
+  if (
+    !userProfile.preferences[type]
+  ) {
+
+    userProfile.preferences[type] =
+      [];
+  }
+
+  const clean =
+    normalizeText(value);
+
+  const exists =
+    userProfile.preferences[
+      type
+    ].some(
+      item =>
+        normalizeText(item) ===
+        clean
+    );
+
+  if (!exists) {
+
+    userProfile.preferences[
+      type
+    ].push(value);
+
+    userProfile.preferences[
+      type
+    ] =
+      userProfile.preferences[
+        type
+      ].slice(
+        -10
+      );
+  }
+}
+
+/*
+=========================================================
+INTERACTION TRACKING
+=========================================================
+*/
+
+function trackProductView(
+  product
+) {
+
+  const id =
+    getProductId(product);
+
+  userProfile.interactions.views[id] =
+    Number(
+      userProfile.interactions.views[id] ||
+      0
+    ) + 1;
+
+  saveUserProfile();
+}
+
+/*
+=========================================================
+LIKE PRODUCT
+=========================================================
+*/
+
+function likeProduct(
+  product
+) {
+
+  const id =
+    getProductId(product);
+
+  userProfile.interactions.likes[id] =
+    Number(
+      userProfile.interactions.likes[id] ||
+      0
+    ) + 1;
+
+  /*
+  Learn product attributes.
+  */
+
+  const productStyles =
+    safeArray(
+      product.style
+    );
+
+  const productColors =
+    safeArray(
+      product.color ||
+      product.colour
+    );
+
+  const productCategories =
+    safeArray(
+      product.category
+    );
+
+  const productOccasions =
+    safeArray(
+      product.occasion
+    );
+
+  productStyles.forEach(
+    style =>
+      addPreference(
+        "styles",
+        style
+      )
+  );
+
+  productColors.forEach(
+    color =>
+      addPreference(
+        "colors",
+        color
+      )
+  );
+
+  productCategories.forEach(
+    category =>
+      addPreference(
+        "categories",
+        category
+      )
+  );
+
+  productOccasions.forEach(
+    occasion =>
+      addPreference(
+        "occasions",
+        occasion
+      )
+  );
+
+  saveUserProfile();
+
+  showPersonalizationToast(
+    "Preference learned ✨"
+  );
+
+  /*
+  Re-rank current results.
+  */
+
+  if (
+    currentResults.length
+  ) {
 
     renderProducts(
-      allProducts.slice(0, 6)
+      currentResults,
+      currentQuery,
+      true
     );
-
-    if (searchSummary) {
-
-      searchSummary.textContent =
-        `${allProducts.length} products available. Set your preferences for personalised recommendations.`;
-    }
-
-    return;
-  }
-
-  const personalized =
-    personalizeProducts(
-      allProducts,
-      preferences
-    );
-
-  renderProducts(
-    personalized.slice(0, 8)
-  );
-
-  if (searchSummary) {
-
-    searchSummary.textContent =
-      "Personalised recommendations based on your preferences.";
-  }
-
-  if (resultCount) {
-
-    resultCount.textContent =
-      "Personalised feed";
   }
 }
 
 /*
 =========================================================
-SAVE USER PREFERENCES
+CLICK TRACKING
 =========================================================
 */
 
-function saveUserPreferences() {
+function trackProductClick(
+  product
+) {
 
-  if (isSavingPreferences) {
-    return;
-  }
+  const id =
+    getProductId(product);
 
-  isSavingPreferences =
-    true;
+  userProfile.interactions.clicks[id] =
+    Number(
+      userProfile.interactions.clicks[id] ||
+      0
+    ) + 1;
 
-  try {
-
-    const preferences =
-      collectPreferences();
-
-    const saved =
-      savePreferences(
-        preferences
-      );
-
-    if (!saved) {
-
-      alert(
-        "Could not save preferences on this device."
-      );
-
-      return;
-    }
-
-    applyPreferencesToUI(
-      preferences
-    );
-
-    alert(
-      "Your fashion preferences have been saved."
-    );
-
-    renderPersonalizedFeed();
-
-  } finally {
-
-    isSavingPreferences =
-      false;
-  }
+  saveUserProfile();
 }
 
 /*
 =========================================================
-RESET USER PREFERENCES
+PRODUCT INTERACTIONS
 =========================================================
 */
 
-function resetUserPreferences() {
+function setupProductInteractions() {
 
-  try {
+  document
+    .querySelectorAll(
+      "[data-product-id]"
+    )
+    .forEach(
+      card => {
 
-    localStorage.removeItem(
-      PREFERENCES_STORAGE_KEY
+        const id =
+          card.dataset.productId;
+
+        const product =
+          currentResults.find(
+            item =>
+              getProductId(item) ===
+              id
+          );
+
+        if (!product) {
+
+          return;
+        }
+
+        trackProductView(
+          product
+        );
+
+        const likeButton =
+          card.querySelector(
+            "[data-like-product]"
+          );
+
+        likeButton?.addEventListener(
+          "click",
+          event => {
+
+            event.preventDefault();
+
+            likeProduct(
+              product
+            );
+
+            likeButton.textContent =
+              "✓ Preference saved";
+
+            likeButton.disabled =
+              true;
+
+          }
+        );
+
+        card.addEventListener(
+          "click",
+          event => {
+
+            if (
+              event.target.closest(
+                "[data-like-product]"
+              )
+            ) {
+
+              return;
+            }
+
+            trackProductClick(
+              product
+            );
+
+          }
+        );
+
+      }
     );
-
-  } catch (error) {
-
-    console.warn(
-      "Could not clear preferences:",
-      error
-    );
-  }
-
-  applyPreferencesToUI(
-    DEFAULT_PREFERENCES
-  );
-
-  renderPersonalizedFeed();
-
-  alert(
-    "Your fashion preferences have been reset."
-  );
 }
 
 /*
@@ -1630,6 +2024,7 @@ PERSONALIZED SEARCH
 async function runSearch() {
 
   if (isSearching) {
+
     return;
   }
 
@@ -1642,7 +2037,26 @@ async function runSearch() {
 
     currentQuery = "";
 
-    renderPersonalizedFeed();
+    if (
+      allProducts.length
+    ) {
+
+      renderProducts(
+        allProducts.slice(
+          0,
+          12
+        ),
+        "",
+        true
+      );
+
+      if (searchSummary) {
+
+        searchSummary.textContent =
+          `${allProducts.length} products available. Personalized ranking is active.`;
+      }
+
+    }
 
     return;
   }
@@ -1658,6 +2072,10 @@ async function runSearch() {
 
   currentQuery =
     query;
+
+  recordSearch(
+    query
+  );
 
   showLoading(
     "Understanding your fashion request..."
@@ -1684,44 +2102,10 @@ async function runSearch() {
       return;
     }
 
-    /*
-    AI search result + user preference
-    personalization reranking
-    */
-
-    const preferences =
-      loadPreferences();
-
-    const personalized =
-      personalizeProducts(
-        results,
-        preferences
-      );
-
-    /*
-    If no preferences exist,
-    preserve original AI ranking.
-    */
-
-    const hasPreferences =
-      preferences.gender ||
-      preferences.categories.length ||
-      preferences.colors.length ||
-      preferences.styles.length ||
-      preferences.occasions.length ||
-      preferences.materials.length ||
-      preferences.budget <
-        10000 ||
-      preferences.minPrice > 0;
-
-    const finalResults =
-      hasPreferences
-        ? personalized
-        : results;
-
     renderProducts(
-      finalResults,
-      query
+      results,
+      query,
+      true
     );
 
     if (
@@ -1730,7 +2114,7 @@ async function runSearch() {
     ) {
 
       searchSummary.textContent =
-        `AI-ranked results for "${query}" · budget detected: ₹${formatPrice(data.budget)}`;
+        `Personalized AI results for "${query}" · budget detected: ₹${formatPrice(data.budget)}`;
     }
 
     document
@@ -1780,8 +2164,11 @@ AI STYLIST
 async function runAIStylist() {
 
   const getValue =
-    (id) =>
-      $(id)?.value?.trim() || "";
+    id =>
+      $(id)
+        ?.value
+        ?.trim() ||
+      "";
 
   const occasion =
     getValue(
@@ -1832,6 +2219,43 @@ async function runAIStylist() {
     return;
   }
 
+  /*
+  Learn stylist preferences.
+  */
+
+  if (style) {
+
+    addPreference(
+      "styles",
+      style
+    );
+  }
+
+  if (color) {
+
+    addPreference(
+      "colors",
+      color
+    );
+  }
+
+  if (occasion) {
+
+    addPreference(
+      "occasions",
+      occasion
+    );
+  }
+
+  if (description) {
+
+    learnPreferencesFromQuery(
+      description
+    );
+  }
+
+  saveUserProfile();
+
   if (stylistButton) {
 
     stylistButton.disabled =
@@ -1852,24 +2276,33 @@ async function runAIStylist() {
         "/api/stylist",
         {
 
-          method: "POST",
+          method:
+            "POST",
 
           headers: {
+
             "Content-Type":
               "application/json"
+
           },
 
           body:
             JSON.stringify({
 
               occasion,
+
               style,
+
               comfort,
+
               color,
+
               coverage,
+
               description
 
             })
+
         }
       );
 
@@ -1880,32 +2313,26 @@ async function runAIStylist() {
         ? data.recommendations
         : [];
 
-    if (!recommendations.length) {
+    if (
+      !recommendations.length
+    ) {
 
       showNoResults();
 
       return;
     }
 
-    const preferences =
-      loadPreferences();
-
-    const personalized =
-      personalizeProducts(
-        recommendations,
-        preferences
-      );
-
     renderProducts(
-      personalized,
+      recommendations,
       data.query ||
-      description
+      description,
+      true
     );
 
     if (searchSummary) {
 
       searchSummary.textContent =
-        "AI Stylist recommendations personalised to your profile.";
+        "Personalized recommendations generated using your AI Stylist preferences.";
     }
 
     document
@@ -1957,7 +2384,7 @@ function setupSearchHints() {
       ".search-hints button"
     )
     .forEach(
-      (button) => {
+      button => {
 
         button.addEventListener(
           "click",
@@ -1971,72 +2398,1008 @@ function setupSearchHints() {
             }
 
             runSearch();
+
           }
         );
+
       }
     );
 }
 
 /*
 =========================================================
-PREFERENCE EVENTS
+PERSONALIZATION PANEL
 =========================================================
 */
 
-function setupPreferenceEvents() {
+function createPersonalizationPanel() {
 
-  const saveButton =
-    $("savePreferences");
+  if (
+    document.getElementById(
+      "personalization-panel"
+    )
+  ) {
 
-  const resetButton =
-    $("resetPreferences");
+    return;
+  }
 
-  saveButton?.addEventListener(
-    "click",
-    saveUserPreferences
+  const panel =
+    document.createElement(
+      "div"
+    );
+
+  panel.id =
+    "personalization-panel";
+
+  panel.innerHTML = `
+
+    <div
+      id="personalization-overlay"
+      class="personalization-overlay"
+    ></div>
+
+    <aside
+      class="personalization-drawer"
+    >
+
+      <button
+        type="button"
+        id="close-personalization"
+        class="personalization-close"
+      >
+        ×
+      </button>
+
+      <div class="personalization-header">
+
+        <span>
+          FASHION AI
+        </span>
+
+        <h2>
+          Your Style Profile
+        </h2>
+
+        <p>
+          Fashion AI learns from your preferences
+          to improve future recommendations.
+        </p>
+
+      </div>
+
+      <div class="personalization-section">
+
+        <h3>
+          Preferred styles
+        </h3>
+
+        <div
+          id="profile-styles"
+          class="profile-tags"
+        ></div>
+
+      </div>
+
+      <div class="personalization-section">
+
+        <h3>
+          Preferred colours
+        </h3>
+
+        <div
+          id="profile-colors"
+          class="profile-tags"
+        ></div>
+
+      </div>
+
+      <div class="personalization-section">
+
+        <h3>
+          Preferred occasions
+        </h3>
+
+        <div
+          id="profile-occasions"
+          class="profile-tags"
+        ></div>
+
+      </div>
+
+      <div class="personalization-section">
+
+        <h3>
+          Preferred categories
+        </h3>
+
+        <div
+          id="profile-categories"
+          class="profile-tags"
+        ></div>
+
+      </div>
+
+      <div class="personalization-section">
+
+        <h3>
+          Budget
+        </h3>
+
+        <input
+          id="profile-budget"
+          type="number"
+          min="0"
+          placeholder="e.g. 2500"
+        />
+
+        <button
+          type="button"
+          id="save-budget"
+          class="profile-save"
+        >
+          Save Budget
+        </button>
+
+      </div>
+
+      <div class="personalization-stats">
+
+        <div>
+          <strong
+            id="profile-search-count"
+          >
+            0
+          </strong>
+
+          <span>
+            Searches
+          </span>
+        </div>
+
+        <div>
+          <strong
+            id="profile-interaction-count"
+          >
+            0
+          </strong>
+
+          <span>
+            Interactions
+          </span>
+        </div>
+
+        <div>
+          <strong
+            id="profile-preference-count"
+          >
+            0
+          </strong>
+
+          <span>
+            Preferences
+          </span>
+        </div>
+
+      </div>
+
+      <button
+        type="button"
+        id="reset-profile"
+        class="profile-reset"
+      >
+        Reset Personalization
+      </button>
+
+    </aside>
+  `;
+
+  document.body.appendChild(
+    panel
   );
 
-  resetButton?.addEventListener(
-    "click",
-    resetUserPreferences
+  injectPersonalizationStyles();
+
+  setupPersonalizationEvents();
+
+  renderProfile();
+}
+
+/*
+=========================================================
+PROFILE TAG RENDER
+=========================================================
+*/
+
+function renderProfileTags(
+  elementId,
+  type
+) {
+
+  const container =
+    document.getElementById(
+      elementId
+    );
+
+  if (!container) {
+
+    return;
+  }
+
+  const values =
+    userProfile.preferences[
+      type
+    ] || [];
+
+  if (!values.length) {
+
+    container.innerHTML = `
+      <span class="profile-empty">
+        Not learned yet
+      </span>
+    `;
+
+    return;
+  }
+
+  container.innerHTML =
+    values
+      .map(
+        value => `
+          <button
+            type="button"
+            class="profile-tag"
+            data-remove-preference="${escapeHTML(type)}"
+            data-remove-value="${escapeHTML(value)}"
+          >
+            ${escapeHTML(value)}
+            <span>×</span>
+          </button>
+        `
+      )
+      .join("");
+}
+
+/*
+=========================================================
+RENDER PROFILE
+=========================================================
+*/
+
+function renderProfile() {
+
+  renderProfileTags(
+    "profile-styles",
+    "styles"
   );
 
-  /*
-  Auto-save when user changes
-  preferences.
-  */
+  renderProfileTags(
+    "profile-colors",
+    "colors"
+  );
+
+  renderProfileTags(
+    "profile-occasions",
+    "occasions"
+  );
+
+  renderProfileTags(
+    "profile-categories",
+    "categories"
+  );
+
+  const budgetInput =
+    document.getElementById(
+      "profile-budget"
+    );
+
+  if (budgetInput) {
+
+    budgetInput.value =
+      userProfile.preferences.budget ||
+      "";
+  }
+
+  const searchCount =
+    userProfile.searchHistory.length;
+
+  const interactions =
+    Object.values(
+      userProfile.interactions
+        .views
+    ).reduce(
+      (
+        total,
+        value
+      ) =>
+        total +
+        Number(value || 0),
+      0
+    );
+
+  const preferenceCount =
+    Object.values(
+      userProfile.preferences
+    )
+      .filter(
+        value =>
+          Array.isArray(value)
+      )
+      .reduce(
+        (
+          total,
+          value
+        ) =>
+          total +
+          value.length,
+        0
+      ) +
+    (
+      userProfile.preferences
+        .budget
+        ? 1
+        : 0
+    );
+
+  const searchElement =
+    document.getElementById(
+      "profile-search-count"
+    );
+
+  const interactionElement =
+    document.getElementById(
+      "profile-interaction-count"
+    );
+
+  const preferenceElement =
+    document.getElementById(
+      "profile-preference-count"
+    );
+
+  if (searchElement) {
+
+    searchElement.textContent =
+      searchCount;
+  }
+
+  if (interactionElement) {
+
+    interactionElement.textContent =
+      interactions;
+  }
+
+  if (preferenceElement) {
+
+    preferenceElement.textContent =
+      preferenceCount;
+  }
+}
+
+/*
+=========================================================
+PROFILE EVENTS
+=========================================================
+*/
+
+function setupPersonalizationEvents() {
 
   document
-    .querySelectorAll(
-      ".preference-input"
+    .getElementById(
+      "close-personalization"
     )
-    .forEach(
-      (input) => {
+    ?.addEventListener(
+      "click",
+      closePersonalization
+    );
 
-        input.addEventListener(
-          "change",
-          () => {
+  document
+    .getElementById(
+      "personalization-overlay"
+    )
+    ?.addEventListener(
+      "click",
+      closePersonalization
+    );
 
-            const preferences =
-              collectPreferences();
+  document
+    .getElementById(
+      "save-budget"
+    )
+    ?.addEventListener(
+      "click",
+      () => {
 
-            savePreferences(
-              preferences
-            );
+        const input =
+          document.getElementById(
+            "profile-budget"
+          );
 
-          }
+        const budget =
+          Number(
+            input?.value
+          );
+
+        if (
+          Number.isFinite(
+            budget
+          ) &&
+          budget > 0
+        ) {
+
+          userProfile.preferences.budget =
+            budget;
+
+        } else {
+
+          userProfile.preferences.budget =
+            null;
+        }
+
+        saveUserProfile();
+
+        renderProfile();
+
+        showPersonalizationToast(
+          "Budget preference saved."
+        );
+
+        if (
+          currentResults.length
+        ) {
+
+          renderProducts(
+            currentResults,
+            currentQuery,
+            true
+          );
+        }
+
+      }
+    );
+
+  document
+    .getElementById(
+      "reset-profile"
+    )
+    ?.addEventListener(
+      "click",
+      () => {
+
+        const confirmed =
+          confirm(
+            "Reset all learned fashion preferences?"
+          );
+
+        if (!confirmed) {
+
+          return;
+        }
+
+        userProfile =
+          createDefaultProfile();
+
+        saveUserProfile();
+
+        renderProfile();
+
+        showPersonalizationToast(
+          "Personalization reset."
+        );
+
+        if (
+          allProducts.length
+        ) {
+
+          renderProducts(
+            allProducts.slice(
+              0,
+              12
+            ),
+            "",
+            true
+          );
+        }
+
+      }
+    );
+
+  document.addEventListener(
+    "click",
+    event => {
+
+      const tag =
+        event.target.closest(
+          "[data-remove-preference]"
+        );
+
+      if (!tag) {
+
+        return;
+      }
+
+      const type =
+        tag.dataset
+          .removePreference;
+
+      const value =
+        tag.dataset
+          .removeValue;
+
+      if (
+        !userProfile.preferences[
+          type
+        ]
+      ) {
+
+        return;
+      }
+
+      userProfile.preferences[
+        type
+      ] =
+        userProfile.preferences[
+          type
+        ].filter(
+          item =>
+            normalizeText(
+              item
+            ) !==
+            normalizeText(
+              value
+            )
+        );
+
+      saveUserProfile();
+
+      renderProfile();
+
+      if (
+        currentResults.length
+      ) {
+
+        renderProducts(
+          currentResults,
+          currentQuery,
+          true
         );
       }
+
+    }
+  );
+}
+
+/*
+=========================================================
+OPEN PROFILE
+=========================================================
+*/
+
+function openPersonalization() {
+
+  createPersonalizationPanel();
+
+  renderProfile();
+
+  document
+    .getElementById(
+      "personalization-panel"
+    )
+    ?.classList.add(
+      "active"
     );
 }
 
 /*
 =========================================================
-EVENTS
+CLOSE PROFILE
 =========================================================
 */
 
-function setupEvents() {
+function closePersonalization() {
+
+  document
+    .getElementById(
+      "personalization-panel"
+    )
+    ?.classList.remove(
+      "active"
+    );
+}
+
+/*
+=========================================================
+PERSONALIZATION TOAST
+=========================================================
+*/
+
+function showPersonalizationToast(
+  message
+) {
+
+  let toast =
+    document.getElementById(
+      "personalization-toast"
+    );
+
+  if (!toast) {
+
+    toast =
+      document.createElement(
+        "div"
+      );
+
+    toast.id =
+      "personalization-toast";
+
+    document.body.appendChild(
+      toast
+    );
+  }
+
+  toast.textContent =
+    message;
+
+  toast.classList.add(
+    "show"
+  );
+
+  setTimeout(
+    () => {
+
+      toast.classList.remove(
+        "show"
+      );
+
+    },
+    2200
+  );
+}
+
+/*
+=========================================================
+INJECT PERSONALIZATION CSS
+=========================================================
+*/
+
+function injectPersonalizationStyles() {
+
+  if (
+    document.getElementById(
+      "day8-personalization-css"
+    )
+  ) {
+
+    return;
+  }
+
+  const style =
+    document.createElement(
+      "style"
+    );
+
+  style.id =
+    "day8-personalization-css";
+
+  style.textContent = `
+
+    .personalization-overlay {
+
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      opacity: 0;
+      pointer-events: none;
+      transition: .25s ease;
+      z-index: 9998;
+
+    }
+
+    .personalization-drawer {
+
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: min(420px, 92vw);
+      height: 100vh;
+      background: #fff;
+      z-index: 9999;
+      transform: translateX(100%);
+      transition: .3s ease;
+      overflow-y: auto;
+      padding: 32px;
+      box-sizing: border-box;
+      box-shadow: -15px 0 40px rgba(0,0,0,.15);
+
+    }
+
+    #personalization-panel.active
+    .personalization-overlay {
+
+      opacity: 1;
+      pointer-events: auto;
+
+    }
+
+    #personalization-panel.active
+    .personalization-drawer {
+
+      transform: translateX(0);
+
+    }
+
+    .personalization-close {
+
+      position: absolute;
+      right: 18px;
+      top: 15px;
+      border: 0;
+      background: transparent;
+      font-size: 30px;
+      cursor: pointer;
+
+    }
+
+    .personalization-header {
+
+      padding-right: 35px;
+      margin-bottom: 28px;
+
+    }
+
+    .personalization-header span {
+
+      font-size: 11px;
+      letter-spacing: 2px;
+      font-weight: 700;
+
+    }
+
+    .personalization-header h2 {
+
+      margin: 8px 0;
+      font-size: 28px;
+
+    }
+
+    .personalization-header p {
+
+      color: #666;
+      line-height: 1.6;
+
+    }
+
+    .personalization-section {
+
+      margin-bottom: 24px;
+
+    }
+
+    .personalization-section h3 {
+
+      font-size: 14px;
+      margin-bottom: 10px;
+
+    }
+
+    .profile-tags {
+
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+
+    }
+
+    .profile-tag {
+
+      border: 1px solid #ddd;
+      background: #fafafa;
+      border-radius: 20px;
+      padding: 8px 12px;
+      cursor: pointer;
+
+    }
+
+    .profile-tag span {
+
+      margin-left: 5px;
+
+    }
+
+    .profile-empty {
+
+      font-size: 13px;
+      color: #999;
+
+    }
+
+    #profile-budget {
+
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #ddd;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+
+    }
+
+    .profile-save {
+
+      border: 0;
+      padding: 11px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+
+    }
+
+    .personalization-stats {
+
+      display: grid;
+      grid-template-columns:
+        repeat(3, 1fr);
+      gap: 8px;
+      margin: 25px 0;
+
+    }
+
+    .personalization-stats div {
+
+      background: #f6f6f6;
+      padding: 14px 8px;
+      text-align: center;
+      border-radius: 10px;
+
+    }
+
+    .personalization-stats strong {
+
+      display: block;
+      font-size: 20px;
+
+    }
+
+    .personalization-stats span {
+
+      display: block;
+      margin-top: 4px;
+      font-size: 11px;
+      color: #777;
+
+    }
+
+    .profile-reset {
+
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 8px;
+      cursor: pointer;
+
+    }
+
+    .personalization-like {
+
+      margin-top: 12px;
+      border: 1px solid #ddd;
+      background: transparent;
+      padding: 9px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+
+    }
+
+    .personalization-reason {
+
+      margin-top: 14px;
+
+    }
+
+    .personalization-reason p {
+
+      margin: 7px 0 0;
+      font-size: 13px;
+      line-height: 1.5;
+
+    }
+
+    #personalization-toast {
+
+      position: fixed;
+      left: 50%;
+      bottom: 25px;
+      transform:
+        translate(-50%, 20px);
+      opacity: 0;
+      background: #111;
+      color: white;
+      padding: 12px 18px;
+      border-radius: 30px;
+      z-index: 10000;
+      transition: .25s ease;
+      pointer-events: none;
+
+    }
+
+    #personalization-toast.show {
+
+      opacity: 1;
+      transform:
+        translate(-50%, 0);
+
+    }
+
+  `;
+
+  document.head.appendChild(
+    style
+  );
+}
+
+/*
+=========================================================
+CREATE PROFILE BUTTON
+=========================================================
+*/
+
+function createProfileButton() {
+
+  if (
+    document.getElementById(
+      "open-personalization"
+    )
+  ) {
+
+    return;
+  }
+
+  const button =
+    document.createElement(
+      "button"
+    );
+
+  button.id =
+    "open-personalization";
+
+  button.type =
+    "button";
+
+  button.textContent =
+    "✦ My Style Profile";
+
+  button.style.cssText = `
+
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    z-index: 5000;
+    border: none;
+    border-radius: 30px;
+    padding: 13px 18px;
+    cursor: pointer;
+    background: #111;
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 8px 25px rgba(0,0,0,.2);
+
+  `;
+
+  button.addEventListener(
+    "click",
+    openPersonalization
+  );
+
+  document.body.appendChild(
+    button
+  );
+}
+
+/*
+=========================================================
+SEARCH HINTS
+=========================================================
+*/
+
+function setupSearchEvents() {
 
   searchButton?.addEventListener(
     "click",
@@ -2045,7 +3408,7 @@ function setupEvents() {
 
   searchInput?.addEventListener(
     "keydown",
-    (event) => {
+    event => {
 
       if (
         event.key ===
@@ -2056,22 +3419,14 @@ function setupEvents() {
 
         runSearch();
       }
+
     }
   );
-
-  stylistButton?.addEventListener(
-    "click",
-    runAIStylist
-  );
-
-  setupSearchHints();
-
-  setupPreferenceEvents();
 }
 
 /*
 =========================================================
-BACKEND HEALTH
+HEALTH CHECK
 =========================================================
 */
 
@@ -2111,40 +3466,37 @@ INITIALIZE
 async function initialize() {
 
   console.log(
-    "Fashion AI Discovery Day 6 starting..."
+    "Fashion AI Discovery Day 8 starting..."
   );
+
+  setupSearchEvents();
+
+  setupSearchHints();
+
+  createPersonalizationPanel();
+
+  createProfileButton();
 
   if (resultsContainer) {
 
     resultsContainer.innerHTML = `
+
       <div class="no-results">
 
         <div class="loading-spinner"></div>
 
         <h3>
-          Connecting to Fashion AI...
+          Loading Fashion AI...
         </h3>
 
         <p>
-          Loading your personalised fashion experience.
+          Preparing personalized discovery.
         </p>
 
       </div>
+
     `;
   }
-
-  /*
-  Load saved profile first.
-  */
-
-  const preferences =
-    loadPreferences();
-
-  applyPreferencesToUI(
-    preferences
-  );
-
-  setupEvents();
 
   const backendOnline =
     await checkBackend();
@@ -2162,23 +3514,44 @@ async function initialize() {
 
     await loadProducts();
 
-    if (allProducts.length) {
+    if (
+      allProducts.length
+    ) {
 
-      renderPersonalizedFeed();
-
-      console.log(
-        "Fashion AI Discovery Day 6 ready."
+      renderProducts(
+        allProducts.slice(
+          0,
+          12
+        ),
+        "",
+        true
       );
+
+      if (resultCount) {
+
+        resultCount.textContent =
+          "Personalized catalogue ready";
+      }
+
+      if (searchSummary) {
+
+        searchSummary.textContent =
+          `${allProducts.length} products available · personalization active`;
+      }
 
     } else {
 
       showNoResults();
     }
 
+    console.log(
+      "Fashion AI Discovery Day 8 ready."
+    );
+
   } catch (error) {
 
     console.error(
-      "Catalogue loading error:",
+      "Initialization error:",
       error
     );
 
@@ -2190,7 +3563,7 @@ async function initialize() {
 
 /*
 =========================================================
-START APPLICATION
+START
 =========================================================
 */
 
@@ -2208,550 +3581,3 @@ if (
 
   initialize();
 }
-
-/*
-=========================================================
-DAY 7 - ADVANCED SEARCH FRONTEND
-=========================================================
-*/
-
-const advancedFilters = {
-  category: "",
-  gender: "",
-  color: "",
-  style: "",
-  occasion: "",
-  material: "",
-  minPrice: "",
-  maxPrice: "",
-  sort: "relevance"
-};
-
-/*
-=========================================================
-LOAD FILTER OPTIONS
-=========================================================
-*/
-
-async function loadAdvancedFilterOptions() {
-
-  try {
-
-    const data =
-      await apiRequest(
-        "/api/filters"
-      );
-
-    console.log(
-      "Advanced filter options:",
-      data
-    );
-
-    populateFilterOptions(
-      "categoryFilter",
-      data.categories || []
-    );
-
-    populateFilterOptions(
-      "genderFilter",
-      data.genders || []
-    );
-
-    populateFilterOptions(
-      "colorFilter",
-      data.colors || []
-    );
-
-    populateFilterOptions(
-      "styleFilter",
-      data.styles || []
-    );
-
-    populateFilterOptions(
-      "occasionFilter",
-      data.occasions || []
-    );
-
-    populateFilterOptions(
-      "materialFilter",
-      data.materials || []
-    );
-
-  } catch (error) {
-
-    console.error(
-      "Could not load filter options:",
-      error
-    );
-  }
-}
-
-/*
-=========================================================
-POPULATE SELECT
-=========================================================
-*/
-
-function populateFilterOptions(
-  id,
-  values
-) {
-
-  const select =
-    document.getElementById(id);
-
-  if (!select) {
-    return;
-  }
-
-  const current =
-    select.value;
-
-  select.innerHTML =
-    `<option value="">All</option>`;
-
-  values.forEach(
-    value => {
-
-      const option =
-        document.createElement(
-          "option"
-        );
-
-      option.value =
-        value;
-
-      option.textContent =
-        value;
-
-      select.appendChild(
-        option
-      );
-    }
-  );
-
-  if (current) {
-    select.value =
-      current;
-  }
-}
-
-/*
-=========================================================
-READ FILTERS
-=========================================================
-*/
-
-function readAdvancedFilters() {
-
-  return {
-
-    category:
-      document.getElementById(
-        "categoryFilter"
-      )?.value || "",
-
-    gender:
-      document.getElementById(
-        "genderFilter"
-      )?.value || "",
-
-    color:
-      document.getElementById(
-        "colorFilter"
-      )?.value || "",
-
-    style:
-      document.getElementById(
-        "styleFilter"
-      )?.value || "",
-
-    occasion:
-      document.getElementById(
-        "occasionFilter"
-      )?.value || "",
-
-    material:
-      document.getElementById(
-        "materialFilter"
-      )?.value || "",
-
-    minPrice:
-      document.getElementById(
-        "minPriceFilter"
-      )?.value || "",
-
-    maxPrice:
-      document.getElementById(
-        "maxPriceFilter"
-      )?.value || "",
-
-    sort:
-      document.getElementById(
-        "sortFilter"
-      )?.value ||
-      "relevance"
-  };
-}
-
-/*
-=========================================================
-ADVANCED SEARCH
-=========================================================
-*/
-
-async function runAdvancedSearch() {
-
-  const query =
-    document.getElementById(
-      "searchInput"
-    )?.value
-      ?.trim() || "";
-
-  const filters =
-    readAdvancedFilters();
-
-  try {
-
-    showLoading(
-      "AI is applying advanced filters..."
-    );
-
-    const data =
-      await apiRequest(
-        "/api/search",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-
-          body:
-            JSON.stringify({
-              query,
-              ...filters
-            })
-        }
-      );
-
-    const results =
-      Array.isArray(
-        data.results
-      )
-        ? data.results
-        : [];
-
-    if (!results.length) {
-
-      showNoResults();
-
-      return;
-    }
-
-    renderProducts(
-      results,
-      query
-    );
-
-    if (searchSummary) {
-
-      const activeFilters =
-        Object.entries(filters)
-          .filter(
-            ([key, value]) =>
-              key !== "sort" &&
-              value !== ""
-          )
-          .map(
-            ([key, value]) =>
-              `${key}: ${value}`
-          );
-
-      searchSummary.textContent =
-        activeFilters.length
-          ? `AI results for "${query || "all products"}" · ${activeFilters.join(" · ")}`
-          : `AI results for "${query || "all products"}"`;
-    }
-
-    document
-      .getElementById(
-        "results-section"
-      )
-      ?.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-      });
-
-  } catch (error) {
-
-    console.error(
-      "Advanced search error:",
-      error
-    );
-
-    showError(
-      error.message ||
-      "Advanced search failed."
-    );
-  }
-}
-
-/*
-=========================================================
-RESET FILTERS
-=========================================================
-*/
-
-function resetAdvancedFilters() {
-
-  const ids = [
-
-    "categoryFilter",
-    "genderFilter",
-    "colorFilter",
-    "styleFilter",
-    "occasionFilter",
-    "materialFilter",
-    "minPriceFilter",
-    "maxPriceFilter"
-  ];
-
-  ids.forEach(
-    id => {
-
-      const element =
-        document.getElementById(id);
-
-      if (element) {
-        element.value = "";
-      }
-    }
-  );
-
-  const sort =
-    document.getElementById(
-      "sortFilter"
-    );
-
-  if (sort) {
-    sort.value =
-      "relevance";
-  }
-
-  if (allProducts.length) {
-
-    renderProducts(
-      allProducts.slice(0, 6)
-    );
-  }
-
-  if (searchSummary) {
-
-    searchSummary.textContent =
-      `${allProducts.length} products available for AI discovery.`;
-  }
-}
-
-/*
-=========================================================
-DAY 7 EVENTS
-=========================================================
-*/
-
-function setupAdvancedSearchEvents() {
-
-  const advancedButton =
-    document.getElementById(
-      "advancedSearchButton"
-    );
-
-  const resetButton =
-    document.getElementById(
-      "resetFiltersButton"
-    );
-
-  advancedButton?.addEventListener(
-    "click",
-    runAdvancedSearch
-  );
-
-  resetButton?.addEventListener(
-    "click",
-    resetAdvancedFilters
-  );
-
-  [
-    "categoryFilter",
-    "genderFilter",
-    "colorFilter",
-    "styleFilter",
-    "occasionFilter",
-    "materialFilter",
-    "sortFilter"
-  ].forEach(
-    id => {
-
-      document
-        .getElementById(id)
-        ?.addEventListener(
-          "change",
-          () => {
-
-            runAdvancedSearch();
-          }
-        );
-    }
-  );
-}
-
-/*
-=========================================================
-START DAY 7 FEATURES
-=========================================================
-*/
-
-document.addEventListener(
-  "DOMContentLoaded",
-  async () => {
-
-    setupAdvancedSearchEvents();
-
-    await loadAdvancedFilterOptions();
-
-    console.log(
-      "Fashion AI Day 7 advanced search ready."
-    );
-  }
-);
-
-/*
-=========================================================
-DAY 8 - EVALUATION PANEL
-=========================================================
-*/
-
-async function loadEvaluationReport() {
-
-  try {
-
-    const data =
-      await apiRequest(
-        "/api/evaluation"
-      );
-
-    console.log(
-      "===================================="
-    );
-
-    console.log(
-      "FASHION AI EVALUATION REPORT"
-    );
-
-    console.log(
-      "===================================="
-    );
-
-    console.table(
-      data.metrics
-    );
-
-    console.log(
-      "Queries evaluated:",
-      data.queriesEvaluated
-    );
-
-    console.log(
-      "Dataset size:",
-      data.datasetSize
-    );
-
-    return data;
-
-  } catch (error) {
-
-    console.error(
-      "Evaluation report unavailable:",
-      error
-    );
-
-    return null;
-  }
-}
-
-
-async function loadEdgeCaseReport() {
-
-  try {
-
-    const data =
-      await apiRequest(
-        "/api/evaluation/edge-cases"
-      );
-
-    console.log(
-      "===================================="
-    );
-
-    console.log(
-      "EDGE CASE TEST REPORT"
-    );
-
-    console.log(
-      "===================================="
-    );
-
-    console.table(
-      data.tests
-    );
-
-    console.log(
-      `Passed: ${data.passed}/${data.total}`
-    );
-
-    return data;
-
-  } catch (error) {
-
-    console.error(
-      "Edge-case report unavailable:",
-      error
-    );
-
-    return null;
-  }
-}
-
-
-/*
-=========================================================
-DAY 8 INITIALIZATION
-=========================================================
-*/
-
-document.addEventListener(
-  "DOMContentLoaded",
-  async () => {
-
-    console.log(
-      "Fashion AI Day 8 evaluation module ready."
-    );
-
-    /*
-    Small delay so backend has time
-    to finish initialization.
-    */
-
-    setTimeout(
-      async () => {
-
-        await loadEvaluationReport();
-
-        await loadEdgeCaseReport();
-
-      },
-      1500
-    );
-  }
-);
