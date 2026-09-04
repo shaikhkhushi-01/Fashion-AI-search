@@ -1,67 +1,84 @@
 # Fashion AI Discovery
 
-An AI-powered fashion discovery and recommendation system combining
-semantic retrieval, keyword matching, attribute reasoning,
-budget-aware ranking, personalization and explainable recommendations.
-
----
+> AI-powered fashion discovery using hybrid retrieval, personalization, AI styling, evaluation, ablation studies, robustness testing, and reproducibility checks.
 
 ## Overview
 
-Fashion search is often treated as a keyword-matching problem.
-
-This project explores a more intelligent fashion discovery pipeline where
-natural-language user queries are converted into structured retrieval
-signals and ranked against a fashion catalogue.
+Fashion AI Discovery is an AI-first fashion discovery platform designed to help users find relevant clothing through natural-language queries instead of relying only on traditional keyword search.
 
 The system combines:
 
-- semantic similarity
-- keyword relevance
+- semantic-style retrieval
+- keyword matching
 - fashion attribute matching
 - budget awareness
-- metadata signals
-- hybrid ranking
-- personalization
+- metadata relevance
+- personalized ranking
 - AI stylist recommendations
-- evaluation metrics
+- research-oriented evaluation
 - ablation experiments
 - robustness testing
 - reproducibility checks
 
-The goal is not to build a full ecommerce clone.
-
-The primary focus is the AI search and recommendation layer.
+The project is designed as a research-oriented prototype rather than a conventional ecommerce clone.
 
 ---
 
-## Research Pipeline
+# Research Motivation
+
+Traditional fashion search often depends heavily on exact keyword matching.
+
+For example:
+
+> "comfortable black outfit for college under 3000"
+
+contains several different information signals:
+
+- comfort
+- color
+- occasion
+- style
+- budget
+- category
+
+A useful fashion discovery system should understand these signals together.
+
+This project therefore investigates a hybrid retrieval pipeline that combines multiple relevance signals instead of relying on a single ranking mechanism.
+
+---
+
+# System Architecture
 
 ```text
 User Query
     |
     v
-Query Understanding
+Query Normalization
     |
     v
-Semantic Retrieval
+Fashion Attribute Extraction
     |
-    +---- Keyword Retrieval
-    |
-    +---- Attribute Matching
-    |
-    +---- Budget Matching
-    |
-    +---- Metadata Signals
-    |
-    v
-Hybrid Candidate Ranking
-    |
-    v
-Personalization
-    |
-    v
-AI Stylist / Explanation
-    |
-    v
-Ranked Fashion Results
+    +--------------------+
+    |                    |
+    v                    v
+Keyword Retrieval    Semantic Signal
+    |                    |
+    +---------+----------+
+              |
+              v
+       Attribute Matching
+              |
+              v
+        Budget Matching
+              |
+              v
+       Metadata Relevance
+              |
+              v
+       Hybrid Ranking
+              |
+              v
+      Personalized Results
+              |
+              v
+        AI Stylist Layer
