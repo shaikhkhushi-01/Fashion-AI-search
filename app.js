@@ -1008,7 +1008,7 @@ function openProductModal(product) {
 
                 <button
                     class="primary-btn modal-like-button"
-                    onclick="toggleWishlist('${escapeHTML(getProductId(product))')}"
+                    onclick="toggleWishlist('${escapeHTML(getProductId(product))}')"
                 >
                     ${state.wishlist.includes(getProductId(product))
                         ? "♥ Saved"
