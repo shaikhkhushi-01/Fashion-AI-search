@@ -1,5 +1,3 @@
-"use strict";
-
 /*
 =========================================================
 FASHION AI DISCOVERY
@@ -7,20 +5,33 @@ DAY 11 — ABLATION STUDY RUNNER
 =========================================================
 */
 
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
-const {
+import {
   retrieveWithExperiment,
   describeExperiments
-} = require("../services/ablation");
+} from "../services/ablation.js";
 
-const {
+import {
   evaluateDataset
-} = require("../services/evaluation");
+} from "../services/evaluation.js";
 
-const evaluationCases =
-  require("./evaluation-cases");
+import evaluationCases from "./evaluation-cases.js";
+
+
+/*
+=========================================================
+ES MODULE PATH SETUP
+=========================================================
+*/
+
+const __filename =
+  fileURLToPath(import.meta.url);
+
+const __dirname =
+  path.dirname(__filename);
 
 
 /*
@@ -262,6 +273,7 @@ function findBestExperiment(
       value > best.value
     ) {
       best = {
+
         key:
           experiment.key,
 
@@ -359,6 +371,7 @@ const report = {
   experiments:
     experimentDefinitions.map(
       (experiment) => ({
+
         key:
           experiment.key,
 
