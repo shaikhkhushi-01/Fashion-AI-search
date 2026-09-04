@@ -1,140 +1,236 @@
-/*
-=========================================================
-FASHION AI DISCOVERY
-DAY 1 - RESEARCH EVALUATION DATASET
-=========================================================
-*/
+/**
+ * ============================================================
+ * DAY 10 — EVALUATION DATASET
+ * ============================================================
+ *
+ * Each query contains:
+ *
+ * relevance score:
+ *
+ * 3 = highly relevant
+ * 2 = relevant
+ * 1 = weakly relevant
+ * 0 = irrelevant
+ *
+ * This is a manually curated research evaluation set.
+ * ============================================================
+ */
 
-export const evaluationCases = [
+module.exports = [
 
   {
-    id: "Q001",
+    id: "q01",
 
     query:
-      "black oversized shirt for college",
+      "white sneakers for college",
 
-    productIds: [2],
-
-    categories: [
-      "Shirts"
-    ]
+    relevance: {
+      "5": 3,
+      "14": 1,
+      "2": 1
+    }
   },
 
+
   {
-    id: "Q002",
+    id: "q02",
 
     query:
-      "comfortable summer linen shirt",
+      "minimal black outfit under 5000",
 
-    productIds: [1],
-
-    categories: [
-      "Shirts"
-    ]
+    relevance: {
+      "4": 3,
+      "2": 3,
+      "17": 2,
+      "14": 1
+    }
   },
 
+
   {
-    id: "Q003",
+    id: "q03",
 
     query:
-      "elegant black dress for wedding",
+      "elegant black dress for evening",
 
-    productIds: [8],
-
-    categories: [
-      "Dresses"
-    ]
+    relevance: {
+      "6": 2,
+      "17": 2,
+      "7": 3,
+      "20": 3
+    }
   },
 
+
   {
-    id: "Q004",
+    id: "q04",
 
     query:
-      "white minimal sneakers",
+      "comfortable summer outfit",
 
-    productIds: [10],
-
-    categories: [
-      "Sneakers"
-    ]
+    relevance: {
+      "1": 3,
+      "3": 3,
+      "16": 3,
+      "14": 2
+    }
   },
 
+
   {
-    id: "Q005",
+    id: "q05",
 
     query:
-      "comfortable hoodie for college",
+      "black shirt for everyday wear",
 
-    productIds: [9],
-
-    categories: [
-      "Hoodies"
-    ]
+    relevance: {
+      "2": 3,
+      "14": 2,
+      "1": 1
+    }
   },
 
+
   {
-    id: "Q006",
+    id: "q06",
 
     query:
-      "black blazer for office",
+      "formal outfit for office",
 
-    productIds: [6],
-
-    categories: [
-      "Blazers"
-    ]
+    relevance: {
+      "6": 3,
+      "15": 3,
+      "4": 2,
+      "11": 2
+    }
   },
 
+
   {
-    id: "Q007",
+    id: "q07",
 
     query:
-      "blue jeans for college",
+      "traditional outfit for wedding",
 
-    productIds: [7],
-
-    categories: [
-      "Jeans"
-    ]
+    relevance: {
+      "10": 3,
+      "9": 3,
+      "13": 3,
+      "18": 2,
+      "20": 2
+    }
   },
 
+
   {
-    id: "Q008",
+    id: "q08",
 
     query:
-      "relaxed black trousers",
+      "warm winter coat for travel",
 
-    productIds: [4],
-
-    categories: [
-      "Trousers"
-    ]
+    relevance: {
+      "11": 3,
+      "19": 1
+    }
   },
 
+
   {
-    id: "Q009",
+    id: "q09",
 
     query:
-      "sporty white shoes for travel",
+      "oversized casual streetwear",
 
-    productIds: [5],
-
-    categories: [
-      "Sneakers"
-    ]
+    relevance: {
+      "2": 3,
+      "12": 3,
+      "19": 2
+    }
   },
 
+
   {
-    id: "Q010",
+    id: "q10",
 
     query:
-      "minimal cream summer dress",
+      "luxury evening outfit",
 
-    productIds: [3],
+    relevance: {
+      "7": 3,
+      "20": 3,
+      "10": 2,
+      "13": 2,
+      "15": 1
+    }
+  },
 
-    categories: [
-      "Dresses"
-    ]
+
+  {
+    id: "q11",
+
+    query:
+      "simple cotton t shirt",
+
+    relevance: {
+      "14": 3,
+      "2": 2,
+      "12": 2
+    }
+  },
+
+
+  {
+    id: "q12",
+
+    query:
+      "blue denim jeans",
+
+    relevance: {
+      "8": 3
+    }
+  },
+
+
+  {
+    id: "q13",
+
+    query:
+      "comfortable clothes for college",
+
+    relevance: {
+      "2": 3,
+      "12": 3,
+      "14": 3,
+      "5": 2
+    }
+  },
+
+
+  {
+    id: "q14",
+
+    query:
+      "minimal white clothing",
+
+    relevance: {
+      "1": 3,
+      "5": 2,
+      "12": 3,
+      "14": 2
+    }
+  },
+
+
+  {
+    id: "q15",
+
+    query:
+      "festive traditional menswear",
+
+    relevance: {
+      "18": 3,
+      "15": 2
+    }
   }
 
 ];
