@@ -14,9 +14,14 @@ import { execFile } from "child_process";
 import { promisify } from "util";
 
 import {
-  runEvaluation,
-  runEdgeCaseTests
-} from "./evaluation.js";
+  searchProducts
+} from "./services/aiSearch.js";
+
+import {
+  evaluateDataset
+} from "./services/evaluation.js";
+
+import evaluationCases from "./tests/evaluation-cases.js";
 
 /*
 =========================================================
@@ -24,10 +29,14 @@ PATH CONFIGURATION
 =========================================================
 */
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __filename =
+  fileURLToPath(import.meta.url);
 
-const execFileAsync = promisify(execFile);
+const __dirname =
+  path.dirname(__filename);
+
+const execFileAsync =
+  promisify(execFile);
 
 /*
 =========================================================
@@ -35,7 +44,8 @@ APPLICATION
 =========================================================
 */
 
-const app = express();
+const app =
+  express();
 
 /*
 =========================================================
@@ -58,16 +68,23 @@ const MODEL_NAME =
   "Xenova/all-MiniLM-L6-v2";
 
 const DEFAULT_SEARCH_LIMIT =
-  Number(process.env.DEFAULT_SEARCH_LIMIT) || 10;
+  Number(
+    process.env.DEFAULT_SEARCH_LIMIT
+  ) || 10;
 
 const MAX_SEARCH_LIMIT =
-  Number(process.env.MAX_SEARCH_LIMIT) || 50;
+  Number(
+    process.env.MAX_SEARCH_LIMIT
+  ) || 50;
 
 const MINIMUM_SEARCH_SCORE =
-  Number(process.env.MINIMUM_SEARCH_SCORE) || 0;
+  Number(
+    process.env.MINIMUM_SEARCH_SCORE
+  ) || 0;
 
 const ENABLE_REQUEST_LOGGING =
-  process.env.ENABLE_REQUEST_LOGGING !== "false";
+  process.env.ENABLE_REQUEST_LOGGING !==
+  "false";
 
 const CORS_ORIGIN =
   process.env.CORS_ORIGIN || "*";
@@ -103,19 +120,27 @@ REQUEST LOGGING
 */
 
 if (ENABLE_REQUEST_LOGGING) {
-  app.use((req, res, next) => {
-    const startedAt = Date.now();
+  app.use(
+    (req, res, next) => {
+      const startedAt =
+        Date.now();
 
-    res.on("finish", () => {
-      const duration = Date.now() - startedAt;
+      res.on(
+        "finish",
+        () => {
+          const duration =
+            Date.now() -
+            startedAt;
 
-      console.log(
-        `${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`
+          console.log(
+            `${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`
+          );
+        }
       );
-    });
 
-    next();
-  });
+      next();
+    }
+  );
 }
 
 /*
@@ -142,12 +167,17 @@ LOAD PRODUCTS
 
 function loadProducts() {
   try {
-    if (!fs.existsSync(productsPath)) {
+    if (
+      !fs.existsSync(
+        productsPath
+      )
+    ) {
       console.error(
         `Product dataset not found at: ${productsPath}`
       );
 
       products = [];
+
       return;
     }
 
@@ -158,15 +188,23 @@ function loadProducts() {
       );
 
     const parsed =
-      JSON.parse(rawData);
+      JSON.parse(
+        rawData
+      );
 
-    if (Array.isArray(parsed)) {
-      products = parsed;
+    if (
+      Array.isArray(parsed)
+    ) {
+      products =
+        parsed;
     } else if (
       parsed &&
-      Array.isArray(parsed.products)
+      Array.isArray(
+        parsed.products
+      )
     ) {
-      products = parsed.products;
+      products =
+        parsed.products;
     } else {
       console.error(
         "products.json does not contain a valid product array."
@@ -202,7 +240,8 @@ function validateStartup() {
 
   const nodeMajor =
     Number(
-      process.versions.node.split(".")[0]
+      process.versions.node
+        .split(".")[0]
     );
 
   if (
@@ -214,19 +253,26 @@ function validateStartup() {
     );
   }
 
-  if (!Array.isArray(products)) {
+  if (
+    !Array.isArray(products)
+  ) {
     errors.push(
       "Product dataset is not an array."
     );
-  } else if (products.length === 0) {
+  } else if (
+    products.length === 0
+  ) {
     errors.push(
       "Product dataset is empty."
     );
   }
 
-  const ids = new Set();
+  const ids =
+    new Set();
 
-  for (const product of products) {
+  for (
+    const product of products
+  ) {
     if (
       !product ||
       typeof product !== "object"
@@ -234,6 +280,7 @@ function validateStartup() {
       errors.push(
         "Invalid product object detected."
       );
+
       continue;
     }
 
@@ -244,12 +291,16 @@ function validateStartup() {
       errors.push(
         "Product without ID detected."
       );
+
       continue;
     }
 
-    const id = String(product.id);
+    const id =
+      String(product.id);
 
-    if (ids.has(id)) {
+    if (
+      ids.has(id)
+    ) {
       errors.push(
         `Duplicate product ID detected: ${id}`
       );
@@ -259,22 +310,13 @@ function validateStartup() {
 
     if (
       !product.name ||
-      typeof product.name !== "string"
+      typeof product.name !==
+        "string"
     ) {
       warnings.push(
         `Product ${id} has no valid name.`
       );
     }
-  }
-
-  if (
-    !Number.isFinite(PORT) ||
-    PORT <= 0 ||
-    PORT > 65535
-  ) {
-    errors.push(
-      `Invalid PORT: ${PORT}`
-    );
   }
 
   if (
@@ -303,23 +345,35 @@ function validateStartup() {
     );
   }
 
-  if (warnings.length) {
+  if (
+    warnings.length
+  ) {
     console.warn(
       "\nStartup warnings:"
     );
 
-    for (const warning of warnings) {
-      console.warn(`- ${warning}`);
+    for (
+      const warning of warnings
+    ) {
+      console.warn(
+        `- ${warning}`
+      );
     }
   }
 
-  if (errors.length) {
+  if (
+    errors.length
+  ) {
     console.error(
       "\nStartup validation failed:"
     );
 
-    for (const error of errors) {
-      console.error(`- ${error}`);
+    for (
+      const error of errors
+    ) {
+      console.error(
+        `- ${error}`
+      );
     }
 
     return false;
@@ -341,14 +395,22 @@ TEXT HELPERS
 =========================================================
 */
 
-function normalizeText(value) {
-  return String(value ?? "")
+function normalizeText(
+  value
+) {
+  return String(
+    value ?? ""
+  )
     .toLowerCase()
     .trim();
 }
 
-function safeArray(value) {
-  if (Array.isArray(value)) {
+function safeArray(
+  value
+) {
+  if (
+    Array.isArray(value)
+  ) {
     return value;
   }
 
@@ -362,571 +424,27 @@ function safeArray(value) {
   return [];
 }
 
-function tokenize(value) {
-  return normalizeText(value)
-    .replace(
-      /[^\p{L}\p{N}\s-]/gu,
-      " "
-    )
-    .split(/\s+/)
-    .filter(Boolean);
-}
-
-/*
-=========================================================
-SYNONYMS
-=========================================================
-*/
-
-const synonyms = {
-  tshirt: [
-    "tshirt",
-    "t-shirt",
-    "tee"
-  ],
-
-  shirt: [
-    "shirt",
-    "shirts"
-  ],
-
-  trouser: [
-    "trouser",
-    "trousers",
-    "pants"
-  ],
-
-  sneaker: [
-    "sneaker",
-    "sneakers",
-    "shoe",
-    "shoes"
-  ],
-
-  casual: [
-    "casual",
-    "everyday",
-    "relaxed"
-  ],
-
-  formal: [
-    "formal",
-    "office",
-    "professional"
-  ],
-
-  summer: [
-    "summer",
-    "warm",
-    "hot"
-  ],
-
-  comfortable: [
-    "comfortable",
-    "comfort",
-    "soft",
-    "relaxed"
-  ],
-
-  cheap: [
-    "cheap",
-    "affordable",
-    "budget",
-    "low"
-  ],
-
-  premium: [
-    "premium",
-    "luxury",
-    "expensive"
-  ]
-};
-
-/*
-=========================================================
-QUERY EXPANSION
-=========================================================
-*/
-
-function expandQuery(query) {
-  const tokens = tokenize(query);
-  const expanded = new Set(tokens);
-
-  for (const token of tokens) {
-    for (const values of Object.values(synonyms)) {
-      if (values.includes(token)) {
-        values.forEach(value => {
-          expanded.add(
-            normalizeText(value)
-          );
-        });
-      }
-    }
-  }
-
-  return [...expanded];
-}
-
-/*
-=========================================================
-PRODUCT TEXT
-=========================================================
-*/
-
-function productText(product) {
-  return [
-    product.brand,
-    product.name,
-    product.category,
-    product.gender,
-    product.color,
-    ...safeArray(product.material),
-    ...safeArray(product.style),
-    ...safeArray(product.occasion),
-    ...safeArray(product.tags),
-    product.description
-  ]
-    .filter(Boolean)
-    .map(normalizeText)
-    .join(" ");
-}
-
-/*
-=========================================================
-RELEVANCE
-=========================================================
-*/
-
-function calculateRelevance(
-  product,
-  query
-) {
-  const queryTokens =
-    expandQuery(query);
-
-  if (!queryTokens.length) {
-    return 0;
-  }
-
-  const name =
-    normalizeText(product.name);
-
-  const brand =
-    normalizeText(product.brand);
-
-  const category =
-    normalizeText(product.category);
-
-  const color =
-    normalizeText(product.color);
-
-  const style =
-    safeArray(product.style)
-      .map(normalizeText);
-
-  const occasion =
-    safeArray(product.occasion)
-      .map(normalizeText);
-
-  const material =
-    safeArray(product.material)
-      .map(normalizeText);
-
-  const tags =
-    safeArray(product.tags)
-      .map(normalizeText);
-
-  const description =
-    normalizeText(product.description);
-
-  const fullText =
-    productText(product);
-
-  let score = 0;
-
-  for (const token of queryTokens) {
-    if (name.includes(token)) {
-      score += 22;
-    }
-
-    if (brand.includes(token)) {
-      score += 18;
-    }
-
-    if (category.includes(token)) {
-      score += 18;
-    }
-
-    if (color.includes(token)) {
-      score += 16;
-    }
-
-    if (
-      style.some(
-        item => item.includes(token)
-      )
-    ) {
-      score += 14;
-    }
-
-    if (
-      occasion.some(
-        item => item.includes(token)
-      )
-    ) {
-      score += 14;
-    }
-
-    if (
-      material.some(
-        item => item.includes(token)
-      )
-    ) {
-      score += 12;
-    }
-
-    if (
-      tags.some(
-        item => item.includes(token)
-      )
-    ) {
-      score += 10;
-    }
-
-    if (
-      description.includes(token)
-    ) {
-      score += 6;
-    }
-
-    if (
-      fullText.includes(token)
-    ) {
-      score += 2;
-    }
-  }
-
-  const normalizedQuery =
-    normalizeText(query);
-
-  if (
-    normalizedQuery &&
-    name.includes(normalizedQuery)
-  ) {
-    score += 25;
-  }
-
-  if (
-    normalizeText(
-      product.availability
-    ) === "in stock"
-  ) {
-    score += 4;
-  }
-
-  return Math.min(
-    100,
-    Math.round(score)
-  );
-}
-
-/*
-=========================================================
-REASONS
-=========================================================
-*/
-
-function getReasons(
-  product,
-  query
-) {
-  const reasons = [];
-
-  const tokens =
-    expandQuery(query);
-
-  const name =
-    normalizeText(product.name);
-
-  const category =
-    normalizeText(product.category);
-
-  const color =
-    normalizeText(product.color);
-
-  const styles =
-    safeArray(product.style)
-      .map(normalizeText);
-
-  const occasions =
-    safeArray(product.occasion)
-      .map(normalizeText);
-
-  const materials =
-    safeArray(product.material)
-      .map(normalizeText);
-
-  if (
-    name &&
-    tokens.some(
-      token => name.includes(token)
-    )
-  ) {
-    reasons.push(
-      "Product name matches your search intent."
-    );
-  }
-
-  if (
-    category &&
-    tokens.some(
-      token => category.includes(token)
-    )
-  ) {
-    reasons.push(
-      `Category matches: ${product.category}.`
-    );
-  }
-
-  if (
-    color &&
-    tokens.some(
-      token => color.includes(token)
-    )
-  ) {
-    reasons.push(
-      `Colour matches: ${product.color}.`
-    );
-  }
-
-  if (
-    styles.some(
-      style =>
-        tokens.some(
-          token =>
-            style.includes(token)
-        )
-    )
-  ) {
-    reasons.push(
-      "Style matches your request."
-    );
-  }
-
-  if (
-    occasions.some(
-      occasion =>
-        tokens.some(
-          token =>
-            occasion.includes(token)
-        )
-    )
-  ) {
-    reasons.push(
-      "Occasion matches your request."
-    );
-  }
-
-  if (
-    materials.some(
-      material =>
-        tokens.some(
-          token =>
-            material.includes(token)
-        )
-    )
-  ) {
-    reasons.push(
-      "Material preference matches."
-    );
-  }
-
-  if (!reasons.length) {
-    reasons.push(
-      "Strong overall semantic/textual match."
-    );
-  }
-
-  return reasons.slice(0, 4);
-}
-
-/*
-=========================================================
-FILTERS
-=========================================================
-*/
-
-function matchesFilter(
-  product,
-  filters
-) {
-  if (
-    filters.category &&
-    normalizeText(product.category) !==
-      normalizeText(filters.category)
-  ) {
-    return false;
-  }
-
-  if (
-    filters.gender &&
-    normalizeText(product.gender) !==
-      normalizeText(filters.gender)
-  ) {
-    return false;
-  }
-
-  if (
-    filters.color &&
-    normalizeText(product.color) !==
-      normalizeText(filters.color)
-  ) {
-    return false;
-  }
-
-  if (filters.style) {
-    const styles =
-      safeArray(product.style)
-        .map(normalizeText);
-
-    if (
-      !styles.includes(
-        normalizeText(filters.style)
-      )
-    ) {
-      return false;
-    }
-  }
-
-  if (filters.occasion) {
-    const occasions =
-      safeArray(product.occasion)
-        .map(normalizeText);
-
-    if (
-      !occasions.includes(
-        normalizeText(filters.occasion)
-      )
-    ) {
-      return false;
-    }
-  }
-
-  if (filters.material) {
-    const materials =
-      safeArray(product.material)
-        .map(normalizeText);
-
-    if (
-      !materials.includes(
-        normalizeText(filters.material)
-      )
-    ) {
-      return false;
-    }
-  }
-
-  if (
-    filters.minPrice !== undefined &&
-    filters.minPrice !== null &&
-    filters.minPrice !== ""
-  ) {
-    const min =
-      Number(filters.minPrice);
-
-    if (
-      Number.isFinite(min) &&
-      Number(product.price) < min
-    ) {
-      return false;
-    }
-  }
-
-  if (
-    filters.maxPrice !== undefined &&
-    filters.maxPrice !== null &&
-    filters.maxPrice !== ""
-  ) {
-    const max =
-      Number(filters.maxPrice);
-
-    if (
-      Number.isFinite(max) &&
-      Number(product.price) > max
-    ) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-/*
-=========================================================
-SORTING
-=========================================================
-*/
-
-function sortResults(
-  results,
-  sort
-) {
-  const output = [...results];
-
-  switch (normalizeText(sort)) {
-    case "price-low":
-    case "price-asc":
-      output.sort(
-        (a, b) =>
-          Number(a.price || 0) -
-          Number(b.price || 0)
-      );
-      break;
-
-    case "price-high":
-    case "price-desc":
-      output.sort(
-        (a, b) =>
-          Number(b.price || 0) -
-          Number(a.price || 0)
-      );
-      break;
-
-    case "newest":
-      output.sort(
-        (a, b) =>
-          Number(b.id || 0) -
-          Number(a.id || 0)
-      );
-      break;
-
-    case "relevance":
-    default:
-      output.sort(
-        (a, b) =>
-          Number(b.matchScore || 0) -
-          Number(a.matchScore || 0)
-      );
-      break;
-  }
-
-  return output;
-}
-
 /*
 =========================================================
 LIMIT
 =========================================================
 */
 
-function normalizeLimit(value) {
-  let limit = Number(value);
+function normalizeLimit(
+  value
+) {
+  let limit =
+    Number(value);
 
-  if (!Number.isFinite(limit)) {
-    limit = DEFAULT_SEARCH_LIMIT;
+  if (
+    !Number.isFinite(limit)
+  ) {
+    limit =
+      DEFAULT_SEARCH_LIMIT;
   }
 
-  limit = Math.trunc(limit);
+  limit =
+    Math.trunc(limit);
 
   return Math.max(
     1,
@@ -939,75 +457,510 @@ function normalizeLimit(value) {
 
 /*
 =========================================================
+FILTER MATCHING
+=========================================================
+*/
+
+function matchesFilter(
+  product,
+  filters = {}
+) {
+  if (
+    filters.category &&
+    normalizeText(
+      product.category
+    ) !==
+      normalizeText(
+        filters.category
+      )
+  ) {
+    return false;
+  }
+
+  if (
+    filters.gender &&
+    normalizeText(
+      product.gender
+    ) !==
+      normalizeText(
+        filters.gender
+      )
+  ) {
+    return false;
+  }
+
+  if (
+    filters.color &&
+    normalizeText(
+      product.color
+    ) !==
+      normalizeText(
+        filters.color
+      )
+  ) {
+    return false;
+  }
+
+  if (
+    filters.style
+  ) {
+    const styles =
+      safeArray(
+        product.style
+      ).map(
+        normalizeText
+      );
+
+    if (
+      !styles.includes(
+        normalizeText(
+          filters.style
+        )
+      )
+    ) {
+      return false;
+    }
+  }
+
+  if (
+    filters.occasion
+  ) {
+    const occasions =
+      safeArray(
+        product.occasion
+      ).map(
+        normalizeText
+      );
+
+    if (
+      !occasions.includes(
+        normalizeText(
+          filters.occasion
+        )
+      )
+    ) {
+      return false;
+    }
+  }
+
+  if (
+    filters.material
+  ) {
+    const materials =
+      safeArray(
+        product.material
+      ).map(
+        normalizeText
+      );
+
+    if (
+      !materials.includes(
+        normalizeText(
+          filters.material
+        )
+      )
+    ) {
+      return false;
+    }
+  }
+
+  if (
+    filters.minPrice !==
+      undefined &&
+    filters.minPrice !==
+      null &&
+    filters.minPrice !== ""
+  ) {
+    const min =
+      Number(
+        filters.minPrice
+      );
+
+    if (
+      Number.isFinite(min) &&
+      Number(product.price) <
+        min
+    ) {
+      return false;
+    }
+  }
+
+  if (
+    filters.maxPrice !==
+      undefined &&
+    filters.maxPrice !==
+      null &&
+    filters.maxPrice !== ""
+  ) {
+    const max =
+      Number(
+        filters.maxPrice
+      );
+
+    if (
+      Number.isFinite(max) &&
+      Number(product.price) >
+        max
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/*
+=========================================================
+FILTER PRODUCTS
+=========================================================
+*/
+
+function applyFilters(
+  items,
+  filters = {}
+) {
+  return items.filter(
+    product =>
+      matchesFilter(
+        product,
+        filters
+      )
+  );
+}
+
+/*
+=========================================================
 SEARCH
 =========================================================
 */
 
 function performSearch(
-  query,
+  query = "",
   filters = {},
-  sort = "relevance"
+  sort = "relevance",
+  limit
 ) {
-  let candidates =
-    products.filter(
-      product =>
-        matchesFilter(
-          product,
-          filters
-        )
+  const filteredProducts =
+    applyFilters(
+      products,
+      filters
     );
 
-  const hasQuery =
-    normalizeText(query).length > 0;
+  const normalizedQuery =
+    String(
+      query ?? ""
+    ).trim();
 
-  if (hasQuery) {
-    candidates =
-      candidates.map(product => {
-        const matchScore =
-          calculateRelevance(
-            product,
-            query
-          );
+  /*
+  -------------------------------------------------------
+  NO QUERY
+  -------------------------------------------------------
+  */
 
-        return {
+  if (
+    !normalizedQuery
+  ) {
+    let results =
+      filteredProducts.map(
+        product => ({
           ...product,
-          matchScore,
-          score: matchScore,
-          reasons:
-            getReasons(
-              product,
-              query
-            )
-        };
-      });
-  } else {
-    candidates =
-      candidates.map(product => ({
-        ...product,
-        matchScore: 50,
-        score: 50,
-        reasons: [
-          "Matches your selected filters."
-        ]
-      }));
-  }
 
-  if (hasQuery) {
-    const strong =
-      candidates.filter(
-        product =>
-          product.matchScore >= 5
+          matchScore: 50,
+
+          score: 50,
+
+          reasons: [
+            "Matches your selected filters."
+          ]
+        })
       );
 
-    candidates =
-      strong.length
-        ? strong
-        : candidates;
+    if (
+      normalizeText(
+        sort
+      ) === "price-low"
+    ) {
+      results.sort(
+        (a, b) =>
+          Number(a.price || 0) -
+          Number(b.price || 0)
+      );
+    }
+
+    if (
+      normalizeText(
+        sort
+      ) === "price-high"
+    ) {
+      results.sort(
+        (a, b) =>
+          Number(b.price || 0) -
+          Number(a.price || 0)
+      );
+    }
+
+    if (
+      normalizeText(
+        sort
+      ) === "newest"
+    ) {
+      results.sort(
+        (a, b) =>
+          Number(b.id || 0) -
+          Number(a.id || 0)
+      );
+    }
+
+    return results.slice(
+      0,
+      normalizeLimit(limit)
+    );
   }
 
-  return sortResults(
-    candidates,
-    sort
+  /*
+  -------------------------------------------------------
+  HYBRID AI SEARCH
+  -------------------------------------------------------
+  */
+
+  let results =
+    searchProducts(
+      filteredProducts,
+      normalizedQuery,
+      {
+        limit:
+          normalizeLimit(limit),
+
+        minScore:
+          MINIMUM_SEARCH_SCORE
+      }
+    );
+
+  /*
+  -------------------------------------------------------
+  SORTING
+  -------------------------------------------------------
+  */
+
+  switch (
+    normalizeText(sort)
+  ) {
+    case "price-low":
+    case "price-asc":
+      results.sort(
+        (a, b) =>
+          Number(a.price || 0) -
+          Number(b.price || 0)
+      );
+      break;
+
+    case "price-high":
+    case "price-desc":
+      results.sort(
+        (a, b) =>
+          Number(b.price || 0) -
+          Number(a.price || 0)
+      );
+      break;
+
+    case "newest":
+      results.sort(
+        (a, b) =>
+          Number(b.id || 0) -
+          Number(a.id || 0)
+      );
+      break;
+
+    case "relevance":
+    default:
+      results.sort(
+        (a, b) =>
+          Number(
+            b.hybridScore ??
+            b.matchScore ??
+            0
+          ) -
+          Number(
+            a.hybridScore ??
+            a.matchScore ??
+            0
+          )
+      );
+      break;
+  }
+
+  return results.slice(
+    0,
+    normalizeLimit(limit)
+  );
+}
+
+/*
+=========================================================
+STYLIST
+=========================================================
+*/
+
+function buildStylistQuery(
+  body = {}
+) {
+  const parts = [];
+
+  if (
+    body.occasion
+  ) {
+    parts.push(
+      body.occasion
+    );
+  }
+
+  if (
+    body.style
+  ) {
+    parts.push(
+      body.style
+    );
+  }
+
+  if (
+    body.comfort
+  ) {
+    parts.push(
+      body.comfort
+    );
+  }
+
+  if (
+    body.color
+  ) {
+    parts.push(
+      body.color
+    );
+  }
+
+  if (
+    body.coverage
+  ) {
+    parts.push(
+      body.coverage
+    );
+  }
+
+  if (
+    body.description
+  ) {
+    parts.push(
+      body.description
+    );
+  }
+
+  return parts
+    .filter(Boolean)
+    .join(" ");
+}
+
+function stylistReasons(
+  product,
+  request
+) {
+  const reasons = [];
+
+  const productStyle =
+    safeArray(
+      product.style
+    ).map(
+      normalizeText
+    );
+
+  const productOccasion =
+    safeArray(
+      product.occasion
+    ).map(
+      normalizeText
+    );
+
+  const requestedStyle =
+    normalizeText(
+      request.style
+    );
+
+  const requestedOccasion =
+    normalizeText(
+      request.occasion
+    );
+
+  const requestedColor =
+    normalizeText(
+      request.color
+    );
+
+  if (
+    requestedStyle &&
+    productStyle.some(
+      value =>
+        value.includes(
+          requestedStyle
+        )
+    )
+  ) {
+    reasons.push(
+      "Style aligns with your preference."
+    );
+  }
+
+  if (
+    requestedOccasion &&
+    productOccasion.some(
+      value =>
+        value.includes(
+          requestedOccasion
+        )
+    )
+  ) {
+    reasons.push(
+      "Suitable for the selected occasion."
+    );
+  }
+
+  if (
+    requestedColor &&
+    normalizeText(
+      product.color
+    ).includes(
+      requestedColor
+    )
+  ) {
+    reasons.push(
+      "Colour matches your preference."
+    );
+  }
+
+  if (
+    request.comfort &&
+    normalizeText(
+      product.description
+    ).includes(
+      normalizeText(
+        request.comfort
+      )
+    )
+  ) {
+    reasons.push(
+      "Comfort preference is reflected in the product."
+    );
+  }
+
+  if (
+    !reasons.length
+  ) {
+    reasons.push(
+      "Recommended based on overall fashion-query compatibility."
+    );
+  }
+
+  return reasons.slice(
+    0,
+    4
   );
 }
 
@@ -1041,6 +994,9 @@ app.get(
       model:
         MODEL_NAME,
 
+      retrieval:
+        "hybrid",
+
       timestamp:
         new Date().toISOString()
     });
@@ -1060,25 +1016,25 @@ app.get(
       startupValid &&
       products.length > 0;
 
-    res.status(
-      ready ? 200 : 503
-    );
+    res
+      .status(
+        ready ? 200 : 503
+      )
+      .json({
+        ready,
 
-    res.json({
-      ready,
+        startupValidation:
+          startupValid,
 
-      startupValidation:
-        startupValid,
+        datasetLoaded:
+          products.length > 0,
 
-      datasetLoaded:
-        products.length > 0,
+        productCount:
+          products.length,
 
-      productCount:
-        products.length,
-
-      timestamp:
-        new Date().toISOString()
-    });
+        timestamp:
+          new Date().toISOString()
+      });
   }
 );
 
@@ -1107,6 +1063,9 @@ app.get(
       model:
         MODEL_NAME,
 
+      retrieval:
+        "hybrid",
+
       timestamp:
         new Date().toISOString()
     });
@@ -1122,8 +1081,11 @@ MANIFEST
 app.get(
   "/api/manifest",
   (req, res) => {
-    let datasetSize = null;
-    let datasetModifiedAt = null;
+    let datasetSize =
+      null;
+
+    let datasetModifiedAt =
+      null;
 
     try {
       if (
@@ -1183,6 +1145,20 @@ app.get(
           MODEL_NAME
       },
 
+      retrieval: {
+        type:
+          "hybrid",
+
+        defaultSearchLimit:
+          DEFAULT_SEARCH_LIMIT,
+
+        maxSearchLimit:
+          MAX_SEARCH_LIMIT,
+
+        minimumSearchScore:
+          MINIMUM_SEARCH_SCORE
+      },
+
       dataset: {
         path:
           productsPath,
@@ -1195,17 +1171,6 @@ app.get(
 
         modifiedAt:
           datasetModifiedAt
-      },
-
-      retrieval: {
-        defaultSearchLimit:
-          DEFAULT_SEARCH_LIMIT,
-
-        maxSearchLimit:
-          MAX_SEARCH_LIMIT,
-
-        minimumSearchScore:
-          MINIMUM_SEARCH_SCORE
       }
     });
   }
@@ -1222,6 +1187,7 @@ app.get(
   (req, res) => {
     res.json({
       products,
+
       count:
         products.length
     });
@@ -1250,8 +1216,10 @@ app.get(
     const prices =
       products
         .map(
-          p =>
-            Number(p.price)
+          product =>
+            Number(
+              product.price
+            )
         )
         .filter(
           Number.isFinite
@@ -1261,30 +1229,33 @@ app.get(
       categories:
         uniqueValues(
           products.map(
-            p => p.category
+            product =>
+              product.category
           )
         ),
 
       genders:
         uniqueValues(
           products.map(
-            p => p.gender
+            product =>
+              product.gender
           )
         ),
 
       colors:
         uniqueValues(
           products.map(
-            p => p.color
+            product =>
+              product.color
           )
         ),
 
       styles:
         uniqueValues(
           products.flatMap(
-            p =>
+            product =>
               safeArray(
-                p.style
+                product.style
               )
           )
         ),
@@ -1292,9 +1263,9 @@ app.get(
       occasions:
         uniqueValues(
           products.flatMap(
-            p =>
+            product =>
               safeArray(
-                p.occasion
+                product.occasion
               )
           )
         ),
@@ -1302,9 +1273,9 @@ app.get(
       materials:
         uniqueValues(
           products.flatMap(
-            p =>
+            product =>
               safeArray(
-                p.material
+                product.material
               )
           )
         ),
@@ -1312,12 +1283,16 @@ app.get(
       priceRange: {
         min:
           prices.length
-            ? Math.min(...prices)
+            ? Math.min(
+                ...prices
+              )
             : 0,
 
         max:
           prices.length
-            ? Math.max(...prices)
+            ? Math.max(
+                ...prices
+              )
             : 0
       }
     });
@@ -1351,9 +1326,6 @@ app.post(
         limit
       } = body;
 
-      const normalizedQuery =
-        String(query ?? "");
-
       const filters = {
         category,
         gender,
@@ -1366,22 +1338,23 @@ app.post(
       };
 
       const normalizedLimit =
-        normalizeLimit(limit);
+        normalizeLimit(
+          limit
+        );
 
       const results =
         performSearch(
-          normalizedQuery,
+          query,
           filters,
-          sort
-        )
-          .slice(
-            0,
-            normalizedLimit
-          );
+          sort,
+          normalizedLimit
+        );
 
       res.json({
         query:
-          normalizedQuery,
+          String(
+            query ?? ""
+          ),
 
         filters,
 
@@ -1397,6 +1370,9 @@ app.post(
 
         model:
           MODEL_NAME,
+
+        retrieval:
+          "hybrid",
 
         timestamp:
           new Date().toISOString()
@@ -1430,33 +1406,27 @@ app.post(
       const filters =
         req.body || {};
 
+      const limit =
+        normalizeLimit(
+          filters.limit
+        );
+
       const results =
         performSearch(
           "",
           filters,
           filters.sort ||
-            "relevance"
-        );
-
-      const limit =
-        normalizeLimit(
-          filters.limit
+            "relevance",
+          limit
         );
 
       res.json({
         filters,
 
         count:
-          Math.min(
-            results.length,
-            limit
-          ),
+          results.length,
 
-        results:
-          results.slice(
-            0,
-            limit
-          )
+        results
       });
     } catch (error) {
       console.error(
@@ -1487,39 +1457,49 @@ app.post(
       const {
         query = "",
         preferences = {}
-      } = req.body || {};
+      } =
+        req.body || {};
 
       const filters = {
         category:
-          preferences.category || "",
+          preferences.category ||
+          "",
 
         gender:
-          preferences.gender || "",
+          preferences.gender ||
+          "",
 
         color:
-          preferences.color || "",
+          preferences.color ||
+          "",
 
         style:
-          preferences.style || "",
+          preferences.style ||
+          "",
 
         occasion:
-          preferences.occasion || "",
+          preferences.occasion ||
+          "",
 
         material:
-          preferences.material || "",
+          preferences.material ||
+          "",
 
         minPrice:
-          preferences.minPrice || "",
+          preferences.minPrice ||
+          "",
 
         maxPrice:
-          preferences.maxPrice || ""
+          preferences.maxPrice ||
+          ""
       };
 
       const results =
         performSearch(
           query,
           filters,
-          "relevance"
+          "relevance",
+          12
         );
 
       res.json({
@@ -1528,10 +1508,7 @@ app.post(
         preferences,
 
         recommendations:
-          results.slice(
-            0,
-            12
-          )
+          results
       });
     } catch (error) {
       console.error(
@@ -1551,7 +1528,123 @@ app.post(
 
 /*
 =========================================================
-EVALUATION
+DAY 9 - AI STYLIST
+=========================================================
+*/
+
+app.post(
+  "/api/stylist",
+  (req, res) => {
+    try {
+      const request =
+        req.body || {};
+
+      const query =
+        buildStylistQuery(
+          request
+        );
+
+      const results =
+        performSearch(
+          query,
+          {},
+          "relevance",
+          12
+        );
+
+      const enriched =
+        results.map(
+          product => ({
+            ...product,
+
+            stylistReasons:
+              stylistReasons(
+                product,
+                request
+              )
+          })
+        );
+
+      res.json({
+        status:
+          "completed",
+
+        query,
+
+        request,
+
+        count:
+          enriched.length,
+
+        recommendations:
+          enriched,
+
+        timestamp:
+          new Date().toISOString()
+      });
+    } catch (error) {
+      console.error(
+        "Stylist error:",
+        error
+      );
+
+      res.status(500).json({
+        status:
+          "failed",
+
+        error:
+          "Stylist recommendation failed.",
+
+        recommendations: []
+      });
+    }
+  }
+);
+
+/*
+=========================================================
+RESEARCH EVALUATION
+=========================================================
+*/
+
+function runEvaluation() {
+  const evaluationQueries =
+    evaluationCases.map(
+      item => ({
+        query:
+          item.query,
+
+        relevance:
+          item.relevance
+      })
+    );
+
+  return evaluateDataset(
+    evaluationQueries,
+    (query) =>
+      searchProducts(
+        products,
+        query,
+        {
+          limit: 10,
+
+          minScore: 0
+        }
+      ),
+    {
+      kValues: [
+        1,
+        3,
+        5,
+        10
+      ]
+    }
+  );
+}
+
+/*
+=========================================================
+EVALUATION API
 =========================================================
 */
 
@@ -1595,14 +1688,82 @@ app.get(
   "/api/evaluation/edge-cases",
   (req, res) => {
     try {
-      const report =
-        runEdgeCaseTests();
+      const cases = [
+        "",
+        " ",
+        "shirt",
+        "black shirt",
+        "BLACK SHIRT",
+        "summer dress",
+        "comfortable sneakers",
+        "formal office outfit",
+        "wedding outfit",
+        "white sneakers",
+        "xyzabc",
+        "123456",
+        "👗 fashion",
+        "a ".repeat(100)
+      ];
+
+      const results =
+        cases.map(
+          query => {
+            const startedAt =
+              Date.now();
+
+            let output = [];
+
+            try {
+              output =
+                searchProducts(
+                  products,
+                  query,
+                  {
+                    limit: 10,
+                    minScore: 0
+                  }
+                );
+            } catch {
+              output = [];
+            }
+
+            return {
+              query,
+
+              resultCount:
+                output.length,
+
+              durationMs:
+                Date.now() -
+                startedAt,
+
+              validArray:
+                Array.isArray(
+                  output
+                )
+            };
+          }
+        );
+
+      const failures =
+        results.filter(
+          item =>
+            !item.validArray
+        );
 
       res.json({
         status:
-          "completed",
+          failures.length
+            ? "failed"
+            : "completed",
 
-        ...report
+        totalCases:
+          results.length,
+
+        failures:
+          failures.length,
+
+        results
       });
     } catch (error) {
       console.error(
@@ -1615,7 +1776,7 @@ app.get(
           "failed",
 
         error:
-          "Edge-case tests failed."
+          "Edge-case evaluation failed."
       });
     }
   }
@@ -1639,7 +1800,9 @@ app.get(
         );
 
       if (
-        !fs.existsSync(testFile)
+        !fs.existsSync(
+          testFile
+        )
       ) {
         return res.status(404).json({
           status:
@@ -1660,14 +1823,19 @@ app.get(
           {
             cwd:
               __dirname,
+
             timeout:
               120000,
+
             maxBuffer:
-              5 * 1024 * 1024
+              5 *
+              1024 *
+              1024
           }
         );
 
-      let report = null;
+      let report =
+        null;
 
       const reportPath =
         path.join(
@@ -1677,7 +1845,9 @@ app.get(
         );
 
       if (
-        fs.existsSync(reportPath)
+        fs.existsSync(
+          reportPath
+        )
       ) {
         try {
           report =
@@ -1702,11 +1872,17 @@ app.get(
         report,
 
         output:
-          stdout.slice(-12000),
+          stdout
+            ? stdout.slice(
+                -12000
+              )
+            : null,
 
         warnings:
           stderr
-            ? stderr.slice(-5000)
+            ? stderr.slice(
+                -5000
+              )
             : null,
 
         timestamp:
@@ -1727,12 +1903,16 @@ app.get(
 
         stdout:
           error.stdout
-            ? error.stdout.slice(-8000)
+            ? error.stdout.slice(
+                -8000
+              )
             : null,
 
         stderr:
           error.stderr
-            ? error.stderr.slice(-5000)
+            ? error.stderr.slice(
+                -5000
+              )
             : null
       });
     }
@@ -1746,9 +1926,15 @@ API ERROR FOR INVALID JSON
 */
 
 app.use(
-  (error, req, res, next) => {
+  (
+    error,
+    req,
+    res,
+    next
+  ) => {
     if (
-      error instanceof SyntaxError &&
+      error instanceof
+        SyntaxError &&
       error.status === 400 &&
       "body" in error
     ) {
@@ -1798,7 +1984,9 @@ app.use(
       error
     );
 
-    if (res.headersSent) {
+    if (
+      res.headersSent
+    ) {
       return next(error);
     }
 
@@ -1853,6 +2041,10 @@ app.listen(
 
     console.log(
       `Model: ${MODEL_NAME}`
+    );
+
+    console.log(
+      "Retrieval: Hybrid"
     );
 
     console.log(
