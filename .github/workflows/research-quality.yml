@@ -56,6 +56,9 @@ jobs:
       - name: Ranker inference test
         run: npm run ranker-inference
 
+      - name: Personalization test
+        run: npm run personalization-test
+
       - name: AI Stylist test
         run: npm run stylist-test
 
@@ -89,3 +92,4 @@ jobs:
           echo "Learning-to-rank: PASS"
           echo "AI Stylist: PASS"
           echo "Explainability: PASS"
+          echo "Personalization: PASS"
