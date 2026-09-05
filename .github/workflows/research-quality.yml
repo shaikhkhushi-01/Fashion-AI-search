@@ -27,6 +27,14 @@ jobs:
         with:
           node-version: 20
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
       - name: Install dependencies
         run: npm install
 
@@ -35,6 +43,9 @@ jobs:
 
       - name: Query understanding check
         run: npm run query-understanding
+
+      - name: Semantic retrieval test
+        run: python tests/semantic-search.py
 
       - name: Reproducibility check
         run: npm run reproducibility
