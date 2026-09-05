@@ -1655,6 +1655,8 @@ async function initialize() {
     setupStylist();
     setupNavigation();
     setupKeyboardShortcut();
+    setupDiscoveryPagination();
+    setupSearchSuggestions();
 
     updateWishlistCount();
 
