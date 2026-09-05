@@ -47,6 +47,9 @@ jobs:
       - name: Semantic retrieval test
         run: python tests/semantic-search.py
 
+      - name: Hybrid retrieval test
+        run: npm run hybrid-test
+
       - name: Reproducibility check
         run: npm run reproducibility
 
@@ -70,3 +73,4 @@ jobs:
           echo "Robustness: PASS"
           echo "Dataset quality: PASS"
           echo "Query understanding: PASS"
+          echo "Hybrid retrieval: PASS"
