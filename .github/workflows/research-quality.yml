@@ -33,6 +33,9 @@ jobs:
       - name: Dataset quality check
         run: npm run dataset
 
+      - name: Query understanding check
+        run: npm run query-understanding
+
       - name: Reproducibility check
         run: npm run reproducibility
 
@@ -55,3 +58,4 @@ jobs:
           echo "Ablation: PASS"
           echo "Robustness: PASS"
           echo "Dataset quality: PASS"
+          echo "Query understanding: PASS"
