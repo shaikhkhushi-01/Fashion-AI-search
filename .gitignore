@@ -13,3 +13,5 @@ __pycache__/
 backend/.cache/
 __pycache__/
 *.pyc
+
+backend/evaluation-results/ranker-model.json
