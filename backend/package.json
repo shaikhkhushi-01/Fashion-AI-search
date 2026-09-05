@@ -11,7 +11,8 @@
     "ablation": "node tests/ablation.js",
     "robustness": "node tests/robustness.js",
     "reproducibility": "node tests/reproducibility.js",
-    "smoke": "node tests/smoke.js"
+    "smoke": "node tests/smoke.js",
+    "day1": "node tests/day1-audit.js"
   },
   "engines": {
     "node": ">=18"
