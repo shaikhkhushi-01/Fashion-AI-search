@@ -1,23 +1,5 @@
-/*
-=========================================================
-FASHION AI DISCOVERY
-DAY 4
-PERSONALIZATION + AI STYLIST ENGINE
-=========================================================
-*/
-
-"use strict";
-
-/*
-=========================================================
-NORMALIZATION
-=========================================================
-*/
-
 function normalize(value) {
-  return String(value ?? "")
-    .trim()
-    .toLowerCase();
+  return String(value ?? "").trim().toLowerCase();
 }
 
 function arrayValues(value) {
@@ -26,465 +8,461 @@ function arrayValues(value) {
   }
 
   if (typeof value === "string" && value.trim()) {
-    return [normalize(value)];
+    return value
+      .split(",")
+      .map(normalize)
+      .filter(Boolean);
   }
 
   return [];
 }
 
-/*
-=========================================================
-USER PROFILE NORMALIZATION
-=========================================================
-*/
+function numberArray(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map(Number)
+    .filter(Number.isFinite);
+}
 
 function normalizeProfile(profile = {}) {
   return {
     gender: normalize(profile.gender),
-
-    preferredColors: arrayValues(
-      profile.preferredColors
-    ),
-
-    preferredStyles: arrayValues(
-      profile.preferredStyles
-    ),
-
-    preferredCategories: arrayValues(
-      profile.preferredCategories
-    ),
-
-    preferredOccasions: arrayValues(
-      profile.preferredOccasions
-    ),
-
-    preferredMaterials: arrayValues(
-      profile.preferredMaterials
-    ),
-
-    dislikedColors: arrayValues(
-      profile.dislikedColors
-    ),
-
-    dislikedStyles: arrayValues(
-      profile.dislikedStyles
-    ),
-
-    budget:
-      Number.isFinite(
-        Number(profile.budget)
-      )
-        ? Number(profile.budget)
-        : null,
-
-    likedProductIds: Array.isArray(
-      profile.likedProductIds
-    )
-      ? profile.likedProductIds.map(Number)
+    preferredColors: arrayValues(profile.preferredColors),
+    preferredStyles: arrayValues(profile.preferredStyles),
+    preferredCategories: arrayValues(profile.preferredCategories),
+    preferredOccasions: arrayValues(profile.preferredOccasions),
+    preferredMaterials: arrayValues(profile.preferredMaterials),
+    dislikedColors: arrayValues(profile.dislikedColors),
+    dislikedStyles: arrayValues(profile.dislikedStyles),
+    budget: Number.isFinite(Number(profile.budget))
+      ? Number(profile.budget)
+      : null,
+    likedProductIds: numberArray(profile.likedProductIds),
+    dislikedProductIds: numberArray(profile.dislikedProductIds),
+    searchHistory: Array.isArray(profile.searchHistory)
+      ? profile.searchHistory
+          .map(item => ({
+            query: String(item?.query ?? "").trim(),
+            timestamp: item?.timestamp ?? null
+          }))
+          .filter(item => item.query)
+          .slice(-20)
       : [],
-
-    dislikedProductIds: Array.isArray(
-      profile.dislikedProductIds
-    )
-      ? profile.dislikedProductIds.map(Number)
-      : []
+    preferenceWeights:
+      profile.preferenceWeights &&
+      typeof profile.preferenceWeights === "object"
+        ? profile.preferenceWeights
+        : {}
   };
 }
 
-/*
-=========================================================
-OVERLAP
-=========================================================
-*/
+function valuesForProduct(product, field) {
+  return arrayValues(product?.[field]);
+}
 
-function overlapScore(
-  productValues,
-  profileValues
-) {
-  if (
-    !productValues.length ||
-    !profileValues.length
-  ) {
+function overlapScore(productValues, profileValues) {
+  const productSet = new Set(productValues.map(normalize));
+  const profileSet = new Set(profileValues.map(normalize));
+
+  if (!productSet.size || !profileSet.size) {
     return 0;
   }
 
-  const matches =
-    productValues.filter(
-      (value) =>
-        profileValues.includes(
-          normalize(value)
-        )
-    );
+  let matches = 0;
 
-  return matches.length;
+  for (const value of productSet) {
+    if (profileSet.has(value)) {
+      matches += 1;
+    }
+  }
+
+  return Math.min(1, matches / profileSet.size);
 }
 
-/*
-=========================================================
-PERSONALIZATION SCORE
-=========================================================
-*/
+function fieldPreferenceScore(product, profile, field) {
+  return overlapScore(
+    valuesForProduct(product, field),
+    profile[`preferred${field[0].toUpperCase()}${field.slice(1)}s`] || []
+  );
+}
 
-function calculatePersonalizationScore(
-  product,
-  rawProfile = {}
-) {
-  const profile =
-    normalizeProfile(rawProfile);
+function dislikedPreferenceScore(product, profile, field) {
+  return overlapScore(
+    valuesForProduct(product, field),
+    profile[`disliked${field[0].toUpperCase()}${field.slice(1)}s`] || []
+  );
+}
 
-  let score = 0;
-
-  const reasons = [];
-
-  /*
-  -------------------------------------------------------
-  GENDER
-  -------------------------------------------------------
-  */
-
-  if (
-    profile.gender &&
-    normalize(product.gender) !==
-      profile.gender &&
-    normalize(product.gender) !==
-      "unisex"
-  ) {
-    score -= 15;
+function genderScore(product, profile) {
+  if (!profile.gender) {
+    return 0.5;
   }
 
-  /*
-  -------------------------------------------------------
-  COLOR
-  -------------------------------------------------------
-  */
+  const gender = normalize(product.gender);
 
-  const productColor =
-    normalize(product.color);
-
-  if (
-    profile.preferredColors.includes(
-      productColor
-    )
-  ) {
-    score += 15;
-
-    reasons.push(
-      `Matches your preferred ${product.color} colour`
-    );
+  if (!gender) {
+    return 0.5;
   }
 
-  if (
-    profile.dislikedColors.includes(
-      productColor
-    )
-  ) {
-    score -= 25;
-
-    reasons.push(
-      `Avoids a colour you usually dislike`
-    );
+  if (gender === profile.gender || gender === "unisex") {
+    return 1;
   }
 
-  /*
-  -------------------------------------------------------
-  STYLE
-  -------------------------------------------------------
-  */
+  return 0;
+}
 
-  const styles =
-    arrayValues(product.style);
+function budgetScore(product, profile) {
+  const budget = Number(profile.budget);
+  const price = Number(product.price);
 
-  const styleMatches =
-    overlapScore(
-      styles,
-      profile.preferredStyles
-    );
-
-  if (styleMatches > 0) {
-    score +=
-      Math.min(
-        20,
-        styleMatches * 10
-      );
-
-    reasons.push(
-      `Matches your preferred style`
-    );
+  if (!Number.isFinite(budget) || !Number.isFinite(price) || budget <= 0) {
+    return 0.5;
   }
 
-  const dislikedStyleMatches =
-    overlapScore(
-      styles,
-      profile.dislikedStyles
-    );
-
-  if (dislikedStyleMatches > 0) {
-    score -=
-      dislikedStyleMatches * 15;
-
-    reasons.push(
-      `Contains a style you marked as less preferred`
-    );
+  if (price <= budget) {
+    const ratio = price / budget;
+    return Math.min(1, 0.8 + (1 - ratio) * 0.2);
   }
 
-  /*
-  -------------------------------------------------------
-  CATEGORY
-  -------------------------------------------------------
-  */
+  const excess = (price - budget) / budget;
 
-  if (
-    profile.preferredCategories.includes(
-      normalize(product.category)
-    )
-  ) {
-    score += 12;
+  return Math.max(0, 0.8 - excess);
+}
 
-    reasons.push(
-      `Matches your preferred category`
-    );
+function interactionScore(product, profile) {
+  const id = Number(product.id);
+
+  if (profile.dislikedProductIds.includes(id)) {
+    return 0;
   }
 
-  /*
-  -------------------------------------------------------
-  OCCASION
-  -------------------------------------------------------
-  */
-
-  const occasions =
-    arrayValues(product.occasion);
-
-  const occasionMatches =
-    overlapScore(
-      occasions,
-      profile.preferredOccasions
-    );
-
-  if (occasionMatches > 0) {
-    score +=
-      Math.min(
-        15,
-        occasionMatches * 7
-      );
-
-    reasons.push(
-      `Suitable for your preferred occasion`
-    );
+  if (profile.likedProductIds.includes(id)) {
+    return 1;
   }
 
-  /*
-  -------------------------------------------------------
-  MATERIAL
-  -------------------------------------------------------
-  */
+  return 0.5;
+}
 
-  const materials =
-    arrayValues(product.material);
+function preferenceStrength(profile, field, value) {
+  const weights = profile.preferenceWeights?.[field];
 
-  if (
-    overlapScore(
-      materials,
-      profile.preferredMaterials
-    ) > 0
-  ) {
-    score += 8;
-
-    reasons.push(
-      `Matches your preferred material`
-    );
+  if (!weights || typeof weights !== "object") {
+    return 0;
   }
 
-  /*
-  -------------------------------------------------------
-  BUDGET
-  -------------------------------------------------------
-  */
+  return Number(weights[normalize(value)]) || 0;
+}
 
-  const price =
-    Number(product.price);
+function learnedPreferenceScore(product, profile) {
+  const fields = [
+    ["color", product.color],
+    ["style", product.style],
+    ["category", product.category],
+    ["occasion", product.occasion],
+    ["material", product.material]
+  ];
 
-  if (
-    Number.isFinite(
-      profile.budget
-    ) &&
-    Number.isFinite(price)
-  ) {
-    if (
-      price <= profile.budget
-    ) {
-      score += 15;
+  let total = 0;
+  let count = 0;
 
-      reasons.push(
-        "Fits within your preferred budget"
-      );
-    } else {
-      const difference =
-        price -
-        profile.budget;
+  for (const [field, value] of fields) {
+    const values = arrayValues(value);
 
-      const percentage =
-        difference /
-        profile.budget;
+    for (const item of values) {
+      const strength = preferenceStrength(profile, field, item);
 
-      if (percentage <= 0.15) {
-        score += 3;
-
-        reasons.push(
-          "Slightly above your preferred budget"
-        );
-      } else {
-        score -= 12;
+      if (strength > 0) {
+        total += Math.min(1, strength);
+        count += 1;
       }
     }
   }
 
-  /*
-  -------------------------------------------------------
-  LIKED PRODUCTS
-  -------------------------------------------------------
-  */
-
-  if (
-    profile.likedProductIds.includes(
-      Number(product.id)
-    )
-  ) {
-    score += 25;
-
-    reasons.push(
-      "You previously liked this product"
-    );
+  if (!count) {
+    return 0;
   }
 
-  /*
-  -------------------------------------------------------
-  DISLIKED PRODUCTS
-  -------------------------------------------------------
-  */
+  return Math.min(1, total / count);
+}
 
-  if (
-    profile.dislikedProductIds.includes(
-      Number(product.id)
-    )
-  ) {
-    score -= 50;
+function calculatePersonalizationScore(product, rawProfile = {}) {
+  const profile = normalizeProfile(rawProfile);
 
-    reasons.push(
-      "You previously disliked this product"
-    );
+  const color = fieldPreferenceScore(product, profile, "color");
+  const style = fieldPreferenceScore(product, profile, "style");
+  const category = fieldPreferenceScore(product, profile, "category");
+  const occasion = fieldPreferenceScore(product, profile, "occasion");
+  const material = fieldPreferenceScore(product, profile, "material");
+
+  const dislikedColor = dislikedPreferenceScore(product, profile, "color");
+  const dislikedStyle = dislikedPreferenceScore(product, profile, "style");
+
+  const gender = genderScore(product, profile);
+  const budget = budgetScore(product, profile);
+  const interaction = interactionScore(product, profile);
+  const learned = learnedPreferenceScore(product, profile);
+
+  const rawScore =
+    color * 0.16 +
+    style * 0.16 +
+    category * 0.16 +
+    occasion * 0.12 +
+    material * 0.08 +
+    gender * 0.08 +
+    budget * 0.10 +
+    interaction * 0.06 +
+    learned * 0.08 -
+    dislikedColor * 0.15 -
+    dislikedStyle * 0.15;
+
+  const score = Math.max(0, Math.min(1, rawScore));
+
+  const reasons = [];
+
+  if (color > 0) {
+    reasons.push("Matches your preferred colour");
+  }
+
+  if (style > 0) {
+    reasons.push("Matches your preferred style");
+  }
+
+  if (category > 0) {
+    reasons.push("Matches categories you explore");
+  }
+
+  if (occasion > 0) {
+    reasons.push("Fits your preferred occasions");
+  }
+
+  if (material > 0) {
+    reasons.push("Matches your preferred material");
+  }
+
+  if (gender === 1) {
+    reasons.push("Matches your profile");
+  }
+
+  if (budget >= 0.8) {
+    reasons.push("Fits your usual budget");
+  }
+
+  if (interaction === 1) {
+    reasons.push("Related to products you liked");
+  }
+
+  if (learned > 0) {
+    reasons.push("Reflects your learned preferences");
+  }
+
+  if (dislikedColor > 0) {
+    reasons.push("Reduced because of a disliked colour");
+  }
+
+  if (dislikedStyle > 0) {
+    reasons.push("Reduced because of a disliked style");
   }
 
   return {
     score,
-    reasons
+    reasons: reasons.slice(0, 6),
+    features: {
+      color,
+      style,
+      category,
+      occasion,
+      material,
+      gender,
+      budget,
+      interaction,
+      learned,
+      dislikedColor,
+      dislikedStyle
+    }
   };
 }
 
-/*
-=========================================================
-PERSONALIZED RANKING
-=========================================================
-*/
-
-function personalizeProducts(
-  products = [],
-  profile = {},
-  limit = 12
-) {
-  const safeProducts =
-    Array.isArray(products)
-      ? products
-      : [];
-
-  const ranked =
-    safeProducts.map(
-      (product) => {
-
-        const result =
-          calculatePersonalizationScore(
-            product,
-            profile
-          );
-
-        return {
-          ...product,
-
-          personalizationScore:
-            Math.round(
-              result.score
-            ),
-
-          personalizationReasons:
-            result.reasons
-        };
-      }
-    );
-
-  ranked.sort(
-    (a, b) =>
-      b.personalizationScore -
-      a.personalizationScore
-  );
-
-  return ranked
-    .slice(
-      0,
-      Math.max(
-        1,
-        Number(limit) || 12
-      )
-    );
+function extractProductPreferences(product) {
+  return {
+    category: arrayValues(product.category),
+    color: arrayValues(product.color),
+    style: arrayValues(product.style),
+    occasion: arrayValues(product.occasion),
+    material: arrayValues(product.material)
+  };
 }
 
-/*
-=========================================================
-AI STYLIST QUERY
-=========================================================
-*/
+function learnFromProduct(profile, product, strength = 1) {
+  const normalized = normalizeProfile(profile);
+  const attributes = extractProductPreferences(product);
 
-function buildStylistQuery(
-  stylist = {}
-) {
-  const parts = [];
+  if (!normalized.preferenceWeights) {
+    normalized.preferenceWeights = {};
+  }
 
-  const fields = [
-    ["occasion", stylist.occasion],
-    ["style", stylist.style],
-    ["comfort", stylist.comfort],
-    ["color", stylist.color],
-    ["coverage", stylist.coverage],
-    ["budget", stylist.budget],
-    ["description", stylist.description]
-  ];
+  for (const [field, values] of Object.entries(attributes)) {
+    if (!normalized.preferenceWeights[field]) {
+      normalized.preferenceWeights[field] = {};
+    }
 
-  for (
-    const [label, value]
-    of fields
-  ) {
-    if (
-      value !== undefined &&
-      value !== null &&
-      String(value).trim()
-    ) {
-      parts.push(
-        `${label}: ${String(value).trim()}`
+    for (const value of values) {
+      const current =
+        Number(normalized.preferenceWeights[field][value]) || 0;
+
+      normalized.preferenceWeights[field][value] = Math.min(
+        10,
+        current + strength
       );
     }
   }
 
-  return parts.join(", ");
+  return normalized;
 }
 
-/*
-=========================================================
-CREATE PROFILE FROM STYLIST
-=========================================================
-*/
+function learnFromSearch(profile, query, products = []) {
+  const normalized = normalizeProfile(profile);
+  const cleanQuery = String(query ?? "").trim();
 
-function profileFromStylist(
-  stylist = {}
+  if (!cleanQuery) {
+    return normalized;
+  }
+
+  normalized.searchHistory.push({
+    query: cleanQuery,
+    timestamp: new Date().toISOString()
+  });
+
+  normalized.searchHistory =
+    normalized.searchHistory.slice(-20);
+
+  const queryTokens = new Set(
+    normalize(cleanQuery)
+      .split(/[^a-z0-9]+/)
+      .filter(token => token.length > 2)
+  );
+
+  for (const product of products.slice(0, 5)) {
+    const searchable = [
+      product.name,
+      product.category,
+      product.color,
+      product.style,
+      product.occasion,
+      product.material,
+      product.description
+    ]
+      .map(normalize)
+      .join(" ");
+
+    const matched = [...queryTokens].filter(token =>
+      searchable.includes(token)
+    );
+
+    if (matched.length > 0) {
+      learnFromProduct(normalized, product, 0.5);
+    }
+  }
+
+  return normalized;
+}
+
+function personalizeProducts(
+  products = [],
+  profile = {},
+  options = {}
 ) {
+  const limit = Math.max(
+    1,
+    Number(options.limit ?? 12)
+  );
+
+  const queryScores = options.queryScores || {};
+  const queryWeight = Number.isFinite(Number(options.queryWeight))
+    ? Number(options.queryWeight)
+    : 0.55;
+
+  const personalizationWeight = Number.isFinite(
+    Number(options.personalizationWeight)
+  )
+    ? Number(options.personalizationWeight)
+    : 0.45;
+
+  const ranked = products
+    .map(product => {
+      const personalization =
+        calculatePersonalizationScore(
+          product,
+          profile
+        );
+
+      const queryScore = Math.max(
+        0,
+        Math.min(
+          1,
+          Number(
+            queryScores[product.id] ??
+              product.semanticScore ??
+              product.similarity ??
+              product.relevanceScore ??
+              0
+          ) || 0
+        )
+      );
+
+      const finalScore =
+        queryScore * queryWeight +
+        personalization.score * personalizationWeight;
+
+      return {
+        ...product,
+        personalizationScore: Number(
+          personalization.score.toFixed(6)
+        ),
+        personalizedScore: Number(
+          finalScore.toFixed(6)
+        ),
+        personalizationReasons:
+          personalization.reasons,
+        personalizationFeatures:
+          personalization.features
+      };
+    })
+    .sort((a, b) => {
+      if (b.personalizedScore !== a.personalizedScore) {
+        return b.personalizedScore - a.personalizedScore;
+      }
+
+      return (
+        Number(b.personalizationScore) -
+        Number(a.personalizationScore)
+      );
+    });
+
+  return ranked.slice(0, limit);
+}
+
+function buildPersonalizedFeed(
+  products = [],
+  profile = {},
+  limit = 12
+) {
+  return personalizeProducts(
+    products,
+    profile,
+    {
+      limit,
+      queryWeight: 0.35,
+      personalizationWeight: 0.65
+    }
+  );
+}
+
+function profileFromStylist(stylist = {}) {
   const profile = {
+    gender: stylist.gender ?? "",
     preferredColors: [],
     preferredStyles: [],
     preferredCategories: [],
@@ -494,55 +472,56 @@ function profileFromStylist(
     dislikedStyles: [],
     budget: null,
     likedProductIds: [],
-    dislikedProductIds: []
+    dislikedProductIds: [],
+    searchHistory: [],
+    preferenceWeights: {}
   };
 
   if (stylist.color) {
-    profile.preferredColors =
-      arrayValues(
-        stylist.color
-      );
+    profile.preferredColors = arrayValues(stylist.color);
   }
 
   if (stylist.style) {
-    profile.preferredStyles =
-      arrayValues(
-        stylist.style
-      );
+    profile.preferredStyles = arrayValues(stylist.style);
+  }
+
+  if (stylist.category) {
+    profile.preferredCategories = arrayValues(stylist.category);
   }
 
   if (stylist.occasion) {
-    profile.preferredOccasions =
-      arrayValues(
-        stylist.occasion
-      );
+    profile.preferredOccasions = arrayValues(stylist.occasion);
   }
 
-  if (stylist.budget) {
-    const budget =
-      Number(stylist.budget);
+  if (stylist.material) {
+    profile.preferredMaterials = arrayValues(stylist.material);
+  }
 
-    if (
-      Number.isFinite(budget)
-    ) {
-      profile.budget =
-        budget;
+  if (stylist.budget !== undefined) {
+    const budget = Number(stylist.budget);
+
+    if (Number.isFinite(budget)) {
+      profile.budget = budget;
     }
   }
 
   return profile;
 }
 
-/*
-=========================================================
-EXPORTS
-=========================================================
-*/
-
 export {
+  normalize,
+  arrayValues,
   normalizeProfile,
+  overlapScore,
+  genderScore,
+  budgetScore,
+  interactionScore,
+  learnedPreferenceScore,
   calculatePersonalizationScore,
+  extractProductPreferences,
+  learnFromProduct,
+  learnFromSearch,
   personalizeProducts,
-  buildStylistQuery,
+  buildPersonalizedFeed,
   profileFromStylist
 };
