@@ -56,6 +56,12 @@ jobs:
       - name: Ranker inference test
         run: npm run ranker-inference
 
+      - name: AI Stylist test
+        run: npm run stylist-test
+
+      - name: Explainability test
+        run: npm run explainability-test
+
       - name: Reproducibility check
         run: npm run reproducibility
 
@@ -81,3 +87,5 @@ jobs:
           echo "Query understanding: PASS"
           echo "Hybrid retrieval: PASS"
           echo "Learning-to-rank: PASS"
+          echo "AI Stylist: PASS"
+          echo "Explainability: PASS"
