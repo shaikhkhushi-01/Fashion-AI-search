@@ -1669,6 +1669,245 @@ async function initialize() {
     );
 }
 
+let discoveryPage = 1;
+let discoveryPageSize = 12;
+
+function getDiscoveryState() {
+    return {
+        query: state.searchQuery || "",
+        category:
+            state.selectedCategory !== "All"
+                ? state.selectedCategory
+                : "",
+        gender:
+            state.selectedGender !== "All"
+                ? state.selectedGender
+                : "",
+        color:
+            state.selectedColor !== "All"
+                ? state.selectedColor
+                : "",
+        style:
+            state.selectedStyle !== "All"
+                ? state.selectedStyle
+                : "",
+        maxPrice:
+            Number.isFinite(state.maxPrice)
+                ? state.maxPrice
+                : "",
+        sort:
+            state.sortBy || "relevance",
+        page: discoveryPage,
+        pageSize: discoveryPageSize
+    };
+}
+
+async function loadDiscoveryPage(page = 1) {
+    discoveryPage = Math.max(
+        1,
+        Number(page) || 1
+    );
+
+    const filters =
+        getDiscoveryState();
+
+    try {
+        const data = await apiRequest(
+            "/api/discovery",
+            {
+                method: "POST",
+                body: JSON.stringify(
+                    filters
+                )
+            }
+        );
+
+        const products =
+            Array.isArray(data.items)
+                ? data.items
+                : [];
+
+        state.searchResults =
+            products;
+
+        renderProducts();
+        renderDiscoveryPagination(
+            data.pagination
+        );
+        updateSearchSummary();
+        updateCatalogueStats();
+
+        return data;
+    } catch (error) {
+        console.error(
+            "Discovery error:",
+            error
+        );
+
+        return null;
+    }
+}
+
+function renderDiscoveryPagination(
+    pagination
+) {
+    const container =
+        $("discoveryPagination");
+
+    if (!container || !pagination) {
+        return;
+    }
+
+    const {
+        page,
+        totalPages,
+        hasNext,
+        hasPrevious
+    } = pagination;
+
+    container.innerHTML = `
+        <button
+            type="button"
+            data-discovery-page="${page - 1}"
+            ${hasPrevious ? "" : "disabled"}
+        >
+            Previous
+        </button>
+
+        <span>
+            Page ${page} of ${totalPages}
+        </span>
+
+        <button
+            type="button"
+            data-discovery-page="${page + 1}"
+            ${hasNext ? "" : "disabled"}
+        >
+            Next
+        </button>
+    `;
+}
+
+function setupDiscoveryPagination() {
+    document.addEventListener(
+        "click",
+        event => {
+            const button =
+                event.target.closest(
+                    "[data-discovery-page]"
+                );
+
+            if (!button) {
+                return;
+            }
+
+            const page =
+                Number(
+                    button.dataset
+                        .discoveryPage
+                );
+
+            if (
+                !Number.isFinite(page) ||
+                page < 1
+            ) {
+                return;
+            }
+
+            loadDiscoveryPage(page);
+        }
+    );
+}
+
+async function loadSearchSuggestions(
+    query
+) {
+    const cleanQuery =
+        String(query || "").trim();
+
+    if (!cleanQuery) {
+        return [];
+    }
+
+    try {
+        const data =
+            await apiRequest(
+                `/api/discovery/suggestions?q=${encodeURIComponent(
+                    cleanQuery
+                )}`
+            );
+
+        return Array.isArray(
+            data.suggestions
+        )
+            ? data.suggestions
+            : [];
+    } catch {
+        return [];
+    }
+}
+
+function renderSearchSuggestions(
+    suggestions
+) {
+    const container =
+        $("searchSuggestions");
+
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML =
+        suggestions
+            .map(
+                suggestion => `
+                    <button
+                        type="button"
+                        data-search="${escapeHTML(
+                            suggestion
+                        )}"
+                    >
+                        ${escapeHTML(
+                            suggestion
+                        )}
+                    </button>
+                `
+            )
+            .join("");
+}
+
+async function setupSearchSuggestions() {
+    const input =
+        $("searchInput");
+
+    if (!input) {
+        return;
+    }
+
+    let timer;
+
+    input.addEventListener(
+        "input",
+        () => {
+            clearTimeout(timer);
+
+            timer = setTimeout(
+                async () => {
+                    const suggestions =
+                        await loadSearchSuggestions(
+                            input.value
+                        );
+
+                    renderSearchSuggestions(
+                        suggestions
+                    );
+                },
+                250
+            );
+        }
+    );
+}
+
 
 /* =========================================================
    GLOBAL FUNCTIONS
