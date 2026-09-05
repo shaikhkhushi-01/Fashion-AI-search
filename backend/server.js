@@ -8,6 +8,10 @@ import { promisify } from "util";
 const PYTHON_AI_URL =
   process.env.PYTHON_AI_URL ||
   "http://127.0.0.1:8000";
+import {
+  normalizeProfile,
+  personalizeProducts
+} from "./services/personalization.js";
 
 import {
   searchProducts
@@ -1452,59 +1456,89 @@ app.post(
     try {
       const {
         query = "",
-        preferences = {}
-      } =
-        req.body || {};
+        preferences = {},
+        limit = 12
+      } = req.body || {};
+
+      const profile =
+        normalizeProfile(preferences);
 
       const filters = {
         category:
-          preferences.category ||
-          "",
-
+          preferences.category || "",
         gender:
-          preferences.gender ||
-          "",
-
+          preferences.gender || "",
         color:
-          preferences.color ||
-          "",
-
+          preferences.color || "",
         style:
-          preferences.style ||
-          "",
-
+          preferences.style || "",
         occasion:
-          preferences.occasion ||
-          "",
-
+          preferences.occasion || "",
         material:
-          preferences.material ||
-          "",
-
+          preferences.material || "",
         minPrice:
-          preferences.minPrice ||
-          "",
-
+          preferences.minPrice || "",
         maxPrice:
-          preferences.maxPrice ||
-          ""
+          preferences.maxPrice || ""
       };
 
-      const results =
+      const candidates =
         performSearch(
           query,
           filters,
           "relevance",
-          12
+          50
+        );
+
+      const queryScores = {};
+
+      for (const product of candidates) {
+        const rawScore =
+          product.semanticScore ??
+          product.similarity ??
+          product.relevanceScore ??
+          product.ai_match_score ??
+          0;
+
+        let score = Number(rawScore);
+
+        if (score > 1) {
+          score /= 100;
+        }
+
+        queryScores[product.id] =
+          Math.max(
+            0,
+            Math.min(1, score)
+          );
+      }
+
+      const recommendations =
+        personalizeProducts(
+          candidates,
+          profile,
+          {
+            limit,
+            queryScores,
+            queryWeight:
+              query
+                ? 0.55
+                : 0.25,
+            personalizationWeight:
+              query
+                ? 0.45
+                : 0.75
+          }
         );
 
       res.json({
-        query,
-
-        preferences,
-
-        recommendations:
-          results
+        status: "completed",
+        query:
+          String(query ?? ""),
+        preferences: profile,
+        count:
+          recommendations.length,
+        recommendations
       });
     } catch (error) {
       console.error(
@@ -1513,15 +1547,14 @@ app.post(
       );
 
       res.status(500).json({
+        status: "failed",
         error:
-          "Recommendation service failed.",
-
+          "Personalized recommendation failed.",
         recommendations: []
       });
     }
   }
 );
-
 /*
 =========================================================
 DAY 9 - AI STYLIST
