@@ -12,7 +12,8 @@
     "robustness": "node tests/robustness.js",
     "reproducibility": "node tests/reproducibility.js",
     "smoke": "node tests/smoke.js",
-    "day1": "node tests/day1-audit.js"
+    "day1": "node tests/day1-audit.js",
+    "dataset": "node tests/dataset.js"
   },
   "engines": {
     "node": ">=18"
