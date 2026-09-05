@@ -2060,3 +2060,77 @@ app.listen(
     );
   }
 );
+
+app.post(
+  "/api/ai-search",
+  async (req, res) => {
+    try {
+      const query =
+        String(
+          req.body?.query ?? ""
+        ).trim();
+
+      const limit =
+        Math.max(
+          1,
+          Math.min(
+            Number(
+              req.body?.limit || 10
+            ),
+            50
+          )
+        );
+
+      if (!query) {
+        return res.status(400).json({
+          success: false,
+          error: "Search query is required.",
+          results: []
+        });
+      }
+
+      const response =
+        await fetch(
+          `${PYTHON_AI_URL}/api/semantic-search`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+            body: JSON.stringify({
+              query,
+              limit
+            })
+          }
+        );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        return res.status(
+          response.status
+        ).json(data);
+      }
+
+      return res.json({
+        ...data,
+        gateway: "node",
+        ai_backend: "python_fastapi"
+      });
+    } catch (error) {
+      console.error(
+        "Python AI search error:",
+        error
+      );
+
+      return res.status(503).json({
+        success: false,
+        error:
+          "Python AI service is unavailable.",
+        results: []
+      });
+    }
+  }
+);
