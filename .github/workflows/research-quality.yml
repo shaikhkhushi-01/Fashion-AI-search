@@ -50,6 +50,12 @@ jobs:
       - name: Hybrid retrieval test
         run: npm run hybrid-test
 
+      - name: Train learning-to-rank model
+        run: npm run train-ranker
+
+      - name: Ranker inference test
+        run: npm run ranker-inference
+
       - name: Reproducibility check
         run: npm run reproducibility
 
@@ -74,3 +80,4 @@ jobs:
           echo "Dataset quality: PASS"
           echo "Query understanding: PASS"
           echo "Hybrid retrieval: PASS"
+          echo "Learning-to-rank: PASS"
