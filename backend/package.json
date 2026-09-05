@@ -16,7 +16,9 @@
     "dataset": "node tests/dataset.js",
     "query-understanding": "node tests/query-understanding.js",
     "semantic-test": "python tests/semantic-search.py",
-    "hybrid-test": "node tests/hybrid-retrieval.js"
+    "hybrid-test": "node tests/hybrid-retrieval.js",
+    "train-ranker": "node tests/train-ranker.js",
+    "ranker-inference": "node tests/ranker-inference.js"
   },
   "engines": {
     "node": ">=18"
