@@ -1,12 +1,10 @@
 from pathlib import Path
-from typing import Optional
-import hashlib
 import json
-import re
+import hashlib
+import os
 
 import numpy as np
 from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from sentence_transformers import SentenceTransformer
 
@@ -16,99 +14,158 @@ PROJECT_DIR = BASE_DIR.parent
 PRODUCTS_FILE = PROJECT_DIR / "data" / "products.json"
 CACHE_DIR = BASE_DIR / ".cache"
 EMBEDDINGS_FILE = CACHE_DIR / "product_embeddings.npy"
-EMBEDDINGS_META_FILE = CACHE_DIR / "product_embeddings.meta.json"
+METADATA_FILE = CACHE_DIR / "embedding_metadata.json"
 
-MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+MODEL_NAME = os.getenv(
+    "EMBEDDING_MODEL",
+    "sentence-transformers/all-MiniLM-L6-v2"
+)
 
 app = FastAPI(
-    title="Fashion AI Discovery AI Service",
-    description="Semantic retrieval service for Fashion AI Discovery.",
-    version="2.0.0"
+    title="Fashion AI Semantic Retrieval API",
+    version="1.0.0"
 )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"]
-)
+model = None
+products = []
+embeddings = None
+catalog_hash = None
 
 
-def load_products():
-    if not PRODUCTS_FILE.exists():
-        raise RuntimeError(
-            f"Product dataset was not found at {PRODUCTS_FILE}"
-        )
-
-    with open(PRODUCTS_FILE, "r", encoding="utf-8") as file:
-        data = json.load(file)
-
-    if not isinstance(data, list):
-        raise RuntimeError("products.json must contain an array.")
-
-    return data
+class SearchRequest(BaseModel):
+    query: str = Field(min_length=1)
+    top_k: int = Field(default=10, ge=1, le=100)
 
 
-products = load_products()
+class SearchResult(BaseModel):
+    product: dict
+    score: float
+    rank: int
 
 
-def normalize(value) -> str:
+class SearchResponse(BaseModel):
+    query: str
+    model: str
+    top_k: int
+    results: list[SearchResult]
+
+
+def normalize_value(value):
     if value is None:
         return ""
 
-    return re.sub(
-        r"\s+",
-        " ",
-        str(value).lower().strip()
-    )
-
-
-def array_to_text(value) -> str:
     if isinstance(value, list):
-        return ", ".join(
-            normalize(item)
+        return " ".join(
+            str(item).strip()
             for item in value
             if str(item).strip()
         )
 
-    return normalize(value)
+    return str(value).strip()
 
 
-def product_to_ai_text(product):
-    return " ".join(
-        [
-            f"brand {normalize(product.get('brand'))}",
-            f"product {normalize(product.get('name'))}",
-            f"category {normalize(product.get('category'))}",
-            f"gender {normalize(product.get('gender'))}",
-            f"colour {normalize(product.get('color'))}",
-            f"material {array_to_text(product.get('material'))}",
-            f"style {array_to_text(product.get('style'))}",
-            f"occasion {array_to_text(product.get('occasion'))}",
-            f"tags {array_to_text(product.get('tags'))}",
-            f"description {normalize(product.get('description'))}"
+def normalize_product(product):
+    normalized = dict(product)
+
+    for key in [
+        "brand",
+        "name",
+        "category",
+        "gender",
+        "color",
+        "material",
+        "style",
+        "occasion",
+        "description"
+    ]:
+        normalized[key] = normalize_value(
+            normalized.get(key)
+        )
+
+    tags = normalized.get("tags", [])
+
+    if isinstance(tags, list):
+        normalized["tags"] = [
+            str(tag).strip()
+            for tag in tags
+            if str(tag).strip()
         ]
-    )
+    elif tags:
+        normalized["tags"] = [
+            str(tags).strip()
+        ]
+    else:
+        normalized["tags"] = []
+
+    return normalized
 
 
-def dataset_signature(items):
+def build_product_text(product):
+    fields = [
+        ("brand", product.get("brand")),
+        ("product", product.get("name")),
+        ("category", product.get("category")),
+        ("gender", product.get("gender")),
+        ("color", product.get("color")),
+        ("material", product.get("material")),
+        ("style", product.get("style")),
+        ("occasion", product.get("occasion")),
+        ("tags", product.get("tags")),
+        ("description", product.get("description"))
+    ]
+
+    parts = []
+
+    for label, value in fields:
+        normalized = normalize_value(value)
+
+        if normalized:
+            parts.append(
+                f"{label}: {normalized}"
+            )
+
+    return " | ".join(parts)
+
+
+def load_products():
+    global products
+
+    if not PRODUCTS_FILE.exists():
+        raise FileNotFoundError(
+            f"Products file not found: {PRODUCTS_FILE}"
+        )
+
+    with PRODUCTS_FILE.open(
+        "r",
+        encoding="utf-8"
+    ) as file:
+        raw_products = json.load(file)
+
+    if not isinstance(raw_products, list):
+        raise ValueError(
+            "products.json must contain a JSON array"
+        )
+
+    products = [
+        normalize_product(product)
+        for product in raw_products
+        if isinstance(product, dict)
+    ]
+
+    if not products:
+        raise ValueError(
+            "products.json contains no valid products"
+        )
+
+
+def calculate_catalog_hash():
     payload = json.dumps(
         [
             {
                 "id": product.get("id"),
-                "brand": product.get("brand"),
-                "name": product.get("name"),
-                "category": product.get("category"),
-                "gender": product.get("gender"),
-                "color": product.get("color"),
-                "material": product.get("material"),
-                "style": product.get("style"),
-                "occasion": product.get("occasion"),
-                "tags": product.get("tags"),
-                "description": product.get("description")
+                "text": build_product_text(product)
             }
-            for product in items
+            for product in products
         ],
         sort_keys=True,
         ensure_ascii=False
@@ -119,32 +176,18 @@ def dataset_signature(items):
     ).hexdigest()
 
 
-model = SentenceTransformer(MODEL_NAME)
+def load_model():
+    global model
 
-product_texts = [
-    product_to_ai_text(product)
-    for product in products
-]
-
-current_signature = dataset_signature(products)
+    model = SentenceTransformer(
+        MODEL_NAME
+    )
 
 
-def build_embeddings():
+def save_embeddings():
     CACHE_DIR.mkdir(
         parents=True,
         exist_ok=True
-    )
-
-    embeddings = model.encode(
-        product_texts,
-        normalize_embeddings=True,
-        show_progress_bar=False,
-        convert_to_numpy=True
-    )
-
-    embeddings = np.asarray(
-        embeddings,
-        dtype=np.float32
     )
 
     np.save(
@@ -152,345 +195,226 @@ def build_embeddings():
         embeddings
     )
 
-    with open(
-        EMBEDDINGS_META_FILE,
+    metadata = {
+        "model": MODEL_NAME,
+        "catalog_hash": catalog_hash,
+        "product_count": len(products),
+        "embedding_dimension": int(
+            embeddings.shape[1]
+        ),
+        "product_ids": [
+            str(product.get("id"))
+            for product in products
+        ]
+    }
+
+    with METADATA_FILE.open(
         "w",
         encoding="utf-8"
     ) as file:
         json.dump(
-            {
-                "model": MODEL_NAME,
-                "dataset_signature": current_signature,
-                "product_count": len(products),
-                "embedding_dimension": int(embeddings.shape[1])
-            },
+            metadata,
             file,
             indent=2
         )
 
-    return embeddings
+
+def load_cached_embeddings():
+    if not EMBEDDINGS_FILE.exists():
+        return None
+
+    if not METADATA_FILE.exists():
+        return None
+
+    try:
+        with METADATA_FILE.open(
+            "r",
+            encoding="utf-8"
+        ) as file:
+            metadata = json.load(file)
+
+        if metadata.get("model") != MODEL_NAME:
+            return None
+
+        if metadata.get(
+            "catalog_hash"
+        ) != catalog_hash:
+            return None
+
+        cached = np.load(
+            EMBEDDINGS_FILE
+        )
+
+        if cached.ndim != 2:
+            return None
+
+        if cached.shape[0] != len(products):
+            return None
+
+        return cached.astype(
+            np.float32
+        )
+
+    except Exception:
+        return None
 
 
-def load_or_build_embeddings():
-    if (
-        EMBEDDINGS_FILE.exists()
-        and EMBEDDINGS_META_FILE.exists()
-    ):
-        try:
-            with open(
-                EMBEDDINGS_META_FILE,
-                "r",
-                encoding="utf-8"
-            ) as file:
-                metadata = json.load(file)
+def build_embeddings():
+    global embeddings
 
-            if (
-                metadata.get("model") == MODEL_NAME
-                and metadata.get("dataset_signature") == current_signature
-                and metadata.get("product_count") == len(products)
-            ):
-                embeddings = np.load(
-                    EMBEDDINGS_FILE
-                )
+    cached = load_cached_embeddings()
 
-                if (
-                    embeddings.ndim == 2
-                    and embeddings.shape[0] == len(products)
-                ):
-                    return np.asarray(
-                        embeddings,
-                        dtype=np.float32
-                    )
-        except Exception:
-            pass
+    if cached is not None:
+        embeddings = cached
+        return
 
-    return build_embeddings()
+    texts = [
+        build_product_text(product)
+        for product in products
+    ]
+
+    embeddings = model.encode(
+        texts,
+        batch_size=32,
+        show_progress_bar=False,
+        normalize_embeddings=True,
+        convert_to_numpy=True
+    ).astype(np.float32)
+
+    save_embeddings()
 
 
-product_embeddings = load_or_build_embeddings()
+def initialize():
+    global catalog_hash
 
-
-class SearchRequest(BaseModel):
-    query: str = Field(
-        ...,
-        min_length=1,
-        max_length=500
-    )
-
-    limit: int = Field(
-        default=10,
-        ge=1,
-        le=50
-    )
-
-
-class StylistRequest(BaseModel):
-    occasion: Optional[str] = ""
-    style: Optional[str] = ""
-    comfort: Optional[str] = ""
-    color: Optional[str] = ""
-    budget: Optional[float] = None
-    description: Optional[str] = ""
+    load_products()
+    catalog_hash = calculate_catalog_hash()
+    load_model()
+    build_embeddings()
 
 
 def semantic_search(
-    query: str,
-    limit: int = 10
+    query,
+    top_k=10
 ):
-    query = query.strip()
+    if not query.strip():
+        raise ValueError(
+            "Query cannot be empty"
+        )
 
-    if not query:
-        return []
+    if embeddings is None:
+        raise RuntimeError(
+            "Semantic index is not initialized"
+        )
 
     query_embedding = model.encode(
         [query],
         normalize_embeddings=True,
-        show_progress_bar=False,
         convert_to_numpy=True
-    )[0]
+    ).astype(np.float32)[0]
 
-    query_embedding = np.asarray(
-        query_embedding,
-        dtype=np.float32
+    scores = np.dot(
+        embeddings,
+        query_embedding
     )
 
-    similarities = product_embeddings @ query_embedding
-
-    ranking = np.argsort(
-        similarities
-    )[::-1]
+    ranked_indices = np.argsort(
+        -scores
+    )[:top_k]
 
     results = []
 
-    for position, index in enumerate(
-        ranking[:limit],
+    for rank, index in enumerate(
+        ranked_indices,
         start=1
     ):
-        product = dict(
-            products[int(index)]
+        results.append(
+            {
+                "product": products[int(index)],
+                "score": round(
+                    float(scores[index]),
+                    6
+                ),
+                "rank": rank
+            }
         )
-
-        score = float(
-            similarities[int(index)]
-        )
-
-        score = max(
-            -1.0,
-            min(
-                score,
-                1.0
-            )
-        )
-
-        normalized_score = (
-            score + 1.0
-        ) / 2.0
-
-        product["semantic_score"] = round(
-            normalized_score,
-            4
-        )
-
-        product["ai_match_score"] = round(
-            normalized_score * 100,
-            2
-        )
-
-        product["semantic_rank"] = position
-
-        product["retrieval_model"] = MODEL_NAME
-
-        results.append(product)
 
     return results
 
 
-def stylist_search(request: StylistRequest):
-    parts = [
-        request.occasion,
-        request.style,
-        request.comfort,
-        request.color,
-        request.description
-    ]
-
-    if request.budget is not None:
-        parts.append(
-            f"under {request.budget} INR"
-        )
-
-    query = " ".join(
-        str(part).strip()
-        for part in parts
-        if part and str(part).strip()
-    )
-
-    if not query:
-        raise HTTPException(
-            status_code=400,
-            detail="At least one styling preference is required."
-        )
-
-    results = semantic_search(
-        query,
-        10
-    )
-
-    if request.budget is not None:
-        budget = float(
-            request.budget
-        )
-
-        for product in results:
-            price = float(
-                product.get("price", 0)
-            )
-
-            if price <= budget:
-                product["budget_fit"] = 1.0
-            else:
-                difference = (
-                    price - budget
-                ) / max(
-                    budget,
-                    1.0
-                )
-
-                product["budget_fit"] = round(
-                    max(
-                        0.0,
-                        1.0 - difference
-                    ),
-                    4
-                )
-
-        results.sort(
-            key=lambda item: (
-                0.7 * float(
-                    item.get(
-                        "semantic_score",
-                        0
-                    )
-                )
-                +
-                0.3 * float(
-                    item.get(
-                        "budget_fit",
-                        0
-                    )
-                )
-            ),
-            reverse=True
-        )
-
-    return query, results
-
-
-@app.get("/")
-def root():
-    return {
-        "status": "online",
-        "service": "Fashion AI Discovery AI Service",
-        "model": MODEL_NAME,
-        "retrieval": "semantic_embedding",
-        "products": len(products),
-        "embedding_dimension": int(
-            product_embeddings.shape[1]
-        )
-    }
+@app.on_event("startup")
+def startup_event():
+    initialize()
 
 
 @app.get("/health")
 def health():
     return {
-        "status": "healthy",
-        "model_loaded": True,
-        "dataset_loaded": len(products) > 0,
-        "product_count": len(products),
-        "embedding_count": int(
-            product_embeddings.shape[0]
+        "status": "ok",
+        "model": MODEL_NAME,
+        "products": len(products),
+        "embedding_dimension": (
+            int(embeddings.shape[1])
+            if embeddings is not None
+            else 0
         ),
-        "embedding_dimension": int(
-            product_embeddings.shape[1]
-        )
+        "index_ready": embeddings is not None
     }
 
 
 @app.get("/api/products")
-def get_products():
+def product_info():
     return {
-        "success": True,
         "count": len(products),
-        "products": products
+        "model": MODEL_NAME,
+        "embedding_dimension": (
+            int(embeddings.shape[1])
+            if embeddings is not None
+            else 0
+        )
     }
 
 
-@app.post("/api/semantic-search")
+@app.post(
+    "/api/semantic-search",
+    response_model=SearchResponse
+)
 def semantic_search_endpoint(
     request: SearchRequest
 ):
-    query = request.query.strip()
-
-    if not query:
-        raise HTTPException(
-            status_code=400,
-            detail="Search query is required."
+    try:
+        results = semantic_search(
+            request.query,
+            request.top_k
         )
 
-    results = semantic_search(
-        query,
-        request.limit
-    )
+        return {
+            "query": request.query,
+            "model": MODEL_NAME,
+            "top_k": request.top_k,
+            "results": results
+        }
 
-    return {
-        "success": True,
-        "query": query,
-        "search_type": "semantic_embedding",
-        "model": MODEL_NAME,
-        "count": len(results),
-        "results": results
-    }
+    except ValueError as error:
+        raise HTTPException(
+            status_code=400,
+            detail=str(error)
+        )
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=500,
+            detail=str(error)
+        )
 
 
-@app.post("/api/search")
-def search(
+@app.post(
+    "/api/search",
+    response_model=SearchResponse
+)
+def search_endpoint(
     request: SearchRequest
 ):
     return semantic_search_endpoint(
         request
-    )
-
-
-@app.post("/api/stylist")
-def stylist(
-    request: StylistRequest
-):
-    query, results = stylist_search(
-        request
-    )
-
-    return {
-        "success": True,
-        "mode": "ai_stylist",
-        "query": query,
-        "preferences": {
-            "occasion": request.occasion,
-            "style": request.style,
-            "comfort": request.comfort,
-            "color": request.color,
-            "budget": request.budget,
-            "description": request.description
-        },
-        "count": len(results),
-        "recommendations": results
-    }
-
-
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(
-        app,
-        host="0.0.0.0",
-        port=8000
     )
