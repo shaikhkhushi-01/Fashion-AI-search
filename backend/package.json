@@ -15,7 +15,8 @@
     "day1": "node tests/day1-audit.js",
     "dataset": "node tests/dataset.js",
     "query-understanding": "node tests/query-understanding.js",
-    "semantic-test": "python tests/semantic-search.py"
+    "semantic-test": "python tests/semantic-search.py",
+    "hybrid-test": "node tests/hybrid-retrieval.js"
   },
   "engines": {
     "node": ">=18"
