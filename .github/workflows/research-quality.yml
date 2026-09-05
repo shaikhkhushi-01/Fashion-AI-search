@@ -59,6 +59,12 @@ jobs:
       - name: Personalization test
         run: npm run personalization-test
 
+      - name: Catalog discovery test
+        run: npm run catalog-discovery-test
+
+      - name: Discovery pagination test
+        run: npm run discovery-pagination-test
+
       - name: AI Stylist test
         run: npm run stylist-test
 
@@ -93,3 +99,5 @@ jobs:
           echo "AI Stylist: PASS"
           echo "Explainability: PASS"
           echo "Personalization: PASS"
+          echo "Catalog Discovery: PASS"
+          echo "Discovery Pagination: PASS"
