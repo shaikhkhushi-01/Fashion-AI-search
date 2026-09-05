@@ -13,7 +13,8 @@
     "reproducibility": "node tests/reproducibility.js",
     "smoke": "node tests/smoke.js",
     "day1": "node tests/day1-audit.js",
-    "dataset": "node tests/dataset.js"
+    "dataset": "node tests/dataset.js",
+    "query-understanding": "node tests/query-understanding.js"
   },
   "engines": {
     "node": ">=18"
