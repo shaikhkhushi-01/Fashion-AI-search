@@ -1,8 +1,3 @@
-/* =========================================================
-   FASHION AI DISCOVERY
-   DAY 9 — ADVANCED CATALOGUE / SEARCH UI
-   ========================================================= */
-
 const API_BASE_URL = "https://fashion-ai-search-lj6s.onrender.com";
 
 const state = {
@@ -394,7 +389,7 @@ async function searchFashion(query) {
     try {
         showLoading();
 
-        const data = await apiRequest("/api/search", {
+        const data = await apiRequest("/api/ai-search", {
             method: "POST",
             body: JSON.stringify({
                 query: cleanQuery
