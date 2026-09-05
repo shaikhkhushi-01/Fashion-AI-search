@@ -12,6 +12,11 @@ import {
   normalizeProfile,
   personalizeProducts
 } from "./services/personalization.js";
+import {
+  buildDiscoveryResult,
+  getFilterValues,
+  buildSearchSuggestions
+} from "./services/catalogDiscovery.js";
 
 import {
   searchProducts
@@ -2163,6 +2168,137 @@ app.post(
         error:
           "Python AI service is unavailable.",
         results: []
+      });
+    }
+  }
+);
+
+app.post(
+  "/api/discovery",
+  (req, res) => {
+    try {
+      const body = req.body || {};
+
+      const products =
+        getProducts();
+
+      const result =
+        buildDiscoveryResult(
+          products,
+          {
+            query:
+              body.query || "",
+            category:
+              body.category || "",
+            gender:
+              body.gender || "",
+            color:
+              body.color || "",
+            style:
+              body.style || "",
+            occasion:
+              body.occasion || "",
+            material:
+              body.material || "",
+            minPrice:
+              body.minPrice ?? "",
+            maxPrice:
+              body.maxPrice ?? "",
+            sort:
+              body.sort || "relevance",
+            page:
+              body.page || 1,
+            pageSize:
+              body.pageSize || 12
+          }
+        );
+
+      res.json({
+        status: "completed",
+        ...result
+      });
+    } catch (error) {
+      console.error(
+        "Discovery error:",
+        error
+      );
+
+      res.status(500).json({
+        status: "failed",
+        items: [],
+        pagination: {
+          page: 1,
+          pageSize: 12,
+          total: 0,
+          totalPages: 1,
+          hasNext: false,
+          hasPrevious: false
+        }
+      });
+    }
+  }
+);
+
+app.get(
+  "/api/discovery/filters",
+  (req, res) => {
+    try {
+      const products =
+        getProducts();
+
+      res.json({
+        status: "completed",
+        filters:
+          getFilterValues(products)
+      });
+    } catch (error) {
+      console.error(
+        "Filter metadata error:",
+        error
+      );
+
+      res.status(500).json({
+        status: "failed",
+        filters: {
+          categories: [],
+          genders: [],
+          colors: [],
+          styles: [],
+          occasions: [],
+          materials: []
+        }
+      });
+    }
+  }
+);
+
+app.get(
+  "/api/discovery/suggestions",
+  (req, res) => {
+    try {
+      const products =
+        getProducts();
+
+      const suggestions =
+        buildSearchSuggestions(
+          products,
+          req.query.q || "",
+          req.query.limit || 8
+        );
+
+      res.json({
+        status: "completed",
+        suggestions
+      });
+    } catch (error) {
+      console.error(
+        "Suggestion error:",
+        error
+      );
+
+      res.status(500).json({
+        status: "failed",
+        suggestions: []
       });
     }
   }
