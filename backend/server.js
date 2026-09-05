@@ -1,10 +1,3 @@
-/*
-=========================================================
-FASHION AI DISCOVERY
-DAY 13 - REPRODUCIBLE DEPLOYMENT + ROBUST API
-=========================================================
-*/
-
 import express from "express";
 import cors from "cors";
 import fs from "fs";
@@ -12,6 +5,9 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { execFile } from "child_process";
 import { promisify } from "util";
+const PYTHON_AI_URL =
+  process.env.PYTHON_AI_URL ||
+  "http://127.0.0.1:8000";
 
 import {
   searchProducts
