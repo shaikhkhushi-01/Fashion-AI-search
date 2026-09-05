@@ -21,7 +21,9 @@
     "ranker-inference": "node tests/ranker-inference.js",
     "stylist-test": "node tests/stylist.js",
     "explainability-test": "node tests/explainability.js",
-    "personalization-test": "node tests/personalization.js"
+    "personalization-test": "node tests/personalization.js",
+    "catalog-discovery-test": "node tests/catalog-discovery.js",
+    "discovery-pagination-test": "node tests/discovery-pagination.js"
   },
   "engines": {
     "node": ">=18"
