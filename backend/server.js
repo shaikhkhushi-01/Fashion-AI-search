@@ -26,7 +26,7 @@ import {
   evaluateDataset
 } from "./services/evaluation.js";
 
-import { products, evaluationCases } from "./tests/evaluation-cases.js";
+import { evaluationCases } from "./tests/evaluation-cases.js";
 
 /*
 =========================================================
