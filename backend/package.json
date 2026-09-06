@@ -34,7 +34,12 @@
     "semantic-client-test": "node tests/semantic-client.test.js",
     "hybrid-pipeline-test": "node tests/hybrid-pipeline.test.js",
     "ranker-pipeline-test": "node tests/ranker-pipeline.test.js",
-    "integration-benchmark": "node tests/integration-benchmark.js"
+    "integration-benchmark": "node tests/integration-benchmark.js",
+    "personalization-v2-test": "node tests/personalization-v2.test.js",
+    "image-retrieval-test": "node tests/image-retrieval.test.js",
+    "visual-client-test": "node tests/visual-client.test.js",
+    "multimodal-fusion-test": "node tests/multimodal-fusion.test.js",
+    "explainability-v2-test": "node tests/explainability-v2.test.js"
   },
   "engines": {
     "node": ">=18"
