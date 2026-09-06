@@ -131,6 +131,21 @@ jobs:
       - name: Explainability V2 tests
         run: npm run explainability-v2-test
 
+      - name: Dataset split tests
+        run: npm run dataset-split-test
+
+      - name: Baseline tests
+        run: npm run baseline-test
+
+      - name: Error analysis tests
+        run: npm run error-analysis-test
+
+      - name: Statistics tests
+        run: npm run statistics-test
+
+      - name: Research report tests
+        run: npm run research-report-test
+
       - name: Research quality summary
         run: |
           echo "======================================"
