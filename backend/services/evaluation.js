@@ -1,210 +1,50 @@
-/*
-=========================================================
-FASHION AI DISCOVERY
-DAY 10 — RESEARCH EVALUATION ENGINE
-=========================================================
-
-Metrics:
-1. Precision@K
-2. Recall@K
-3. F1@K
-4. MRR@K
-5. NDCG@K
-=========================================================
-*/
-
-function normalizeId(value) {
-  if (value === null || value === undefined) {
-    return "";
-  }
-
-  return String(value).trim();
+function normalize(value) {
+  return String(value ?? "").trim().toLowerCase();
 }
 
-function uniqueIds(values) {
-  return [
-    ...new Set(
-      (values || [])
-        .map(normalizeId)
-        .filter(Boolean)
-    )
-  ];
+function relevanceValue(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.max(0, number) : 0;
 }
 
-function normalizeRelevance(value) {
-  const score = Number(value);
-
-  if (!Number.isFinite(score)) {
-    return 0;
-  }
-
-  return Math.max(
-    0,
-    Math.min(3, score)
-  );
+function binaryRelevance(value, threshold = 1) {
+  return relevanceValue(value) >= threshold ? 1 : 0;
 }
 
-function buildRelevanceMap(relevance) {
-  const map = new Map();
+function precisionAtK(predicted, relevant, k = 5) {
+  const predictions = predicted.slice(0, k);
+  if (!predictions.length) return 0;
 
-  if (!Array.isArray(relevance)) {
-    return map;
-  }
+  const relevantSet = new Set(relevant.map(String));
+  const hits = predictions.filter(item => relevantSet.has(String(item))).length;
 
-  for (const item of relevance) {
-    if (!item) {
-      continue;
-    }
-
-    const id = normalizeId(
-      item.productId ?? item.id
-    );
-
-    if (!id) {
-      continue;
-    }
-
-    map.set(
-      id,
-      normalizeRelevance(
-        item.relevance
-      )
-    );
-  }
-
-  return map;
+  return hits / predictions.length;
 }
 
-function isRelevant(
-  productId,
-  relevanceMap
-) {
-  return (
-    normalizeRelevance(
-      relevanceMap.get(
-        normalizeId(productId)
-      )
-    ) > 0
-  );
+function recallAtK(predicted, relevant, k = 5) {
+  if (!relevant.length) return 0;
+
+  const predictions = predicted.slice(0, k);
+  const relevantSet = new Set(relevant.map(String));
+  const hits = predictions.filter(item => relevantSet.has(String(item))).length;
+
+  return hits / relevantSet.size;
 }
 
-function precisionAtK(
-  retrievedIds,
-  relevanceMap,
-  k
-) {
-  const results =
-    uniqueIds(retrievedIds)
-      .slice(0, k);
+function f1AtK(predicted, relevant, k = 5) {
+  const precision = precisionAtK(predicted, relevant, k);
+  const recall = recallAtK(predicted, relevant, k);
 
-  if (!results.length) {
-    return 0;
-  }
+  if (precision + recall === 0) return 0;
 
-  const relevantCount =
-    results.filter(
-      (id) =>
-        isRelevant(
-          id,
-          relevanceMap
-        )
-    ).length;
-
-  return relevantCount / results.length;
+  return (2 * precision * recall) / (precision + recall);
 }
 
-function recallAtK(
-  retrievedIds,
-  relevanceMap,
-  k
-) {
-  const results =
-    uniqueIds(retrievedIds)
-      .slice(0, k);
+function reciprocalRank(predicted, relevant) {
+  const relevantSet = new Set(relevant.map(String));
 
-  const relevantTotal =
-    [...relevanceMap.values()]
-      .filter(
-        (score) =>
-          score > 0
-      ).length;
-
-  if (!relevantTotal) {
-    return 0;
-  }
-
-  const relevantRetrieved =
-    results.filter(
-      (id) =>
-        isRelevant(
-          id,
-          relevanceMap
-        )
-    ).length;
-
-  return (
-    relevantRetrieved /
-    relevantTotal
-  );
-}
-
-function f1AtK(
-  retrievedIds,
-  relevanceMap,
-  k
-) {
-  const precision =
-    precisionAtK(
-      retrievedIds,
-      relevanceMap,
-      k
-    );
-
-  const recall =
-    recallAtK(
-      retrievedIds,
-      relevanceMap,
-      k
-    );
-
-  if (
-    precision === 0 &&
-    recall === 0
-  ) {
-    return 0;
-  }
-
-  return (
-    2 *
-    precision *
-    recall
-  ) /
-  (
-    precision +
-    recall
-  );
-}
-
-function reciprocalRankAtK(
-  retrievedIds,
-  relevanceMap,
-  k
-) {
-  const results =
-    uniqueIds(retrievedIds)
-      .slice(0, k);
-
-  for (
-    let index = 0;
-    index < results.length;
-    index++
-  ) {
-    if (
-      isRelevant(
-        results[index],
-        relevanceMap
-      )
-    ) {
+  for (let index = 0; index < predicted.length; index += 1) {
+    if (relevantSet.has(String(predicted[index]))) {
       return 1 / (index + 1);
     }
   }
@@ -212,358 +52,172 @@ function reciprocalRankAtK(
   return 0;
 }
 
-function dcgAtK(
-  retrievedIds,
-  relevanceMap,
-  k
-) {
-  const results =
-    uniqueIds(retrievedIds)
-      .slice(0, k);
+function mrr(predictions, relevantLists) {
+  if (!relevantLists.length) return 0;
 
-  let dcg = 0;
+  const scores = predictions.map((prediction, index) => {
+    return reciprocalRank(prediction, relevantLists[index] || []);
+  });
 
-  for (
-    let index = 0;
-    index < results.length;
-    index++
-  ) {
-    const relevance =
-      normalizeRelevance(
-        relevanceMap.get(
-          results[index]
-        )
-      );
+  return scores.reduce((sum, score) => sum + score, 0) / scores.length;
+}
 
-    if (index === 0) {
-      dcg += relevance;
-    } else {
-      dcg +=
-        relevance /
-        Math.log2(index + 2);
+function dcgAtK(predicted, relevanceMap, k = 5) {
+  return predicted
+    .slice(0, k)
+    .reduce((sum, productId, index) => {
+      const relevance = relevanceValue(relevanceMap[String(productId)]);
+
+      if (relevance <= 0) {
+        return sum;
+      }
+
+      return sum + ((2 ** relevance) - 1) / Math.log2(index + 2);
+    }, 0);
+}
+
+function ndcgAtK(predicted, relevanceMap, k = 5) {
+  const actual = dcgAtK(predicted, relevanceMap, k);
+
+  const ideal = Object.values(relevanceMap)
+    .map(relevanceValue)
+    .sort((a, b) => b - a)
+    .slice(0, k);
+
+  const idealDcg = ideal.reduce((sum, relevance, index) => {
+    return sum + ((2 ** relevance) - 1) / Math.log2(index + 2);
+  }, 0);
+
+  if (idealDcg === 0) return 0;
+
+  return actual / idealDcg;
+}
+
+function averagePrecision(predicted, relevant) {
+  if (!relevant.length) return 0;
+
+  const relevantSet = new Set(relevant.map(String));
+  let hits = 0;
+  let score = 0;
+
+  predicted.forEach((item, index) => {
+    if (relevantSet.has(String(item))) {
+      hits += 1;
+      score += hits / (index + 1);
     }
-  }
+  });
 
-  return dcg;
+  return score / relevantSet.size;
 }
 
-function idealDcgAtK(
-  relevanceMap,
-  k
-) {
-  const relevanceScores =
-    [...relevanceMap.values()]
-      .map(normalizeRelevance)
-      .sort(
-        (a, b) =>
-          b - a
-      )
-      .slice(0, k);
-
-  let idcg = 0;
-
-  for (
-    let index = 0;
-    index < relevanceScores.length;
-    index++
-  ) {
-    const relevance =
-      relevanceScores[index];
-
-    if (index === 0) {
-      idcg += relevance;
-    } else {
-      idcg +=
-        relevance /
-        Math.log2(index + 2);
-    }
-  }
-
-  return idcg;
-}
-
-function ndcgAtK(
-  retrievedIds,
-  relevanceMap,
-  k
-) {
-  const dcg =
-    dcgAtK(
-      retrievedIds,
-      relevanceMap,
-      k
-    );
-
-  const idcg =
-    idealDcgAtK(
-      relevanceMap,
-      k
-    );
-
-  if (idcg === 0) {
-    return 0;
-  }
-
-  return dcg / idcg;
-}
-
-function evaluateQuery({
-  query,
-  retrievedIds,
-  relevance,
-  kValues = [1, 3, 5, 10]
-}) {
-  const relevanceMap =
-    buildRelevanceMap(
-      relevance
-    );
-
-  const metrics = {};
-
-  for (const k of kValues) {
-    metrics[`@${k}`] = {
-      precision:
-        Number(
-          precisionAtK(
-            retrievedIds,
-            relevanceMap,
-            k
-          ).toFixed(4)
-        ),
-
-      recall:
-        Number(
-          recallAtK(
-            retrievedIds,
-            relevanceMap,
-            k
-          ).toFixed(4)
-        ),
-
-      f1:
-        Number(
-          f1AtK(
-            retrievedIds,
-            relevanceMap,
-            k
-          ).toFixed(4)
-        ),
-
-      mrr:
-        Number(
-          reciprocalRankAtK(
-            retrievedIds,
-            relevanceMap,
-            k
-          ).toFixed(4)
-        ),
-
-      ndcg:
-        Number(
-          ndcgAtK(
-            retrievedIds,
-            relevanceMap,
-            k
-          ).toFixed(4)
-        )
-    };
-  }
-
+function evaluateQuery(predicted, relevant, relevanceMap = {}, k = 5) {
   return {
-    query,
-    retrievedIds:
-      uniqueIds(
-        retrievedIds
-      ),
-    relevance,
-    metrics
+    precisionAtK: precisionAtK(predicted, relevant, k),
+    recallAtK: recallAtK(predicted, relevant, k),
+    f1AtK: f1AtK(predicted, relevant, k),
+    reciprocalRank: reciprocalRank(predicted, relevant),
+    ndcgAtK: ndcgAtK(predicted, relevanceMap, k),
+    averagePrecision: averagePrecision(predicted, relevant)
   };
 }
 
 function mean(values) {
-  const valid =
-    values.filter(
-      (value) =>
-        Number.isFinite(
-          Number(value)
-        )
-    );
+  if (!values.length) return 0;
 
-  if (!valid.length) {
-    return 0;
-  }
-
-  return (
-    valid.reduce(
-      (sum, value) =>
-        sum + Number(value),
-      0
-    ) /
-    valid.length
-  );
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
-function aggregateResults(
-  queryResults,
-  kValues = [1, 3, 5, 10]
-) {
-  const aggregate = {};
-
-  for (const k of kValues) {
-    const key = `@${k}`;
-
-    aggregate[key] = {
-      precision:
-        Number(
-          mean(
-            queryResults.map(
-              (result) =>
-                result.metrics[key]
-                  ?.precision ?? 0
-            )
-          ).toFixed(4)
-        ),
-
-      recall:
-        Number(
-          mean(
-            queryResults.map(
-              (result) =>
-                result.metrics[key]
-                  ?.recall ?? 0
-            )
-          ).toFixed(4)
-        ),
-
-      f1:
-        Number(
-          mean(
-            queryResults.map(
-              (result) =>
-                result.metrics[key]
-                  ?.f1 ?? 0
-            )
-          ).toFixed(4)
-        ),
-
-      mrr:
-        Number(
-          mean(
-            queryResults.map(
-              (result) =>
-                result.metrics[key]
-                  ?.mrr ?? 0
-            )
-          ).toFixed(4)
-        ),
-
-      ndcg:
-        Number(
-          mean(
-            queryResults.map(
-              (result) =>
-                result.metrics[key]
-                  ?.ndcg ?? 0
-            )
-          ).toFixed(4)
-        )
-    };
-  }
-
-  return aggregate;
+function aggregateMetrics(results) {
+  return {
+    precisionAtK: mean(results.map(item => item.precisionAtK)),
+    recallAtK: mean(results.map(item => item.recallAtK)),
+    f1AtK: mean(results.map(item => item.f1AtK)),
+    mrr: mean(results.map(item => item.reciprocalRank)),
+    ndcgAtK: mean(results.map(item => item.ndcgAtK)),
+    map: mean(results.map(item => item.averagePrecision))
+  };
 }
 
-function evaluateDataset({
-  cases,
-  retrieve,
-  kValues = [1, 3, 5, 10]
-}) {
-  if (!Array.isArray(cases)) {
-    throw new Error(
-      "Evaluation cases must be an array."
-    );
-  }
-
-  if (
-    typeof retrieve !== "function"
-  ) {
-    throw new Error(
-      "retrieve must be a function."
-    );
-  }
-
+function evaluateDataset(cases, predictor, options = {}) {
+  const k = Number(options.k || 5);
   const queryResults = [];
 
   for (const testCase of cases) {
-    const query =
-      String(
-        testCase.query ?? ""
-      ).trim();
+    const predicted = predictor(testCase.query, testCase);
 
-    if (!query) {
-      continue;
-    }
-
-    const retrieved =
-      retrieve(
-        query,
-        testCase
-      );
-
-    const retrievedIds =
-      Array.isArray(retrieved)
-        ? retrieved.map(
-            (item) =>
-              typeof item === "object"
-                ? item.id ??
-                  item.productId
-                : item
-          )
-        : [];
-
-    queryResults.push(
-      evaluateQuery({
-        query,
-        retrievedIds,
-        relevance:
-          testCase.relevance || [],
-        kValues
-      })
+    const result = evaluateQuery(
+      predicted,
+      testCase.relevant || [],
+      testCase.relevance || {},
+      k
     );
+
+    queryResults.push({
+      query: testCase.query,
+      predicted: predicted.slice(0, k),
+      relevant: testCase.relevant || [],
+      metrics: result
+    });
+  }
+
+  const metrics = aggregateMetrics(
+    queryResults.map(item => item.metrics)
+  );
+
+  return {
+    k,
+    queries: queryResults,
+    metrics
+  };
+}
+
+function compareSystems(cases, systems, options = {}) {
+  const results = {};
+
+  for (const [name, predictor] of Object.entries(systems)) {
+    results[name] = evaluateDataset(cases, predictor, options);
+  }
+
+  return results;
+}
+
+function formatMetric(value) {
+  return Number(Number(value).toFixed(4));
+}
+
+function createEvaluationReport(results) {
+  const systems = {};
+
+  for (const [name, result] of Object.entries(results)) {
+    systems[name] = {
+      precisionAtK: formatMetric(result.metrics.precisionAtK),
+      recallAtK: formatMetric(result.metrics.recallAtK),
+      f1AtK: formatMetric(result.metrics.f1AtK),
+      mrr: formatMetric(result.metrics.mrr),
+      ndcgAtK: formatMetric(result.metrics.ndcgAtK),
+      map: formatMetric(result.metrics.map)
+    };
   }
 
   return {
-    totalQueries:
-      queryResults.length,
-
-    kValues,
-
-    aggregate:
-      aggregateResults(
-        queryResults,
-        kValues
-      ),
-
-    queries:
-      queryResults
+    generatedAt: new Date().toISOString(),
+    systems,
+    queryCount: Object.values(results)[0]?.queries?.length || 0,
+    k: Object.values(results)[0]?.k || 5
   };
 }
 
 export {
-  normalizeId,
-  uniqueIds,
-  normalizeRelevance,
-  buildRelevanceMap,
-  isRelevant,
   precisionAtK,
   recallAtK,
   f1AtK,
-  reciprocalRankAtK,
-  dcgAtK,
-  idealDcgAtK,
+  reciprocalRank,
+  mrr,
   ndcgAtK,
+  averagePrecision,
   evaluateQuery,
-  mean,
-  aggregateResults,
-  evaluateDataset
+  evaluateDataset,
+  aggregateMetrics,
+  compareSystems,
+  createEvaluationReport
 };
