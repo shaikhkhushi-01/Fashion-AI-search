@@ -1,56 +1,110 @@
-/*
-=========================================================
-FASHION AI DISCOVERY
-DAY 11 — BASELINE + ABLATION ENGINE
-=========================================================
-
-Experiments:
-
-1. Keyword Only
-2. Semantic Only
-3. Attribute Only
-4. Hybrid Without Budget
-5. Full Hybrid
-
-All systems use the SAME evaluation benchmark.
-=========================================================
-*/
-
 import {
-  tokenize,
-  keywordScore,
-  attributeScore,
-  metadataScore,
-  calculateHybridScore
-} from "./aiSearch.js";
+  precisionAtK,
+  recallAtK,
+  f1AtK,
+  mrr,
+  ndcgAtK
+} from "./evaluation.js";
 
-
-function clamp(value) {
-  return Math.max(
-    0,
-    Math.min(
-      1,
-      Number(value) || 0
-    )
-  );
+function normalize(value) {
+  return String(value ?? "").trim().toLowerCase();
 }
 
-
-function round(
-  value,
-  digits = 4
-) {
-  return Number(
-    Number(value).toFixed(digits)
-  );
+function tokenize(value) {
+  return normalize(value)
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
 }
 
+function textOf(product) {
+  return [
+    product.name,
+    product.brand,
+    product.category,
+    product.gender,
+    product.color,
+    product.style,
+    product.occasion,
+    product.material,
+    product.fit,
+    product.pattern,
+    product.description,
+    Array.isArray(product.tags) ? product.tags.join(" ") : product.tags
+  ]
+    .map(normalize)
+    .join(" ");
+}
 
-function semanticScore(
-  query,
-  product
-) {
-  const possibleScores = [
+function lexicalScore(product, query) {
+  const queryTokens = tokenize(query);
+
+  if (!queryTokens.length) {
+    return 0;
+  }
+
+  const text = textOf(product);
+
+  const matched = queryTokens.filter(token => text.includes(token));
+
+  return matched.length / queryTokens.length;
+}
+
+function attributeScore(product, query) {
+  const fields = [
+    product.category,
+    product.gender,
+    product.color,
+    product.style,
+    product.occasion,
+    product.material,
+    product.fit,
+    product.pattern
+  ];
+
+  const queryTokens = tokenize(query);
+
+  if (!queryTokens.length) {
+    return 0;
+  }
+
+  let matches = 0;
+
+  for (const field of fields) {
+    const fieldTokens = tokenize(field);
+
+    if (queryTokens.some(token => fieldTokens.includes(token))) {
+      matches += 1;
+    }
+  }
+
+  return Math.min(matches / 4, 1);
+}
+
+function budgetScore(product, query) {
+  const match = normalize(query).match(/(?:under|below|less than|upto|up to)\s*(?:₹|rs\.?|inr)?\s*(\d+)/i);
+
+  if (!match) {
+    return 1;
+  }
+
+  const budget = Number(match[1]);
+  const price = Number(product.price);
+
+  if (!Number.isFinite(price) || !Number.isFinite(budget)) {
+    return 0;
+  }
+
+  if (price <= budget) {
+    return 1;
+  }
+
+  const difference = price - budget;
+
+  return Math.max(0, 1 - difference / Math.max(budget, 1));
+}
+
+function semanticScore(product) {
+  const values = [
     product.semanticScore,
     product.semantic_similarity,
     product.similarity,
@@ -58,298 +112,204 @@ function semanticScore(
     product.vectorScore
   ];
 
-  for (const value of possibleScores) {
-    const number = Number(value);
+  for (const value of values) {
+    const score = Number(value);
 
-    if (Number.isFinite(number)) {
-      if (number > 1) {
-        return clamp(
-          number / 100
-        );
-      }
-
-      return clamp(number);
+    if (Number.isFinite(score)) {
+      return Math.max(0, Math.min(1, score));
     }
   }
 
-  return clamp(
-    keywordScore(
-      tokenize(query),
-      product
-    ) * 0.75
-  );
+  return 0;
 }
 
+function scoreProduct(product, query, configuration) {
+  let score = 0;
+  let totalWeight = 0;
 
-function keywordOnlyScore(
-  query,
-  product
-) {
-  return keywordScore(
-    tokenize(query),
-    product
-  );
-}
-
-
-function attributeOnlyScore(
-  query,
-  product
-) {
-  return attributeScore(
-    query,
-    product
-  );
-}
-
-
-function semanticOnlyScore(
-  query,
-  product
-) {
-  return semanticScore(
-    query,
-    product
-  );
-}
-
-
-function hybridWithoutBudgetScore(
-  query,
-  product
-) {
-  const semantic =
-    semanticScore(
-      query,
-      product
-    );
-
-  const keyword =
-    keywordOnlyScore(
-      query,
-      product
-    );
-
-  const attributes =
-    attributeOnlyScore(
-      query,
-      product
-    );
-
-  const metadata =
-    metadataScore(
-      product
-    );
-
-  const finalScore =
-    semantic * 0.50 +
-    keyword * 0.22 +
-    attributes * 0.22 +
-    metadata * 0.06;
-
-  return clamp(
-    finalScore
-  );
-}
-
-
-function fullHybridScore(
-  query,
-  product
-) {
-  return calculateHybridScore(
-    query,
-    product
-  ).finalScore;
-}
-
-
-const EXPERIMENTS = {
-
-  keyword_only: {
-    name:
-      "Keyword Only",
-
-    description:
-      "Lexical keyword matching without semantic or attribute ranking.",
-
-    score:
-      keywordOnlyScore
-  },
-
-  semantic_only: {
-    name:
-      "Semantic Only",
-
-    description:
-      "Semantic similarity without keyword, attribute, budget or metadata signals.",
-
-    score:
-      semanticOnlyScore
-  },
-
-  attribute_only: {
-    name:
-      "Attribute Only",
-
-    description:
-      "Fashion attribute matching without semantic or keyword ranking.",
-
-    score:
-      attributeOnlyScore
-  },
-
-  hybrid_without_budget: {
-    name:
-      "Hybrid Without Budget",
-
-    description:
-      "Hybrid retrieval with the budget signal removed.",
-
-    score:
-      hybridWithoutBudgetScore
-  },
-
-  full_hybrid: {
-    name:
-      "Full Hybrid",
-
-    description:
-      "Complete hybrid retrieval using semantic, keyword, attribute, budget and metadata signals.",
-
-    score:
-      fullHybridScore
-  }
-};
-
-
-function retrieveWithExperiment(
-  products,
-  query,
-  experimentKey,
-  options = {}
-) {
-  if (!Array.isArray(products)) {
-    return [];
+  if (configuration.lexical) {
+    score += lexicalScore(product, query) * 0.35;
+    totalWeight += 0.35;
   }
 
-  const experiment =
-    EXPERIMENTS[
-      experimentKey
-    ];
-
-  if (!experiment) {
-    throw new Error(
-      `Unknown experiment: ${experimentKey}`
-    );
+  if (configuration.semantic) {
+    score += semanticScore(product) * 0.45;
+    totalWeight += 0.45;
   }
 
-  const limit =
-    Math.max(
-      1,
-      Number(
-        options.limit || 10
-      )
-    );
+  if (configuration.attributes) {
+    score += attributeScore(product, query) * 0.15;
+    totalWeight += 0.15;
+  }
 
-  const minScore =
-    Number.isFinite(
-      Number(options.minScore)
-    )
-      ? Number(options.minScore)
-      : 0;
+  if (configuration.budget) {
+    score += budgetScore(product, query) * 0.05;
+    totalWeight += 0.05;
+  }
 
+  if (!totalWeight) {
+    return 0;
+  }
+
+  return score / totalWeight;
+}
+
+function rankProducts(products, query, configuration) {
   return products
-    .map((product) => {
+    .map((product, index) => ({
+      product,
+      index,
+      score: scoreProduct(product, query, configuration)
+    }))
+    .sort((a, b) => {
+      if (b.score !== a.score) {
+        return b.score - a.score;
+      }
 
-      const score =
-        clamp(
-          experiment.score(
-            query,
-            product
-          )
-        );
-
-      return {
-        ...product,
-
-        experimentScore:
-          round(score),
-
-        matchScore:
-          Math.round(
-            score * 100
-          )
-      };
+      return a.index - b.index;
     })
+    .map(item => item.product);
+}
 
-    .filter(
-      (product) =>
-        product.experimentScore >=
-        minScore
+function evaluateRanking(rankedProducts, relevantIds, k = 5) {
+  const rankedIds = rankedProducts.slice(0, k).map(product => String(product.id));
+
+  const relevant = relevantIds.map(String);
+
+  return {
+    precisionAtK: precisionAtK(rankedIds, relevant, k),
+    recallAtK: recallAtK(rankedIds, relevant, k),
+    f1AtK: f1AtK(rankedIds, relevant, k),
+    mrr: mrr(rankedIds, relevant),
+    ndcgAtK: ndcgAtK(rankedIds, relevant, k)
+  };
+}
+
+function mean(values) {
+  if (!values.length) {
+    return 0;
+  }
+
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function aggregate(results) {
+  return {
+    precisionAtK: mean(results.map(item => item.precisionAtK)),
+    recallAtK: mean(results.map(item => item.recallAtK)),
+    f1AtK: mean(results.map(item => item.f1AtK)),
+    mrr: mean(results.map(item => item.mrr)),
+    ndcgAtK: mean(results.map(item => item.ndcgAtK))
+  };
+}
+
+function runConfiguration(products, evaluationCases, configuration, k = 5) {
+  const results = evaluationCases.map(testCase => {
+    const ranked = rankProducts(
+      products,
+      testCase.query,
+      configuration
+    );
+
+    return {
+      query: testCase.query,
+      metrics: evaluateRanking(
+        ranked,
+        testCase.relevantIds,
+        k
+      )
+    };
+  });
+
+  return {
+    configuration,
+    queries: results,
+    aggregate: aggregate(results)
+  };
+}
+
+function runAblationStudy(products, evaluationCases, k = 5) {
+  const configurations = [
+    {
+      name: "lexical-only",
+      lexical: true,
+      semantic: false,
+      attributes: false,
+      budget: false
+    },
+    {
+      name: "semantic-only",
+      lexical: false,
+      semantic: true,
+      attributes: false,
+      budget: false
+    },
+    {
+      name: "lexical-attributes",
+      lexical: true,
+      semantic: false,
+      attributes: true,
+      budget: false
+    },
+    {
+      name: "lexical-budget",
+      lexical: true,
+      semantic: false,
+      attributes: false,
+      budget: true
+    },
+    {
+      name: "semantic-attributes",
+      lexical: false,
+      semantic: true,
+      attributes: true,
+      budget: false
+    },
+    {
+      name: "full-hybrid",
+      lexical: true,
+      semantic: true,
+      attributes: true,
+      budget: true
+    }
+  ];
+
+  return configurations.map(configuration =>
+    runConfiguration(
+      products,
+      evaluationCases,
+      configuration,
+      k
     )
+  );
+}
 
+function compareAblationResults(results) {
+  return [...results]
     .sort(
       (a, b) =>
-        b.experimentScore -
-        a.experimentScore
+        b.aggregate.ndcgAtK -
+        a.aggregate.ndcgAtK
     )
-
-    .slice(
-      0,
-      limit
-    );
+    .map((result, index) => ({
+      rank: index + 1,
+      configuration: result.configuration.name,
+      precisionAtK: result.aggregate.precisionAtK,
+      recallAtK: result.aggregate.recallAtK,
+      f1AtK: result.aggregate.f1AtK,
+      mrr: result.aggregate.mrr,
+      ndcgAtK: result.aggregate.ndcgAtK
+    }));
 }
-
-
-function runAllExperiments(
-  products,
-  query,
-  options = {}
-) {
-  const results = {};
-
-  for (
-    const experimentKey
-    of Object.keys(EXPERIMENTS)
-  ) {
-    results[experimentKey] =
-      retrieveWithExperiment(
-        products,
-        query,
-        experimentKey,
-        options
-      );
-  }
-
-  return results;
-}
-
-
-function describeExperiments() {
-  return Object.entries(
-    EXPERIMENTS
-  ).map(
-    ([key, value]) => ({
-      key,
-      name:
-        value.name,
-      description:
-        value.description
-    })
-  );
-}
-
 
 export {
-  EXPERIMENTS,
+  lexicalScore,
+  attributeScore,
+  budgetScore,
   semanticScore,
-  keywordOnlyScore,
-  attributeOnlyScore,
-  semanticOnlyScore,
-  hybridWithoutBudgetScore,
-  fullHybridScore,
-  retrieveWithExperiment,
-  runAllExperiments,
-  describeExperiments
+  rankProducts,
+  evaluateRanking,
+  runConfiguration,
+  runAblationStudy,
+  compareAblationResults
 };
