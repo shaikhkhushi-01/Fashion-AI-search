@@ -30,7 +30,9 @@
     "ablation-test": "node tests/ablation.test.js",
     "robustness-test": "node tests/robustness.test.js",
     "reproducibility": "node tests/reproducibility.js",
-    "reproducibility-test": "node tests/reproducibility.test.js"
+    "reproducibility-test": "node tests/reproducibility.test.js",
+    "semantic-client-test": "node tests/semantic-client.test.js",
+    "hybrid-pipeline-test": "node tests/hybrid-pipeline.test.js"
   },
   "engines": {
     "node": ">=18"
