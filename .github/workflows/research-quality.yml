@@ -107,3 +107,5 @@ jobs:
           echo "Personalization: PASS"
           echo "Catalog Discovery: PASS"
           echo "Discovery Pagination: PASS"
+          echo "Evaluation metrics: PASS"
+          echo "Evaluation benchmark: PASS"
