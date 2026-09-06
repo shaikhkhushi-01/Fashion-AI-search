@@ -39,7 +39,12 @@
     "image-retrieval-test": "node tests/image-retrieval.test.js",
     "visual-client-test": "node tests/visual-client.test.js",
     "multimodal-fusion-test": "node tests/multimodal-fusion.test.js",
-    "explainability-v2-test": "node tests/explainability-v2.test.js"
+    "explainability-v2-test": "node tests/explainability-v2.test.js",
+    "dataset-split-test": "node tests/dataset-split.test.js",
+    "baseline-test": "node tests/baselines.test.js",
+    "error-analysis-test": "node tests/error-analysis.test.js",
+    "statistics-test": "node tests/statistics.test.js",
+    "research-report-test": "node tests/research-report.test.js"
   },
   "engines": {
     "node": ">=18"
