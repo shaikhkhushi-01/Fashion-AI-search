@@ -44,7 +44,8 @@
     "baseline-test": "node tests/baselines.test.js",
     "error-analysis-test": "node tests/error-analysis.test.js",
     "statistics-test": "node tests/statistics.test.js",
-    "research-report-test": "node tests/research-report.test.js"
+    "research-report-test": "node tests/research-report.test.js",
+    "performance-test": "node tests/performance.test.js"
   },
   "engines": {
     "node": ">=18"
