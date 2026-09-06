@@ -89,7 +89,7 @@ function matchesSearch(product, query) {
     product.description,
     product.tags
   ]
-    .flatMap(value)
+    .flatMap(value => values(value))
     => values(value))
     .join(" ");
 
