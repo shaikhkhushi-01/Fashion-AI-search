@@ -1,0 +1,131 @@
+import {
+  lexicalScore,
+  attributeScore,
+  budgetScore
+} from "./ablation.js";
+
+import {
+  attachSemanticScores
+} from "./semanticClient.js";
+
+function metadataScore(product) {
+  let score = 0;
+
+  const fields = [
+    "name",
+    "brand",
+    "category",
+    "gender",
+    "color",
+    "style",
+    "occasion",
+    "material",
+    "description"
+  ];
+
+  for (const field of fields) {
+    if (
+      product?.[field] !== undefined &&
+      product?.[field] !== null &&
+      String(product[field]).trim()
+    ) {
+      score += 1;
+    }
+  }
+
+  return Math.min(
+    score / fields.length,
+    1
+  );
+}
+
+function hybridScore(product, query) {
+  const semantic =
+    Number(product.semanticScore) || 0;
+
+  const lexical =
+    lexicalScore(product, query);
+
+  const attribute =
+    attributeScore(product, query);
+
+  const budget =
+    budgetScore(product, query);
+
+  const metadata =
+    metadataScore(product);
+
+  return (
+    semantic * 0.45 +
+    lexical * 0.2 +
+    attribute * 0.2 +
+    budget * 0.1 +
+    metadata * 0.05
+  );
+}
+
+function rankHybrid(products, query) {
+  return products
+    .map((product, index) => ({
+      ...product,
+      hybridScore:
+        hybridScore(product, query),
+      _index: index
+    }))
+    .sort((a, b) => {
+      if (
+        b.hybridScore !==
+        a.hybridScore
+      ) {
+        return (
+          b.hybridScore -
+          a.hybridScore
+        );
+      }
+
+      return a._index - b._index;
+    })
+    .map(product => {
+      const result = {
+        ...product
+      };
+
+      delete result._index;
+
+      return result;
+    });
+}
+
+async function hybridSearch(
+  products,
+  query,
+  options = {}
+) {
+  const topK =
+    Number(options.topK) || 20;
+
+  const semanticUrl =
+    options.semanticUrl ||
+    process.env.SEMANTIC_API_URL ||
+    "http://127.0.0.1:8000";
+
+  const scoredProducts =
+    await attachSemanticScores(
+      products,
+      query,
+      Math.max(topK, 50),
+      semanticUrl
+    );
+
+  return rankHybrid(
+    scoredProducts,
+    query
+  ).slice(0, topK);
+}
+
+export {
+  metadataScore,
+  hybridScore,
+  rankHybrid,
+  hybridSearch
+};
