@@ -69,9 +69,9 @@ function matchesPrice(product, minPrice, maxPrice) {
 }
 
 function matchesSearch(product, query) {
-  const cleanQuery = normalize(query);
+  const tokens = tokenize(query);
 
-  if (!cleanQuery) {
+  if (!tokens.length) {
     return true;
   }
 
@@ -90,20 +90,9 @@ function matchesSearch(product, query) {
     product.tags
   ]
     .flatMap(value => values(value))
-    => values(value))
     .join(" ");
 
-  const tokens = cleanQuery
-    .split(/[^a-z0-9]+/)
-    .filter(token => token.length > 1);
-
-  if (!tokens.length) {
-    return true;
-  }
-
-  return tokens.some(token =>
-    searchableText.includes(token)
-  );
+  return tokens.every(token => searchableText.includes(token));
 }
 
 function filterCatalogue(
