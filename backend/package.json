@@ -32,7 +32,9 @@
     "reproducibility": "node tests/reproducibility.js",
     "reproducibility-test": "node tests/reproducibility.test.js",
     "semantic-client-test": "node tests/semantic-client.test.js",
-    "hybrid-pipeline-test": "node tests/hybrid-pipeline.test.js"
+    "hybrid-pipeline-test": "node tests/hybrid-pipeline.test.js",
+    "ranker-pipeline-test": "node tests/ranker-pipeline.test.js",
+    "integration-benchmark": "node tests/integration-benchmark.js"
   },
   "engines": {
     "node": ">=18"
