@@ -5,12 +5,10 @@ on:
     branches:
       - main
       - master
-
   pull_request:
 
 jobs:
   research-quality:
-
     runs-on: ubuntu-latest
 
     defaults:
@@ -18,7 +16,6 @@ jobs:
         working-directory: backend
 
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -71,14 +68,14 @@ jobs:
       - name: Explainability test
         run: npm run explainability-test
 
+      - name: Reproducibility unit tests
+        run: npm run reproducibility-test
+
       - name: Reproducibility check
         run: npm run reproducibility
 
       - name: Evaluation metrics test
         run: npm run evaluation-test
-
-      - name: Evaluation benchmark
-        run: npm run evaluate
 
       - name: Evaluation benchmark
         run: npm run evaluate
@@ -89,23 +86,11 @@ jobs:
       - name: Robustness benchmark
         run: npm run robustness
 
-      - name: Ablation benchmark
-        run: npm run ablation
-
       - name: Ablation unit tests
         run: npm run ablation-test
 
       - name: Ablation benchmark
         run: npm run ablation
-
-      - name: Robustness benchmark
-        run: npm run robustness
-
-      - name: Reproducibility unit tests
-        run: npm run reproducibility-test
-
-      - name: Reproducibility check
-        run: npm run reproducibility
 
       - name: Semantic client tests
         run: npm run semantic-client-test
@@ -160,20 +145,26 @@ jobs:
           echo "======================================"
           echo " Fashion AI Research Quality Pipeline "
           echo "======================================"
-          echo "Reproducibility: PASS"
-          echo "Evaluation: PASS"
-          echo "Ablation: PASS"
-          echo "Robustness: PASS"
           echo "Dataset quality: PASS"
           echo "Query understanding: PASS"
+          echo "Semantic retrieval: PASS"
           echo "Hybrid retrieval: PASS"
           echo "Learning-to-rank: PASS"
+          echo "Personalization: PASS"
           echo "AI Stylist: PASS"
           echo "Explainability: PASS"
-          echo "Personalization: PASS"
           echo "Catalog Discovery: PASS"
-          echo "Discovery Pagination: PASS"
           echo "Evaluation metrics: PASS"
           echo "Evaluation benchmark: PASS"
           echo "Ablation study: PASS"
           echo "Robustness: PASS"
+          echo "Reproducibility: PASS"
+          echo "Multimodal fusion: PASS"
+          echo "Dataset split: PASS"
+          echo "Baselines: PASS"
+          echo "Error analysis: PASS"
+          echo "Statistics: PASS"
+          echo "Research report: PASS"
+          echo "Performance: PASS"
+          echo "Research pipeline: PASS"
+          echo "Project manifest: PASS"
