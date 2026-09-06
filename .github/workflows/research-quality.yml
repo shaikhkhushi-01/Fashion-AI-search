@@ -101,6 +101,21 @@ jobs:
       - name: Robustness benchmark
         run: npm run robustness
 
+      - name: Reproducibility unit tests
+        run: npm run reproducibility-test
+
+      - name: Reproducibility check
+        run: npm run reproducibility
+
+      - name: Semantic client tests
+        run: npm run semantic-client-test
+
+      - name: Hybrid pipeline tests
+        run: npm run hybrid-pipeline-test
+
+      - name: Ranker pipeline tests
+        run: npm run ranker-pipeline-test
+
       - name: Research quality summary
         run: |
           echo "======================================"
