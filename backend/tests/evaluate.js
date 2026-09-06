@@ -1,397 +1,125 @@
-/*
-=========================================================
-FASHION AI DISCOVERY
-DAY 10 — REAL SEARCH EVALUATION RUNNER
-=========================================================
-*/
-
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-
 import {
-  searchProducts
-} from "../services/aiSearch.js";
-
-import {
-  evaluateDataset
+  compareSystems,
+  createEvaluationReport
 } from "../services/evaluation.js";
+import { products, evaluationCases } from "./evaluation-cases.js";
+import { lexicalScore, attributeScore, budgetScore } from "../services/hybridRetrieval.js";
 
-import evaluationCases from "./evaluation-cases.js";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-
-/*
-=========================================================
-ES MODULE PATH SETUP
-=========================================================
-*/
-
-const __filename =
-  fileURLToPath(import.meta.url);
-
-const __dirname =
-  path.dirname(__filename);
-
-
-/*
-=========================================================
-LOAD PRODUCTS
-=========================================================
-*/
-
-const productsPath =
-  path.join(
-    __dirname,
-    "..",
-    "..",
-    "data",
-    "products.json"
-  );
-
-
-if (!fs.existsSync(productsPath)) {
-  throw new Error(
-    `Products file not found: ${productsPath}`
-  );
+function tokenize(value) {
+  return String(value ?? "")
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
 }
 
+function baselineSearch(query) {
+  const queryTokens = tokenize(query);
 
-const products =
-  JSON.parse(
-    fs.readFileSync(
-      productsPath,
-      "utf8"
-    )
-  );
+  return products
+    .map(product => {
+      const text = [
+        product.name,
+        product.brand,
+        product.category,
+        product.gender,
+        product.color,
+        product.style,
+        product.occasion,
+        product.material,
+        product.description,
+        product.tags
+      ]
+        .flatMap(value => tokenize(value))
+        .join(" ");
 
+      const matches = queryTokens.filter(token => text.includes(token)).length;
 
-if (!Array.isArray(products)) {
-  throw new Error(
-    "products.json must contain an array."
-  );
+      return {
+        id: product.id,
+        score: matches / Math.max(queryTokens.length, 1)
+      };
+    })
+    .sort((a, b) => b.score - a.score)
+    .map(item => String(item.id));
 }
 
-
-/*
-=========================================================
-CONFIGURATION
-=========================================================
-*/
-
-const K_VALUES = [
-  1,
-  3,
-  5,
-  10
-];
-
-
-/*
-=========================================================
-REAL SEARCH ENGINE
-=========================================================
-*/
-
-function retrieve(query) {
-  return searchProducts(
-    products,
-    query,
-    {
-      limit: 10,
-      minScore: 0
-    }
-  );
+function lexicalSystem(query) {
+  return products
+    .map(product => ({
+      id: product.id,
+      score: lexicalScore(query, product)
+    }))
+    .sort((a, b) => b.score - a.score)
+    .map(item => String(item.id));
 }
 
-
-/*
-=========================================================
-RUN EVALUATION
-=========================================================
-*/
-
-console.log("");
-
-console.log(
-  "=============================================="
-);
-
-console.log(
-  "FASHION AI DISCOVERY — DAY 10 EVALUATION"
-);
-
-console.log(
-  "=============================================="
-);
-
-console.log("");
-
-console.log(
-  `Products: ${products.length}`
-);
-
-console.log(
-  `Queries: ${evaluationCases.length}`
-);
-
-console.log(
-  `K values: ${K_VALUES.join(", ")}`
-);
-
-console.log("");
-
-
-const report =
-  evaluateDataset({
-    cases:
-      evaluationCases,
-
-    retrieve,
-
-    kValues:
-      K_VALUES
-  });
-
-
-/*
-=========================================================
-PRINT OVERALL METRICS
-=========================================================
-*/
-
-console.log(
-  "----------------------------------------------"
-);
-
-console.log(
-  "OVERALL METRICS"
-);
-
-console.log(
-  "----------------------------------------------"
-);
-
-
-for (const k of K_VALUES) {
-  const metrics =
-    report.aggregate[`@${k}`];
-
-  console.log("");
-
-  console.log(
-    `@${k}`
-  );
-
-  console.log(
-    `Precision : ${metrics.precision}`
-  );
-
-  console.log(
-    `Recall    : ${metrics.recall}`
-  );
-
-  console.log(
-    `F1        : ${metrics.f1}`
-  );
-
-  console.log(
-    `MRR       : ${metrics.mrr}`
-  );
-
-  console.log(
-    `NDCG      : ${metrics.ndcg}`
-  );
+function attributeSystem(query) {
+  return products
+    .map(product => ({
+      id: product.id,
+      score: attributeScore(query, product)
+    }))
+    .sort((a, b) => b.score - a.score)
+    .map(item => String(item.id));
 }
 
+function hybridSystem(query) {
+  return products
+    .map(product => {
+      const lexical = lexicalScore(query, product);
+      const attribute = attributeScore(query, product);
+      const budget = budgetScore(query, product);
 
-/*
-=========================================================
-PER-QUERY SUMMARY
-=========================================================
-*/
-
-console.log("");
-
-console.log(
-  "----------------------------------------------"
-);
-
-console.log(
-  "PER-QUERY RESULTS"
-);
-
-console.log(
-  "----------------------------------------------"
-);
-
-console.log("");
-
-
-for (
-  const result
-  of report.queries
-) {
-  const top5 =
-    result.retrievedIds
-      .slice(0, 5)
-      .join(", ");
-
-  console.log(
-    `${result.query}`
-  );
-
-  console.log(
-    `  Retrieved: ${top5}`
-  );
-
-  console.log(
-    `  P@5: ${result.metrics["@5"].precision}`
-  );
-
-  console.log(
-    `  R@5: ${result.metrics["@5"].recall}`
-  );
-
-  console.log(
-    `  MRR@5: ${result.metrics["@5"].mrr}`
-  );
-
-  console.log(
-    `  NDCG@5: ${result.metrics["@5"].ndcg}`
-  );
-
-  console.log("");
+      return {
+        id: product.id,
+        score:
+          lexical * 0.5 +
+          attribute * 0.35 +
+          budget * 0.15
+      };
+    })
+    .sort((a, b) => b.score - a.score)
+    .map(item => String(item.id));
 }
 
+const systems = {
+  baseline: baselineSearch,
+  lexical: lexicalSystem,
+  attribute: attributeSystem,
+  hybrid: hybridSystem
+};
 
-/*
-=========================================================
-CREATE OUTPUT DIRECTORY
-=========================================================
-*/
-
-const outputDirectory =
-  path.join(
-    __dirname,
-    "..",
-    "evaluation-results"
-  );
-
-
-fs.mkdirSync(
-  outputDirectory,
+const results = compareSystems(
+  evaluationCases,
+  systems,
   {
-    recursive: true
+    k: 5
   }
 );
 
+const report = createEvaluationReport(results);
 
-/*
-=========================================================
-FINAL REPORT
-=========================================================
-*/
+const outputPath = path.join(
+  __dirname,
+  "..",
+  "evaluation-results",
+  "evaluation-report.json"
+);
 
-const finalReport = {
-
-  project:
-    "Fashion AI Discovery",
-
-  evaluation:
-    "Day 10 — Hybrid Retrieval Evaluation",
-
-  timestamp:
-    new Date().toISOString(),
-
-  dataset: {
-
-    totalProducts:
-      products.length,
-
-    totalQueries:
-      evaluationCases.length
-  },
-
-  methodology: {
-
-    retrieval:
-      "Hybrid semantic + keyword + attribute + budget + metadata",
-
-    relevanceScale: {
-
-      3:
-        "Highly relevant",
-
-      2:
-        "Relevant",
-
-      1:
-        "Weakly relevant",
-
-      0:
-        "Irrelevant"
-    },
-
-    metrics: [
-      "Precision@K",
-      "Recall@K",
-      "F1@K",
-      "MRR@K",
-      "NDCG@K"
-    ],
-
-    kValues:
-      K_VALUES
-  },
-
-  aggregate:
-    report.aggregate,
-
-  queries:
-    report.queries
-};
-
-
-/*
-=========================================================
-SAVE REPORT
-=========================================================
-*/
-
-const outputPath =
-  path.join(
-    outputDirectory,
-    "evaluation-report.json"
-  );
-
+fs.mkdirSync(path.dirname(outputPath), {
+  recursive: true
+});
 
 fs.writeFileSync(
   outputPath,
-  JSON.stringify(
-    finalReport,
-    null,
-    2
-  ),
-  "utf8"
+  JSON.stringify(report, null, 2)
 );
 
-
-console.log(
-  "=============================================="
-);
-
-console.log(
-  "EVALUATION COMPLETE"
-);
-
-console.log(
-  "=============================================="
-);
-
-console.log("");
-
-console.log(
-  `Report saved to: ${outputPath}`
-);
-
-console.log("");
+console.log(JSON.stringify(report, null, 2));
+console.log(`Evaluation report written to ${outputPath}`);
