@@ -74,6 +74,12 @@ jobs:
       - name: Reproducibility check
         run: npm run reproducibility
 
+      - name: Evaluation metrics test
+        run: npm run evaluation-test
+
+      - name: Evaluation benchmark
+        run: npm run evaluate
+
       - name: Evaluation benchmark
         run: npm run evaluate
 
