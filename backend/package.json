@@ -46,7 +46,8 @@
     "statistics-test": "node tests/statistics.test.js",
     "research-report-test": "node tests/research-report.test.js",
     "performance-test": "node tests/performance.test.js",
-    "research-pipeline-test": "node tests/research-pipeline.test.js"
+    "research-pipeline-test": "node tests/research-pipeline.test.js",
+    "project-manifest-test": "node tests/project-manifest.test.js"
   },
   "engines": {
     "node": ">=18"
