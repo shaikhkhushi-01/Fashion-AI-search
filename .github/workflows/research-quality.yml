@@ -116,6 +116,21 @@ jobs:
       - name: Ranker pipeline tests
         run: npm run ranker-pipeline-test
 
+      - name: Personalization V2 tests
+        run: npm run personalization-v2-test
+
+      - name: Image retrieval tests
+        run: npm run image-retrieval-test
+
+      - name: Visual client tests
+        run: npm run visual-client-test
+
+      - name: Multimodal fusion tests
+        run: npm run multimodal-fusion-test
+
+      - name: Explainability V2 tests
+        run: npm run explainability-v2-test
+
       - name: Research quality summary
         run: |
           echo "======================================"
