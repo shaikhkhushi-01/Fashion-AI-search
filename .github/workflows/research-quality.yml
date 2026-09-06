@@ -146,6 +146,15 @@ jobs:
       - name: Research report tests
         run: npm run research-report-test
 
+      - name: Performance tests
+        run: npm run performance-test
+
+      - name: Research pipeline tests
+        run: npm run research-pipeline-test
+
+      - name: Project manifest tests
+        run: npm run project-manifest-test
+
       - name: Research quality summary
         run: |
           echo "======================================"
