@@ -27,7 +27,8 @@
     "evaluation-test": "node tests/evaluation.test.js",
     "evaluate": "node tests/evaluate.js",
     "ablation": "node tests/ablation.js",
-    "ablation-test": "node tests/ablation.test.js"
+    "ablation-test": "node tests/ablation.test.js",
+    "robustness-test": "node tests/robustness.test.js"
   },
   "engines": {
     "node": ">=18"
