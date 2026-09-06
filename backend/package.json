@@ -28,7 +28,9 @@
     "evaluate": "node tests/evaluate.js",
     "ablation": "node tests/ablation.js",
     "ablation-test": "node tests/ablation.test.js",
-    "robustness-test": "node tests/robustness.test.js"
+    "robustness-test": "node tests/robustness.test.js",
+    "reproducibility": "node tests/reproducibility.js",
+    "reproducibility-test": "node tests/reproducibility.test.js"
   },
   "engines": {
     "node": ">=18"
