@@ -23,7 +23,9 @@
     "explainability-test": "node tests/explainability.js",
     "personalization-test": "node tests/personalization.js",
     "catalog-discovery-test": "node tests/catalog-discovery.js",
-    "discovery-pagination-test": "node tests/discovery-pagination.js"
+    "discovery-pagination-test": "node tests/discovery-pagination.js",
+    "evaluation-test": "node tests/evaluation.test.js",
+    "evaluate": "node tests/evaluate.js"
   },
   "engines": {
     "node": ">=18"
