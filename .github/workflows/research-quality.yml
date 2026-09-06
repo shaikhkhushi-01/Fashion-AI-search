@@ -86,6 +86,12 @@ jobs:
       - name: Ablation benchmark
         run: npm run ablation
 
+      - name: Ablation unit tests
+        run: npm run ablation-test
+
+      - name: Ablation benchmark
+        run: npm run ablation
+
       - name: Robustness benchmark
         run: npm run robustness
 
@@ -109,3 +115,4 @@ jobs:
           echo "Discovery Pagination: PASS"
           echo "Evaluation metrics: PASS"
           echo "Evaluation benchmark: PASS"
+          echo "Ablation study: PASS"
