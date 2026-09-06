@@ -1,3 +1,5 @@
+import { tokenize } from "./aiSearch.js";
+
 function normalize(value) {
   return String(value ?? "")
     .trim()
