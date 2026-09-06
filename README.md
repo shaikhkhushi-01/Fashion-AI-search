@@ -1,84 +1,96 @@
 # Fashion AI Discovery
 
-> AI-powered fashion discovery using hybrid retrieval, personalization, AI styling, evaluation, ablation studies, robustness testing, and reproducibility checks.
+Fashion AI Discovery is an AI-oriented fashion search and recommendation system designed around natural-language product discovery.
 
-## Overview
+## Research Question
 
-Fashion AI Discovery is an AI-first fashion discovery platform designed to help users find relevant clothing through natural-language queries instead of relying only on traditional keyword search.
+Can combining semantic, lexical, attribute and personalized signals improve fashion retrieval compared with conventional keyword-based search?
 
-The system combines:
+## System
 
-- semantic-style retrieval
-- keyword matching
-- fashion attribute matching
-- budget awareness
-- metadata relevance
-- personalized ranking
-- AI stylist recommendations
-- research-oriented evaluation
-- ablation experiments
-- robustness testing
-- reproducibility checks
-
-The project is designed as a research-oriented prototype rather than a conventional ecommerce clone.
-
----
-
-# Research Motivation
-
-Traditional fashion search often depends heavily on exact keyword matching.
-
-For example:
-
-> "comfortable black outfit for college under 3000"
-
-contains several different information signals:
-
-- comfort
-- color
-- occasion
-- style
-- budget
-- category
-
-A useful fashion discovery system should understand these signals together.
-
-This project therefore investigates a hybrid retrieval pipeline that combines multiple relevance signals instead of relying on a single ranking mechanism.
-
----
-
-# System Architecture
-
-```text
 User Query
-    |
-    v
-Query Normalization
-    |
-    v
-Fashion Attribute Extraction
-    |
-    +--------------------+
-    |                    |
-    v                    v
-Keyword Retrieval    Semantic Signal
-    |                    |
-    +---------+----------+
-              |
-              v
-       Attribute Matching
-              |
-              v
-        Budget Matching
-              |
-              v
-       Metadata Relevance
-              |
-              v
-       Hybrid Ranking
-              |
-              v
-      Personalized Results
-              |
-              v
-        AI Stylist Layer
+→ Query Understanding
+→ Semantic Retrieval
+→ Lexical Retrieval
+→ Attribute Matching
+→ Candidate Fusion
+→ Ranking
+→ Personalization
+→ Explainability
+→ Evaluation
+
+## Core Components
+
+- Natural-language fashion query understanding
+- Semantic retrieval
+- Lexical retrieval
+- Attribute-aware retrieval
+- Hybrid candidate fusion
+- Learning-to-rank experimentation
+- Personalized recommendations
+- AI Stylist
+- Explainable recommendations
+- Multimodal retrieval infrastructure
+- Baseline comparison
+- Error analysis
+- Statistical analysis
+- Dataset splitting
+- Reproducibility
+- Performance benchmarking
+
+## Evaluation
+
+The evaluation framework supports:
+
+- Precision@K
+- Recall@K
+- F1@K
+- MRR
+- NDCG@K
+- Average Precision
+- Bootstrap confidence intervals
+- Baseline comparison
+- Ablation experiments
+- Error analysis
+
+## Research Methodology
+
+The system is evaluated against simpler retrieval strategies and progressively stronger retrieval configurations.
+
+Experiments are organized around retrieval quality, personalization, robustness, reproducibility and computational performance.
+
+## Reproducibility
+
+The project includes deterministic dataset splitting, experiment configuration, evaluation scripts, statistical analysis and project file hashing.
+
+## Backend
+
+The Node.js backend provides retrieval, ranking, personalization, evaluation and research utilities.
+
+The Python service provides embedding-based semantic retrieval.
+
+## Frontend
+
+The frontend provides:
+
+- Natural-language search
+- AI relevance indicators
+- Product discovery
+- Advanced filters
+- Personalized recommendations
+- AI Stylist
+- Recommendation explanations
+
+## Research Direction
+
+Future work can investigate larger fashion datasets, stronger transformer encoders, vision-language models, learned multimodal fusion, user-level ranking models and online evaluation.
+
+## Links
+
+Live application:
+
+https://shaikhkhushi-01.github.io/Fashion-AI-search/
+
+Repository:
+
+https://github.com/shaikhkhushi-01/Fashion-AI-search
