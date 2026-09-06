@@ -83,6 +83,12 @@ jobs:
       - name: Evaluation benchmark
         run: npm run evaluate
 
+      - name: Robustness unit tests
+        run: npm run robustness-test
+
+      - name: Robustness benchmark
+        run: npm run robustness
+
       - name: Ablation benchmark
         run: npm run ablation
 
@@ -116,3 +122,4 @@ jobs:
           echo "Evaluation metrics: PASS"
           echo "Evaluation benchmark: PASS"
           echo "Ablation study: PASS"
+          echo "Robustness: PASS"
