@@ -29,7 +29,9 @@ function textOf(product) {
     product.fit,
     product.pattern,
     product.description,
-    Array.isArray(product.tags) ? product.tags.join(" ") : product.tags
+    Array.isArray(product.tags)
+      ? product.tags.join(" ")
+      : product.tags
   ]
     .map(normalize)
     .join(" ");
@@ -43,8 +45,9 @@ function lexicalScore(product, query) {
   }
 
   const text = textOf(product);
-
-  const matched = queryTokens.filter(token => text.includes(token));
+  const matched = queryTokens.filter(token =>
+    text.includes(token)
+  );
 
   return matched.length / queryTokens.length;
 }
@@ -72,7 +75,11 @@ function attributeScore(product, query) {
   for (const field of fields) {
     const fieldTokens = tokenize(field);
 
-    if (queryTokens.some(token => fieldTokens.includes(token))) {
+    if (
+      queryTokens.some(token =>
+        fieldTokens.includes(token)
+      )
+    ) {
       matches += 1;
     }
   }
@@ -81,7 +88,9 @@ function attributeScore(product, query) {
 }
 
 function budgetScore(product, query) {
-  const match = normalize(query).match(/(?:under|below|less than|upto|up to)\s*(?:₹|rs\.?|inr)?\s*(\d+)/i);
+  const match = normalize(query).match(
+    /(?:under|below|less than|upto|up to)\s*(?:₹|rs\.?|inr)?\s*(\d+)/i
+  );
 
   if (!match) {
     return 1;
@@ -90,7 +99,10 @@ function budgetScore(product, query) {
   const budget = Number(match[1]);
   const price = Number(product.price);
 
-  if (!Number.isFinite(price) || !Number.isFinite(budget)) {
+  if (
+    !Number.isFinite(price) ||
+    !Number.isFinite(budget)
+  ) {
     return 0;
   }
 
@@ -100,7 +112,10 @@ function budgetScore(product, query) {
 
   const difference = price - budget;
 
-  return Math.max(0, 1 - difference / Math.max(budget, 1));
+  return Math.max(
+    0,
+    1 - difference / Math.max(budget, 1)
+  );
 }
 
 function semanticScore(product) {
@@ -116,14 +131,21 @@ function semanticScore(product) {
     const score = Number(value);
 
     if (Number.isFinite(score)) {
-      return Math.max(0, Math.min(1, score));
+      return Math.max(
+        0,
+        Math.min(1, score)
+      );
     }
   }
 
   return 0;
 }
 
-function scoreProduct(product, query, configuration) {
+function scoreProduct(
+  product,
+  query,
+  configuration
+) {
   let score = 0;
   let totalWeight = 0;
 
@@ -154,12 +176,20 @@ function scoreProduct(product, query, configuration) {
   return score / totalWeight;
 }
 
-function rankProducts(products, query, configuration) {
+function rankProducts(
+  products,
+  query,
+  configuration
+) {
   return products
     .map((product, index) => ({
       product,
       index,
-      score: scoreProduct(product, query, configuration)
+      score: scoreProduct(
+        product,
+        query,
+        configuration
+      )
     }))
     .sort((a, b) => {
       if (b.score !== a.score) {
@@ -171,7 +201,27 @@ function rankProducts(products, query, configuration) {
     .map(item => item.product);
 }
 
-function evaluateRanking(rankedProducts, relevantIds, k = 5) {
+function resolveRelevantIds(testCase) {
+  if (Array.isArray(testCase.relevantIds)) {
+    return testCase.relevantIds;
+  }
+
+  if (Array.isArray(testCase.relevantProductIds)) {
+    return testCase.relevantProductIds;
+  }
+
+  if (Array.isArray(testCase.relevant)) {
+    return testCase.relevant;
+  }
+
+  return [];
+}
+
+function evaluateRanking(
+  rankedProducts,
+  relevantIds,
+  k = 5
+) {
   const rankedIds = rankedProducts
     .slice(0, k)
     .map(product => String(product.id));
@@ -181,11 +231,30 @@ function evaluateRanking(rankedProducts, relevantIds, k = 5) {
     : [];
 
   return {
-    precisionAtK: precisionAtK(rankedIds, relevant, k),
-    recallAtK: recallAtK(rankedIds, relevant, k),
-    f1AtK: f1AtK(rankedIds, relevant, k),
-    mrr: mrr(rankedIds, relevant),
-    ndcgAtK: ndcgAtK(rankedIds, relevant, k)
+    precisionAtK: precisionAtK(
+      rankedIds,
+      relevant,
+      k
+    ),
+    recallAtK: recallAtK(
+      rankedIds,
+      relevant,
+      k
+    ),
+    f1AtK: f1AtK(
+      rankedIds,
+      relevant,
+      k
+    ),
+    mrr: mrr(
+      rankedIds,
+      relevant
+    ),
+    ndcgAtK: ndcgAtK(
+      rankedIds,
+      relevant,
+      k
+    )
   };
 }
 
@@ -194,45 +263,83 @@ function mean(values) {
     return 0;
   }
 
-  return values.reduce((sum, value) => sum + value, 0) / values.length;
+  return (
+    values.reduce(
+      (sum, value) => sum + value,
+      0
+    ) / values.length
+  );
 }
 
 function aggregate(results) {
   return {
-    precisionAtK: mean(results.map(item => item.precisionAtK)),
-    recallAtK: mean(results.map(item => item.recallAtK)),
-    f1AtK: mean(results.map(item => item.f1AtK)),
-    mrr: mean(results.map(item => item.mrr)),
-    ndcgAtK: mean(results.map(item => item.ndcgAtK))
+    precisionAtK: mean(
+      results.map(
+        item => item.precisionAtK
+      )
+    ),
+    recallAtK: mean(
+      results.map(
+        item => item.recallAtK
+      )
+    ),
+    f1AtK: mean(
+      results.map(
+        item => item.f1AtK
+      )
+    ),
+    mrr: mean(
+      results.map(
+        item => item.mrr
+      )
+    ),
+    ndcgAtK: mean(
+      results.map(
+        item => item.ndcgAtK
+      )
+    )
   };
 }
 
-function runConfiguration(products, evaluationCases, configuration, k = 5) {
-  const results = evaluationCases.map(testCase => {
-    const ranked = rankProducts(
-      products,
-      testCase.query,
-      configuration
-    );
+function runConfiguration(
+  products,
+  evaluationCases,
+  configuration,
+  k = 5
+) {
+  const results = evaluationCases.map(
+    testCase => {
+      const ranked = rankProducts(
+        products,
+        testCase.query,
+        configuration
+      );
 
-    return {
-      query: testCase.query,
-      metrics: evaluateRanking(
-        ranked,
-        testCase.relevantIds,
-        k
-      )
-    };
-  });
+      return {
+        query: testCase.query,
+        metrics: evaluateRanking(
+          ranked,
+          resolveRelevantIds(testCase),
+          k
+        )
+      };
+    }
+  );
 
   return {
     configuration,
     queries: results,
-    aggregate: aggregate(results)
+    aggregate: aggregate(
+      results.map(item => item.metrics)
+    )
   };
 }
 
-function runAblationStudy(products, evaluationCases, k = 5) {
+function runAblationStudy(
+  products,
+  evaluationCases,
+  k = 5
+) {
   const configurations = [
     {
       name: "lexical-only",
@@ -278,17 +385,16 @@ function runAblationStudy(products, evaluationCases, k = 5) {
     }
   ];
 
-  return {
-  query: testCase.query,
-  metrics: evaluateRanking(
-    ranked,
-    testCase.relevantIds ??
-      testCase.relevantProductIds ??
-      testCase.relevant ??
-      [],
-    k
-  )
-};
+  return configurations.map(
+    configuration =>
+      runConfiguration(
+        products,
+        evaluationCases,
+        configuration,
+        k
+      )
+  );
+}
 
 function compareAblationResults(results) {
   return [...results]
@@ -299,12 +405,18 @@ function compareAblationResults(results) {
     )
     .map((result, index) => ({
       rank: index + 1,
-      configuration: result.configuration.name,
-      precisionAtK: result.aggregate.precisionAtK,
-      recallAtK: result.aggregate.recallAtK,
-      f1AtK: result.aggregate.f1AtK,
-      mrr: result.aggregate.mrr,
-      ndcgAtK: result.aggregate.ndcgAtK
+      configuration:
+        result.configuration.name,
+      precisionAtK:
+        result.aggregate.precisionAtK,
+      recallAtK:
+        result.aggregate.recallAtK,
+      f1AtK:
+        result.aggregate.f1AtK,
+      mrr:
+        result.aggregate.mrr,
+      ndcgAtK:
+        result.aggregate.ndcgAtK
     }));
 }
 
