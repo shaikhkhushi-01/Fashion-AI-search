@@ -1,3 +1,4 @@
+```js
 import { tokenize } from "./aiSearch.js";
 
 function normalize(value) {
@@ -33,9 +34,7 @@ function matchesValue(productValue, filterValue) {
 
   return filterValues.some(filter =>
     productValues.some(product =>
-      product === filter ||
-      product.includes(filter) ||
-      filter.includes(product)
+      product === filter
     )
   );
 }
@@ -52,7 +51,12 @@ function matchesPrice(product, minPrice, maxPrice) {
     minPrice !== null &&
     minPrice !== ""
   ) {
-    if (price < Number(minPrice)) {
+    const minimum = Number(minPrice);
+
+    if (
+      !Number.isFinite(minimum) ||
+      price < minimum
+    ) {
       return false;
     }
   }
@@ -62,7 +66,12 @@ function matchesPrice(product, minPrice, maxPrice) {
     maxPrice !== null &&
     maxPrice !== ""
   ) {
-    if (price > Number(maxPrice)) {
+    const maximum = Number(maxPrice);
+
+    if (
+      !Number.isFinite(maximum) ||
+      price > maximum
+    ) {
       return false;
     }
   }
@@ -94,7 +103,9 @@ function matchesSearch(product, query) {
     .flatMap(value => values(value))
     .join(" ");
 
-  return tokens.every(token => searchableText.includes(token));
+  return tokens.every(token =>
+    searchableText.includes(token)
+  );
 }
 
 function filterCatalogue(
@@ -280,6 +291,7 @@ function paginate(
   );
 
   const total = products.length;
+
   const totalPages = Math.max(
     1,
     Math.ceil(total / safePageSize)
@@ -401,7 +413,10 @@ function buildSearchSuggestions(
   }
 
   return [...candidates]
-    .slice(0, Math.max(1, Number(limit) || 8));
+    .slice(
+      0,
+      Math.max(1, Number(limit) || 8)
+    );
 }
 
 export {
@@ -417,3 +432,4 @@ export {
   getFilterValues,
   buildSearchSuggestions
 };
+```
