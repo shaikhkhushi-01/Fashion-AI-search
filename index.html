@@ -1,1596 +1,546 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-
-  <meta
-    name="description"
-    content="AI-powered fashion discovery platform"
-  >
-
-  <meta
-    name="theme-color"
-    content="#111111"
-  >
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AI-powered fashion discovery platform">
+  <meta name="theme-color" content="#f5f3ef">
   <title>Fashion AI Discovery</title>
-
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./style.css">
 </head>
 
 <body>
-
-  <!-- =========================================================
-       HEADER
-  ========================================================== -->
-
   <header class="header">
-
     <div class="container header-inner">
-
-      <div class="brand">
-
+      <a class="brand" href="#" aria-label="Fashion AI home">
         <span class="brand-mark">FA</span>
+        <span class="brand-copy">
+          <strong>Fashion AI</strong>
+          <small>Intelligent Discovery</small>
+        </span>
+      </a>
 
-        <div>
-          <h1>Fashion AI</h1>
-          <p>Intelligent Discovery</p>
-        </div>
-
-      </div>
+      <nav class="main-nav" aria-label="Main navigation">
+        <button type="button" data-scroll="forYouSection">For You</button>
+        <button type="button" data-scroll="catalogue">Discover</button>
+        <button type="button" data-scroll="stylist">AI Stylist</button>
+      </nav>
 
       <div class="header-actions">
-
-        <div
-          id="backendStatus"
-          class="status"
-        >
+        <div id="backendStatus" class="status" title="Checking AI engine">
           <span class="status-dot"></span>
-          AI SYSTEM
+          <span>AI ENGINE</span>
         </div>
 
-        <button
-          id="wishlistButton"
-          type="button"
-          class="wishlist-button"
-        >
-          ♡
+        <button id="wishlistButton" type="button" class="wishlist-button header-wishlist" aria-label="Open wishlist">
+          <span class="wishlist-icon">♡</span>
           <span id="wishlistCount">0</span>
         </button>
-
       </div>
-
     </div>
-
   </header>
 
-
-  <!-- =========================================================
-       PERSONAL AI PROFILE
-  ========================================================== -->
-
-  <section
-    class="preferences-section"
-    id="preferences-section"
-  >
-
-    <div class="container">
-
-      <div class="preferences-header">
-
-        <span class="section-kicker">
-          PERSONAL AI PROFILE
-        </span>
-
-        <h2>
-          Tell Fashion AI your preferences
-        </h2>
-
-        <p>
-          Your preferences are stored on this device and used
-          to personalise fashion recommendations.
-        </p>
-
-      </div>
-
-
-      <div class="preferences-grid">
-
-        <!-- Gender -->
-
-        <div class="preference-group">
-
-          <label for="preferenceGender">
-            Gender
-          </label>
-
-          <select
-            id="preferenceGender"
-            class="preference-input"
-          >
-
-            <option value="">Any</option>
-            <option value="Women">Women</option>
-            <option value="Men">Men</option>
-            <option value="Unisex">Unisex</option>
-
-          </select>
-
-        </div>
-
-
-        <!-- Categories -->
-
-        <div class="preference-group">
-
-          <label>Categories</label>
-
-          <div class="preference-options">
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceCategory"
-                value="Shirts"
-              >
-              Shirts
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceCategory"
-                value="Dresses"
-              >
-              Dresses
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceCategory"
-                value="Jeans"
-              >
-              Jeans
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceCategory"
-                value="Sneakers"
-              >
-              Sneakers
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceCategory"
-                value="Hoodies"
-              >
-              Hoodies
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceCategory"
-                value="Blazers"
-              >
-              Blazers
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceCategory"
-                value="Trousers"
-              >
-              Trousers
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceCategory"
-                value="T-Shirts"
-              >
-              T-Shirts
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceCategory"
-                value="Tops"
-              >
-              Tops
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceCategory"
-                value="Skirts"
-              >
-              Skirts
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceCategory"
-                value="Kurta"
-              >
-              Kurta
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceCategory"
-                value="Abaya"
-              >
-              Abaya
-            </label>
-
-          </div>
-
-        </div>
-
-
-        <!-- Colours -->
-
-        <div class="preference-group">
-
-          <label>Favourite Colours</label>
-
-          <div class="preference-options">
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceColor"
-                value="Black"
-              >
-              Black
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceColor"
-                value="White"
-              >
-              White
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceColor"
-                value="Blue"
-              >
-              Blue
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceColor"
-                value="Cream"
-              >
-              Cream
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceColor"
-                value="Grey"
-              >
-              Grey
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceColor"
-                value="Red"
-              >
-              Red
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceColor"
-                value="Pink"
-              >
-              Pink
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceColor"
-                value="Purple"
-              >
-              Purple
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceColor"
-                value="Maroon"
-              >
-              Maroon
-            </label>
-
-          </div>
-
-        </div>
-
-
-        <!-- Styles -->
-
-        <div class="preference-group">
-
-          <label>Preferred Styles</label>
-
-          <div class="preference-options">
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceStyle"
-                value="Minimal"
-              >
-              Minimal
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceStyle"
-                value="Casual"
-              >
-              Casual
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceStyle"
-                value="Classic"
-              >
-              Classic
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceStyle"
-                value="Streetwear"
-              >
-              Streetwear
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceStyle"
-                value="Elegant"
-              >
-              Elegant
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceStyle"
-                value="Sporty"
-              >
-              Sporty
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceStyle"
-                value="Modern"
-              >
-              Modern
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceStyle"
-                value="Comfortable"
-              >
-              Comfortable
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceStyle"
-                value="Traditional"
-              >
-              Traditional
-            </label>
-
-          </div>
-
-        </div>
-
-
-        <!-- Occasions -->
-
-        <div class="preference-group">
-
-          <label>Preferred Occasions</label>
-
-          <div class="preference-options">
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceOccasion"
-                value="Casual"
-              >
-              Casual
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceOccasion"
-                value="College"
-              >
-              College
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceOccasion"
-                value="Office"
-              >
-              Office
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceOccasion"
-                value="Travel"
-              >
-              Travel
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceOccasion"
-                value="Party"
-              >
-              Party
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceOccasion"
-                value="Wedding"
-              >
-              Wedding
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceOccasion"
-                value="Evening"
-              >
-              Evening
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceOccasion"
-                value="Festive"
-              >
-              Festive
-            </label>
-
-          </div>
-
-        </div>
-
-
-        <!-- Materials -->
-
-        <div class="preference-group">
-
-          <label>Preferred Materials</label>
-
-          <div class="preference-options">
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceMaterial"
-                value="Cotton"
-              >
-              Cotton
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceMaterial"
-                value="Linen"
-              >
-              Linen
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceMaterial"
-                value="Denim"
-              >
-              Denim
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceMaterial"
-                value="Silk"
-              >
-              Silk
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceMaterial"
-                value="Wool"
-              >
-              Wool
-            </label>
-
-            <label>
-              <input
-                class="preference-input"
-                type="checkbox"
-                name="preferenceMaterial"
-                value="Polyester"
-              >
-              Polyester
-            </label>
-
-          </div>
-
-        </div>
-
-
-        <!-- Budget -->
-
-        <div class="preference-group">
-
-          <label for="preferenceBudget">
-            Maximum Budget
-          </label>
-
-          <input
-            id="preferenceBudget"
-            class="preference-input"
-            type="number"
-            min="0"
-            value="10000"
-            placeholder="₹10000"
-          >
-
-        </div>
-
-
-        <!-- Price Range -->
-
-        <div class="preference-group">
-
-          <label>
-            Price Range
-          </label>
-
-          <div class="price-range">
-
-            <input
-              id="preferenceMinPrice"
-              class="preference-input"
-              type="number"
-              min="0"
-              value="0"
-              placeholder="Min ₹"
-            >
-
-            <input
-              id="preferenceMaxPrice"
-              class="preference-input"
-              type="number"
-              min="0"
-              value="10000"
-              placeholder="Max ₹"
-            >
-
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <div class="preferences-actions">
-
-        <button
-          id="savePreferences"
-          type="button"
-        >
-          Save Preferences
-        </button>
-
-        <button
-          id="resetPreferences"
-          type="button"
-        >
-          Reset
-        </button>
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- =========================================================
-       HERO
-  ========================================================== -->
-
   <main>
-
     <section class="hero">
+      <div class="hero-orbit hero-orbit-one"></div>
+      <div class="hero-orbit hero-orbit-two"></div>
 
-      <div class="container">
+      <div class="container hero-inner">
+        <div class="hero-copy">
+          <p class="eyebrow">AI-POWERED FASHION DISCOVERY</p>
 
-        <p class="eyebrow">
-          AI-POWERED FASHION DISCOVERY
-        </p>
+          <h1>
+            Search for style.
+            <span>Not just products.</span>
+          </h1>
 
-        <h2>
-          Find fashion
-          <span>intelligently.</span>
-        </h2>
-
-        <p class="hero-text">
-          Describe what you want in natural language.
-          Fashion AI will understand your intent and rank
-          the most relevant products.
-        </p>
-
-
-        <div class="search-box">
-
-          <input
-            id="searchInput"
-            type="text"
-            placeholder="Try: black outfit for college under 3000"
-            autocomplete="off"
-          >
-
-          <button
-            id="searchButton"
-            type="button"
-          >
-            Search
-          </button>
-
-        </div>
-
-
-        <div class="search-hints">
-
-          <button
-            type="button"
-            class="quick-search"
-            data-query="white sneakers for college"
-          >
-            white sneakers for college
-          </button>
-
-          <button
-            type="button"
-            class="quick-search"
-            data-query="elegant black dress for evening"
-          >
-            elegant black dress for evening
-          </button>
-
-          <button
-            type="button"
-            class="quick-search"
-            data-query="comfortable summer outfit"
-          >
-            comfortable summer outfit
-          </button>
-
-          <button
-            type="button"
-            class="quick-search"
-            data-query="minimal black outfit under 5000"
-          >
-            minimal black outfit under 5000
-          </button>
-
-        </div>
-
-        <div id="searchSuggestions" class="search-suggestions"></div>
-
-      </div>
-
-    </section>
-
-
-    <!-- =========================================================
-         PERSONALIZED FOR YOU
-    ========================================================== -->
-
-    <section
-      id="forYouSection"
-      class="for-you-section"
-    >
-
-      <div class="container">
-
-        <div class="section-header">
-
-          <div>
-
-            <p class="eyebrow">
-              PERSONALIZED DISCOVERY
-            </p>
-
-            <h2>
-              For You
-            </h2>
-
-            <p>
-              Recommendations based on your preferences
-              and interactions.
-            </p>
-
-          </div>
-
-        </div>
-
-
-        <div id="forYouResults">
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- =========================================================
-         DAY 9 — ADVANCED CATALOGUE
-    ========================================================== -->
-
-    <section
-      id="catalogue"
-      class="advanced-search"
-    >
-
-      <div class="container">
-
-        <div class="advanced-search-header">
-
-          <p class="eyebrow">
-            ADVANCED DISCOVERY
+          <p class="hero-description">
+            Describe the look you have in mind. Fashion AI understands your intent,
+            preferences and context to discover relevant pieces for you.
           </p>
 
-          <h2>
-            Refine your AI search
-          </h2>
-
-          <p>
-            Combine natural-language search with fashion,
-            price, colour, style and occasion filters.
-          </p>
-
-        </div>
-
-
-        <div class="filter-grid">
-
-          <!-- Category -->
-
-          <div class="filter-group">
-
-            <label for="categoryFilter">
-              Category
-            </label>
-
-            <select id="categoryFilter">
-
-              <option value="">
-                All Categories
-              </option>
-
-            </select>
-
-          </div>
-
-
-          <!-- Gender -->
-
-          <div class="filter-group">
-
-            <label for="genderFilter">
-              Gender
-            </label>
-
-            <select id="genderFilter">
-
-              <option value="">
-                All Genders
-              </option>
-
-            </select>
-
-          </div>
-
-
-          <!-- Colour -->
-
-          <div class="filter-group">
-
-            <label for="colorFilter">
-              Colour
-            </label>
-
-            <select id="colorFilter">
-
-              <option value="">
-                All Colours
-              </option>
-
-            </select>
-
-          </div>
-
-
-          <!-- Style -->
-
-          <div class="filter-group">
-
-            <label for="styleFilter">
-              Style
-            </label>
-
-            <select id="styleFilter">
-
-              <option value="">
-                All Styles
-              </option>
-
-            </select>
-
-          </div>
-
-
-          <!-- Occasion -->
-
-          <div class="filter-group">
-
-            <label for="occasionFilter">
-              Occasion
-            </label>
-
-            <select id="occasionFilter">
-
-              <option value="">
-                All Occasions
-              </option>
-
-            </select>
-
-          </div>
-
-
-          <!-- Material -->
-
-          <div class="filter-group">
-
-            <label for="materialFilter">
-              Material
-            </label>
-
-            <select id="materialFilter">
-
-              <option value="">
-                All Materials
-              </option>
-
-            </select>
-
-          </div>
-
-
-          <!-- Minimum Price -->
-
-          <div class="filter-group">
-
-            <label for="minPriceFilter">
-              Minimum Price
-            </label>
+          <div class="search-shell">
+            <div class="search-leading">
+              <span>⌕</span>
+            </div>
 
             <input
-              id="minPriceFilter"
-              type="number"
-              min="0"
-              placeholder="₹0"
+              id="searchInput"
+              type="text"
+              autocomplete="off"
+              placeholder="Try “minimal black outfit for college under ₹3000”"
+              aria-label="Search fashion"
             >
 
+            <button id="searchButton" type="button" class="search-button">
+              <span>Discover</span>
+              <span class="search-arrow">↗</span>
+            </button>
           </div>
 
+          <div id="searchSuggestions" class="search-suggestions"></div>
 
-          <!-- Maximum Price -->
+          <div class="search-hints">
+            <span>Try</span>
 
-          <div class="filter-group">
+            <button type="button" class="quick-search" data-query="white sneakers for college">
+              White sneakers for college
+            </button>
 
-            <label for="maxPriceFilter">
-              Maximum Price
-            </label>
+            <button type="button" class="quick-search" data-query="elegant black dress for evening">
+              Elegant black dress
+            </button>
 
-            <input
-              id="maxPriceFilter"
-              type="number"
-              min="0"
-              placeholder="₹10000"
-            >
+            <button type="button" class="quick-search" data-query="comfortable summer outfit">
+              Comfortable summer outfit
+            </button>
 
+            <button type="button" class="quick-search" data-query="minimal black outfit under 5000">
+              Minimal black under ₹5000
+            </button>
           </div>
-
-
-          <!-- Sort -->
-
-          <div class="filter-group">
-
-            <label for="sortFilter">
-              Sort Results
-            </label>
-
-            <select id="sortFilter">
-
-              <option value="relevance">
-                AI Relevance
-              </option>
-
-              <option value="price-low">
-                Price: Low to High
-              </option>
-
-              <option value="price-high">
-                Price: High to Low
-              </option>
-
-              <option value="newest">
-                Newest
-              </option>
-
-            </select>
-
-          </div>
-
         </div>
 
+        <div class="hero-proof">
+          <div class="proof-card">
+            <span class="proof-icon">✦</span>
+            <div>
+              <strong>Natural language</strong>
+              <small>Search the way you think</small>
+            </div>
+          </div>
 
-        <div class="filter-actions">
+          <div class="proof-card">
+            <span class="proof-icon">◌</span>
+            <div>
+              <strong>AI-ranked results</strong>
+              <small>Relevant pieces first</small>
+            </div>
+          </div>
 
-          <button
-            id="advancedSearchButton"
-            type="button"
-          >
-            Apply AI Filters
-          </button>
-
-          <button
-            id="resetFiltersButton"
-            type="button"
-          >
-            Reset Filters
-          </button>
-
+          <div class="proof-card">
+            <span class="proof-icon">♡</span>
+            <div>
+              <strong>Personal discovery</strong>
+              <small>Learns your preferences</small>
+            </div>
+          </div>
         </div>
-
       </div>
-
     </section>
 
-
-    <!-- =========================================================
-         MOBILE FILTER DRAWER
-    ========================================================== -->
-
-    <aside
-      id="filterSidebar"
-      class="filter-sidebar"
-      aria-hidden="true"
-    >
-
-      <div class="filter-sidebar-header">
-
-        <h3>
-          Filters
-        </h3>
-
-        <button
-          id="closeFilters"
-          type="button"
-          aria-label="Close filters"
-        >
-          ×
-        </button>
-
-      </div>
-
-      <div class="filter-sidebar-content">
-
-        <p>
-          Use the advanced discovery controls above
-          to refine your results.
-        </p>
-
-      </div>
-
-    </aside>
-
-
-    <button
-      id="openFilters"
-      type="button"
-      class="mobile-filter-button"
-    >
-      Filters
-    </button>
-
-
-    <!-- =========================================================
-         SEARCH RESULTS
-    ========================================================== -->
-
-    <section
-      id="results-section"
-      class="results-section"
-    >
-
+    <section id="preferences-section" class="preferences-section">
       <div class="container">
-
-        <div class="section-header">
-
-          <div>
-
-            <p class="eyebrow">
-              DISCOVERY
-            </p>
-
-            <h2>
-              Fashion matches
-            </h2>
-
-            <p id="searchSummary">
-              Connecting to Fashion AI...
-            </p>
-
-          </div>
-
-          <span id="resultCount">
-            Loading
-          </span>
-
-        </div>
-
-
-        <div id="results">
-
-          <div class="no-results">
-
-            <div class="loading-spinner"></div>
-
-            <h3>
-              Connecting to Fashion AI...
-            </h3>
-
+        <div class="preferences-panel">
+          <div class="section-intro">
+            <p class="eyebrow">PERSONAL AI PROFILE</p>
+            <h2>Make discovery feel like yours.</h2>
             <p>
-              Loading the fashion catalogue.
+              Tell Fashion AI what you like. Your preferences stay on this device
+              and help personalise recommendations.
             </p>
-
           </div>
 
-          <div id="discoveryPagination" class="discovery-pagination"></div>
+          <div class="preferences-grid">
+            <div class="preference-group">
+              <label for="preferenceGender">Gender</label>
+              <select id="preferenceGender" class="preference-input">
+                <option value="">Any</option>
+                <option value="Women">Women</option>
+                <option value="Men">Men</option>
+                <option value="Unisex">Unisex</option>
+              </select>
+            </div>
 
+            <div class="preference-group preference-wide">
+              <label>Categories</label>
+              <div class="preference-options">
+                <label><input class="preference-input" type="checkbox" name="preferenceCategory" value="Shirts"> Shirts</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceCategory" value="Dresses"> Dresses</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceCategory" value="Jeans"> Jeans</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceCategory" value="Sneakers"> Sneakers</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceCategory" value="Hoodies"> Hoodies</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceCategory" value="Blazers"> Blazers</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceCategory" value="Trousers"> Trousers</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceCategory" value="T-Shirts"> T-Shirts</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceCategory" value="Tops"> Tops</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceCategory" value="Skirts"> Skirts</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceCategory" value="Kurta"> Kurta</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceCategory" value="Abaya"> Abaya</label>
+              </div>
+            </div>
+
+            <div class="preference-group">
+              <label>Favourite Colours</label>
+              <div class="preference-options">
+                <label><input class="preference-input" type="checkbox" name="preferenceColor" value="Black"> Black</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceColor" value="White"> White</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceColor" value="Blue"> Blue</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceColor" value="Cream"> Cream</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceColor" value="Grey"> Grey</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceColor" value="Red"> Red</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceColor" value="Pink"> Pink</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceColor" value="Purple"> Purple</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceColor" value="Maroon"> Maroon</label>
+              </div>
+            </div>
+
+            <div class="preference-group">
+              <label>Preferred Styles</label>
+              <div class="preference-options">
+                <label><input class="preference-input" type="checkbox" name="preferenceStyle" value="Minimal"> Minimal</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceStyle" value="Casual"> Casual</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceStyle" value="Classic"> Classic</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceStyle" value="Streetwear"> Streetwear</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceStyle" value="Elegant"> Elegant</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceStyle" value="Sporty"> Sporty</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceStyle" value="Modern"> Modern</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceStyle" value="Comfortable"> Comfortable</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceStyle" value="Traditional"> Traditional</label>
+              </div>
+            </div>
+
+            <div class="preference-group">
+              <label>Preferred Occasions</label>
+              <div class="preference-options">
+                <label><input class="preference-input" type="checkbox" name="preferenceOccasion" value="Casual"> Casual</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceOccasion" value="College"> College</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceOccasion" value="Office"> Office</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceOccasion" value="Travel"> Travel</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceOccasion" value="Party"> Party</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceOccasion" value="Wedding"> Wedding</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceOccasion" value="Evening"> Evening</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceOccasion" value="Festive"> Festive</label>
+              </div>
+            </div>
+
+            <div class="preference-group">
+              <label>Preferred Materials</label>
+              <div class="preference-options">
+                <label><input class="preference-input" type="checkbox" name="preferenceMaterial" value="Cotton"> Cotton</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceMaterial" value="Linen"> Linen</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceMaterial" value="Denim"> Denim</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceMaterial" value="Silk"> Silk</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceMaterial" value="Wool"> Wool</label>
+                <label><input class="preference-input" type="checkbox" name="preferenceMaterial" value="Polyester"> Polyester</label>
+              </div>
+            </div>
+
+            <div class="preference-group">
+              <label for="preferenceBudget">Maximum Budget</label>
+              <input id="preferenceBudget" class="preference-input" type="number" min="0" value="10000" placeholder="₹10000">
+            </div>
+
+            <div class="preference-group">
+              <label>Price Range</label>
+              <div class="price-range">
+                <input id="preferenceMinPrice" class="preference-input" type="number" min="0" value="0" placeholder="Min ₹">
+                <input id="preferenceMaxPrice" class="preference-input" type="number" min="0" value="10000" placeholder="Max ₹">
+              </div>
+            </div>
+          </div>
+
+          <div class="preferences-actions">
+            <button id="savePreferences" type="button" class="primary-button">Save Preferences</button>
+            <button id="resetPreferences" type="button" class="secondary-button">Reset</button>
+          </div>
         </div>
-
       </div>
-
     </section>
 
-
-    <!-- =========================================================
-         AI STYLIST
-    ========================================================== -->
-
-    <section
-      id="stylist"
-      class="stylist-section"
-    >
-
+    <section id="forYouSection" class="for-you-section">
       <div class="container">
-
         <div class="section-header">
-
           <div>
-
-            <p class="eyebrow">
-              AI STYLIST
-            </p>
-
-            <h2>
-              Build your look
-            </h2>
-
-            <p>
-              Tell the AI stylist about the occasion,
-              style and comfort you want.
-            </p>
-
+            <p class="eyebrow">PERSONALIZED DISCOVERY</p>
+            <h2>For You</h2>
+            <p>Pieces selected around your preferences and recent interactions.</p>
           </div>
-
+          <span class="section-index">01</span>
         </div>
 
-
-        <div class="stylist-grid">
-
-          <!-- Occasion -->
-
-          <div class="filter-group">
-
-            <label for="stylistOccasion">
-              Occasion
-            </label>
-
-            <select id="stylistOccasion">
-
-              <option value="">
-                Any occasion
-              </option>
-
-              <option value="Casual">
-                Casual
-              </option>
-
-              <option value="College">
-                College
-              </option>
-
-              <option value="Office">
-                Office
-              </option>
-
-              <option value="Travel">
-                Travel
-              </option>
-
-              <option value="Party">
-                Party
-              </option>
-
-              <option value="Wedding">
-                Wedding
-              </option>
-
-              <option value="Evening">
-                Evening
-              </option>
-
-              <option value="Festive">
-                Festive
-              </option>
-
-            </select>
-
-          </div>
-
-
-          <!-- Style -->
-
-          <div class="filter-group">
-
-            <label for="stylistStyle">
-              Style
-            </label>
-
-            <select id="stylistStyle">
-
-              <option value="">
-                Any style
-              </option>
-
-              <option value="Minimal">
-                Minimal
-              </option>
-
-              <option value="Casual">
-                Casual
-              </option>
-
-              <option value="Classic">
-                Classic
-              </option>
-
-              <option value="Streetwear">
-                Streetwear
-              </option>
-
-              <option value="Elegant">
-                Elegant
-              </option>
-
-              <option value="Modern">
-                Modern
-              </option>
-
-              <option value="Traditional">
-                Traditional
-              </option>
-
-              <option value="Comfortable">
-                Comfortable
-              </option>
-
-            </select>
-
-          </div>
-
-
-          <!-- Comfort -->
-
-          <div class="filter-group">
-
-            <label for="stylistComfort">
-              Comfort
-            </label>
-
-            <select id="stylistComfort">
-
-              <option value="">
-                Any
-              </option>
-
-              <option value="Low">
-                Fashion first
-              </option>
-
-              <option value="Medium">
-                Balanced
-              </option>
-
-              <option value="High">
-                Comfort first
-              </option>
-
-            </select>
-
-          </div>
-
-
-          <!-- Colour -->
-
-          <div class="filter-group">
-
-            <label for="stylistColor">
-              Colour
-            </label>
-
-            <select id="stylistColor">
-
-              <option value="">
-                Any colour
-              </option>
-
-              <option value="Black">
-                Black
-              </option>
-
-              <option value="White">
-                White
-              </option>
-
-              <option value="Blue">
-                Blue
-              </option>
-
-              <option value="Cream">
-                Cream
-              </option>
-
-              <option value="Grey">
-                Grey
-              </option>
-
-              <option value="Red">
-                Red
-              </option>
-
-              <option value="Pink">
-                Pink
-              </option>
-
-              <option value="Purple">
-                Purple
-              </option>
-
-              <option value="Maroon">
-                Maroon
-              </option>
-
-            </select>
-
-          </div>
-
-
-          <!-- Coverage -->
-
-          <div class="filter-group">
-
-            <label for="stylistCoverage">
-              Coverage
-            </label>
-
-            <select id="stylistCoverage">
-
-              <option value="">
-                Any
-              </option>
-
-              <option value="Light">
-                Light
-              </option>
-
-              <option value="Medium">
-                Medium
-              </option>
-
-              <option value="Full">
-                Full
-              </option>
-
-            </select>
-
-          </div>
-
-        </div>
-
-
-        <div class="stylist-description">
-
-          <label for="stylistDescription">
-            Describe your look
-          </label>
-
-          <textarea
-            id="stylistDescription"
-            rows="4"
-            placeholder="Example: I need a minimal and comfortable outfit for a college event..."
-          ></textarea>
-
-        </div>
-
-
-        <div class="stylist-actions">
-
-          <button
-            id="stylistButton"
-            type="button"
-          >
-            ✨ Generate AI Look
-          </button>
-
-        </div>
-
-
-        <div
-          id="stylistResults"
-          class="stylist-results"
-        >
-        </div>
-
+        <div id="forYouResults" class="product-grid recommendation-grid"></div>
       </div>
-
     </section>
 
+    <section id="catalogue" class="catalogue-section">
+      <div class="container">
+        <div class="catalogue-heading">
+          <div>
+            <p class="eyebrow">DISCOVERY SPACE</p>
+            <h2>Explore the catalogue.</h2>
+            <p>Combine AI search with precise fashion filters.</p>
+          </div>
+
+          <button id="openFilters" type="button" class="filter-mobile-button">
+            Filters
+          </button>
+        </div>
+
+        <div class="catalogue-layout">
+          <aside id="filterSidebar" class="filter-sidebar" aria-hidden="true">
+            <div class="filter-sidebar-header">
+              <div>
+                <span class="eyebrow">REFINE</span>
+                <h3>Filters</h3>
+              </div>
+              <button id="closeFilters" type="button" class="drawer-close" aria-label="Close filters">×</button>
+            </div>
+
+            <div class="filter-list">
+              <div class="filter-group">
+                <label for="categoryFilter">Category</label>
+                <select id="categoryFilter">
+                  <option value="">All Categories</option>
+                </select>
+              </div>
+
+              <div class="filter-group">
+                <label for="genderFilter">Gender</label>
+                <select id="genderFilter">
+                  <option value="">All Genders</option>
+                </select>
+              </div>
+
+              <div class="filter-group">
+                <label for="colorFilter">Colour</label>
+                <select id="colorFilter">
+                  <option value="">All Colours</option>
+                </select>
+              </div>
+
+              <div class="filter-group">
+                <label for="styleFilter">Style</label>
+                <select id="styleFilter">
+                  <option value="">All Styles</option>
+                </select>
+              </div>
+
+              <div class="filter-group">
+                <label for="occasionFilter">Occasion</label>
+                <select id="occasionFilter">
+                  <option value="">All Occasions</option>
+                </select>
+              </div>
+
+              <div class="filter-group">
+                <label for="materialFilter">Material</label>
+                <select id="materialFilter">
+                  <option value="">All Materials</option>
+                </select>
+              </div>
+
+              <div class="filter-group">
+                <label for="minPriceFilter">Minimum Price</label>
+                <input id="minPriceFilter" type="number" min="0" placeholder="₹0">
+              </div>
+
+              <div class="filter-group">
+                <label for="maxPriceFilter">Maximum Price</label>
+                <input id="maxPriceFilter" type="number" min="0" placeholder="₹10000">
+              </div>
+
+              <div class="filter-group">
+                <label for="sortFilter">Sort Results</label>
+                <select id="sortFilter">
+                  <option value="relevance">AI Relevance</option>
+                  <option value="price-low">Price: Low to High</option>
+                  <option value="price-high">Price: High to Low</option>
+                  <option value="newest">Newest</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="filter-ai-card">
+              <span>✦</span>
+              <div>
+                <strong>AI-ranked discovery</strong>
+                <p>Search intent and your profile can influence the order of results.</p>
+              </div>
+            </div>
+
+            <div class="filter-actions">
+              <button id="advancedSearchButton" type="button" class="primary-button">Apply Filters</button>
+              <button id="resetFiltersButton" type="button" class="text-button">Reset all</button>
+            </div>
+          </aside>
+
+          <div class="catalogue-results">
+            <div class="results-toolbar">
+              <div>
+                <p class="eyebrow">MATCHES</p>
+                <h3>Fashion matches</h3>
+                <p id="searchSummary">Connecting to Fashion AI...</p>
+              </div>
+              <span id="resultCount" class="result-count">Loading</span>
+            </div>
+
+            <div id="results" class="product-grid">
+              <div class="no-results">
+                <div class="loading-spinner"></div>
+                <h3>Connecting to Fashion AI</h3>
+                <p>Loading the fashion catalogue.</p>
+              </div>
+            </div>
+
+            <div id="discoveryPagination" class="discovery-pagination"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="stylist" class="stylist-section">
+      <div class="container">
+        <div class="stylist-card">
+          <div class="stylist-intro">
+            <div>
+              <p class="eyebrow">AI STYLIST</p>
+              <h2>Build a look around the moment.</h2>
+              <p>
+                Give Fashion AI the context. It will turn your preferences
+                into a fashion discovery query.
+              </p>
+            </div>
+            <div class="stylist-mark">FA</div>
+          </div>
+
+          <div class="stylist-grid">
+            <div class="filter-group">
+              <label for="stylistOccasion">Occasion</label>
+              <select id="stylistOccasion">
+                <option value="">Any occasion</option>
+                <option value="Casual">Casual</option>
+                <option value="College">College</option>
+                <option value="Office">Office</option>
+                <option value="Travel">Travel</option>
+                <option value="Party">Party</option>
+                <option value="Wedding">Wedding</option>
+                <option value="Evening">Evening</option>
+                <option value="Festive">Festive</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label for="stylistStyle">Style</label>
+              <select id="stylistStyle">
+                <option value="">Any style</option>
+                <option value="Minimal">Minimal</option>
+                <option value="Casual">Casual</option>
+                <option value="Classic">Classic</option>
+                <option value="Streetwear">Streetwear</option>
+                <option value="Elegant">Elegant</option>
+                <option value="Modern">Modern</option>
+                <option value="Traditional">Traditional</option>
+                <option value="Comfortable">Comfortable</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label for="stylistComfort">Comfort</label>
+              <select id="stylistComfort">
+                <option value="">Any</option>
+                <option value="Low">Fashion first</option>
+                <option value="Medium">Balanced</option>
+                <option value="High">Comfort first</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label for="stylistColor">Colour</label>
+              <select id="stylistColor">
+                <option value="">Any colour</option>
+                <option value="Black">Black</option>
+                <option value="White">White</option>
+                <option value="Blue">Blue</option>
+                <option value="Cream">Cream</option>
+                <option value="Grey">Grey</option>
+                <option value="Red">Red</option>
+                <option value="Pink">Pink</option>
+                <option value="Purple">Purple</option>
+                <option value="Maroon">Maroon</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label for="stylistCoverage">Coverage</label>
+              <select id="stylistCoverage">
+                <option value="">Any</option>
+                <option value="Light">Light</option>
+                <option value="Medium">Medium</option>
+                <option value="Full">Full</option>
+              </select>
+            </div>
+
+            <div class="stylist-description">
+              <label for="stylistDescription">Describe your look</label>
+              <textarea id="stylistDescription" rows="4" placeholder="Example: I need a minimal and comfortable outfit for a college event..."></textarea>
+            </div>
+          </div>
+
+          <div class="stylist-actions">
+            <button id="stylistButton" type="button" class="primary-button stylist-button">
+              <span>✦</span>
+              Generate AI Look
+            </button>
+          </div>
+
+          <div id="stylistResults" class="stylist-results"></div>
+        </div>
+      </div>
+    </section>
   </main>
 
-
-  <!-- =========================================================
-       PRODUCT MODAL
-  ========================================================== -->
-
-  <div
-    id="productModal"
-    class="product-modal"
-    aria-hidden="true"
-  >
-
+  <div id="productModal" class="product-modal" aria-hidden="true">
     <div class="product-modal-overlay"></div>
-
-    <div
-      class="product-modal-content"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Product details"
-    >
-
-      <button
-        id="closeProductModal"
-        type="button"
-        class="modal-close"
-        aria-label="Close product details"
-      >
-        ×
-      </button>
-
-      <div id="productModalBody">
-      </div>
-
+    <div class="product-modal-content" role="dialog" aria-modal="true" aria-label="Product details">
+      <button id="closeProductModal" type="button" class="modal-close" aria-label="Close product details">×</button>
+      <div id="productModalBody"></div>
     </div>
-
   </div>
 
-
-  <!-- =========================================================
-       WISHLIST PANEL
-  ========================================================== -->
-
-  <div
-    id="wishlistPanel"
-    class="wishlist-panel"
-    aria-hidden="true"
-  >
-
+  <aside id="wishlistPanel" class="wishlist-panel" aria-hidden="true">
     <div class="wishlist-panel-header">
-
       <div>
+        <p class="eyebrow">SAVED EDIT</p>
+        <h3>Your Wishlist</h3>
+      </div>
+      <button id="closeWishlist" type="button" class="drawer-close" aria-label="Close wishlist">×</button>
+    </div>
 
-        <p class="eyebrow">
-          SAVED ITEMS
-        </p>
+    <div id="wishlistResults" class="wishlist-results">
+      <div class="empty-state">
+        <span>♡</span>
+        <h3>Your wishlist is empty</h3>
+        <p>Save pieces you want to come back to.</p>
+      </div>
+    </div>
+  </aside>
 
-        <h3>
-          Your Wishlist
-        </h3>
+  <div id="wishlistOverlay" class="wishlist-overlay"></div>
 
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div>
+        <strong>Fashion AI</strong>
+        <p>Intelligent fashion discovery.</p>
       </div>
 
-      <button
-        id="closeWishlist"
-        type="button"
-        aria-label="Close wishlist"
-      >
-        ×
-      </button>
-
-    </div>
-
-
-    <div id="wishlistResults">
-
-      <div class="no-results">
-
-        <p>
-          Your wishlist is empty.
-        </p>
-
+      <div class="footer-meta">
+        <span>Semantic Search</span>
+        <span>Hybrid Retrieval</span>
+        <span>Personalization</span>
+        <span>AI Styling</span>
       </div>
 
+      <p class="footer-note">Research Prototype</p>
     </div>
-
-  </div>
-
-
-  <!-- =========================================================
-       FOOTER
-  ========================================================== -->
-
-  <footer>
-
-    <div class="container">
-
-      <p>
-        Fashion AI Discovery · Research Prototype
-      </p>
-
-      <p>
-        Semantic Search · Hybrid Retrieval · Personalization · AI Styling
-      </p>
-
-    </div>
-
   </footer>
 
-
-  <!-- =========================================================
-       APPLICATION JAVASCRIPT
-  ========================================================== -->
-
   <script src="./app.js"></script>
-
 </body>
-
 </html>
+```
