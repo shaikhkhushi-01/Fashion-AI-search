@@ -2136,10 +2136,10 @@ app.post(
               "Content-Type":
                 "application/json"
             },
-            body: JSON.stringify({
-              query,
-              limit
-            })
+           body: JSON.stringify({
+  query,
+  top_k: limit
+})
           }
         );
 
