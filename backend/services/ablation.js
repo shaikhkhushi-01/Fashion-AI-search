@@ -310,11 +310,7 @@ function evaluateRanking(
       safeK
     );
 
-  const reciprocal =
-    mrr(
-      [rankedIds],
-      [relevant]
-    );
+  const reciprocal = mrr([rankedIds], [relevant]);
 
   const ndcg =
     ndcgAtK(
