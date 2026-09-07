@@ -1,4 +1,3 @@
-```javascript
 const API_BASE_URL = "https://fashion-ai-search-lj6s.onrender.com";
 
 const state = {
@@ -1854,4 +1853,3 @@ document.addEventListener(
   "DOMContentLoaded",
   initialize
 );
-```
