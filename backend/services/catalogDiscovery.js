@@ -114,20 +114,39 @@ function filterCatalogue(
   } = options;
 
   return products.filter(product => {
-    return (
-      matchesSearch(product, query) &&
-      matchesValue(product.category, category) &&
-      matchesValue(product.gender, gender) &&
-      matchesValue(product.color, color) &&
-      matchesValue(product.style, style) &&
-      matchesValue(product.occasion, occasion) &&
-      matchesValue(product.material, material) &&
-      matchesPrice(
-        product,
-        minPrice,
-        maxPrice
-      )
-    );
+    if (!matchesSearch(product, query)) {
+      return false;
+    }
+
+    if (!matchesValue(product.category, category)) {
+      return false;
+    }
+
+    if (!matchesValue(product.gender, gender)) {
+      return false;
+    }
+
+    if (!matchesValue(product.color, color)) {
+      return false;
+    }
+
+    if (!matchesValue(product.style, style)) {
+      return false;
+    }
+
+    if (!matchesValue(product.occasion, occasion)) {
+      return false;
+    }
+
+    if (!matchesValue(product.material, material)) {
+      return false;
+    }
+
+    if (!matchesPrice(product, minPrice, maxPrice)) {
+      return false;
+    }
+
+    return true;
   });
 }
 
