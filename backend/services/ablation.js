@@ -110,7 +110,10 @@ function budgetScore(product = {}, query = "") {
   const budget = safeNumber(match[1]);
   const price = safeNumber(product.price);
 
-  if (budget <= 0 || price < 0) {
+  if (
+    budget <= 0 ||
+    price < 0
+  ) {
     return 0;
   }
 
@@ -156,36 +159,33 @@ function scoreProduct(
   let totalWeight = 0;
 
   if (configuration.lexical) {
-    score += lexicalScore(
-      product,
-      query
-    ) * 0.35;
+    score +=
+      lexicalScore(product, query) *
+      0.35;
 
     totalWeight += 0.35;
   }
 
   if (configuration.semantic) {
-    score += semanticScore(
-      product
-    ) * 0.45;
+    score +=
+      semanticScore(product) *
+      0.45;
 
     totalWeight += 0.45;
   }
 
   if (configuration.attributes) {
-    score += attributeScore(
-      product,
-      query
-    ) * 0.15;
+    score +=
+      attributeScore(product, query) *
+      0.15;
 
     totalWeight += 0.15;
   }
 
   if (configuration.budget) {
-    score += budgetScore(
-      product,
-      query
-    ) * 0.05;
+    score +=
+      budgetScore(product, query) *
+      0.05;
 
     totalWeight += 0.05;
   }
@@ -227,16 +227,34 @@ function rankProducts(
 }
 
 function resolveRelevantIds(testCase = {}) {
-  const candidates = [
-    testCase.relevantIds,
-    testCase.relevantProductIds,
-    testCase.relevant
-  ];
+  if (
+    Array.isArray(
+      testCase.relevantIds
+    )
+  ) {
+    return testCase.relevantIds.map(
+      String
+    );
+  }
 
-  for (const value of candidates) {
-    if (Array.isArray(value)) {
-      return value.map(String);
-    }
+  if (
+    Array.isArray(
+      testCase.relevantProductIds
+    )
+  ) {
+    return testCase.relevantProductIds.map(
+      String
+    );
+  }
+
+  if (
+    Array.isArray(
+      testCase.relevant
+    )
+  ) {
+    return testCase.relevant.map(
+      String
+    );
   }
 
   return [];
@@ -247,17 +265,15 @@ function evaluateRanking(
   relevantIds = [],
   k = 5
 ) {
-  const safeRankedProducts = Array.isArray(
-    rankedProducts
-  )
-    ? rankedProducts
-    : [];
+  const safeRankedProducts =
+    Array.isArray(rankedProducts)
+      ? rankedProducts
+      : [];
 
-  const safeRelevantIds = Array.isArray(
-    relevantIds
-  )
-    ? relevantIds
-    : [];
+  const relevant =
+    Array.isArray(relevantIds)
+      ? relevantIds.map(String)
+      : [];
 
   const safeK = Math.max(
     1,
@@ -266,44 +282,71 @@ function evaluateRanking(
     )
   );
 
-  const rankedIds = safeRankedProducts
-    .slice(0, safeK)
-    .map(product => String(product.id));
+  const rankedIds =
+    safeRankedProducts
+      .slice(0, safeK)
+      .map(product =>
+        String(product.id)
+      );
 
-  const relevant = safeRelevantIds.map(
-    String
-  );
+  const precision =
+    precisionAtK(
+      rankedIds,
+      relevant,
+      safeK
+    );
+
+  const recall =
+    recallAtK(
+      rankedIds,
+      relevant,
+      safeK
+    );
+
+  const f1 =
+    f1AtK(
+      rankedIds,
+      relevant,
+      safeK
+    );
+
+  const reciprocal =
+    mrr(
+      [rankedIds],
+      [relevant]
+    );
+
+  const ndcg =
+    ndcgAtK(
+      rankedIds,
+      relevant,
+      safeK
+    );
 
   return {
-    precisionAtK: precisionAtK(
-      rankedIds,
-      relevant,
-      safeK
+    precisionAtK: safeNumber(
+      precision
     ),
-    recallAtK: recallAtK(
-      rankedIds,
-      relevant,
-      safeK
+    recallAtK: safeNumber(
+      recall
     ),
-    f1AtK: f1AtK(
-      rankedIds,
-      relevant,
-      safeK
+    f1AtK: safeNumber(
+      f1
     ),
-    mrr: mrr(
-      rankedIds,
-      relevant
+    mrr: safeNumber(
+      reciprocal
     ),
-    ndcgAtK: ndcgAtK(
-      rankedIds,
-      relevant,
-      safeK
+    ndcgAtK: safeNumber(
+      ndcg
     )
   };
 }
 
 function mean(values = []) {
-  if (!Array.isArray(values) || !values.length) {
+  if (
+    !Array.isArray(values) ||
+    values.length === 0
+  ) {
     return 0;
   }
 
@@ -317,9 +360,10 @@ function mean(values = []) {
 }
 
 function aggregate(results = []) {
-  const metrics = Array.isArray(results)
-    ? results
-    : [];
+  const metrics =
+    Array.isArray(results)
+      ? results
+      : [];
 
   return {
     precisionAtK: mean(
@@ -361,48 +405,46 @@ function runConfiguration(
   configuration = {},
   k = 5
 ) {
-  const safeProducts = Array.isArray(
-    products
-  )
-    ? products
-    : [];
+  const safeProducts =
+    Array.isArray(products)
+      ? products
+      : [];
 
-  const safeEvaluationCases =
+  const safeCases =
     Array.isArray(evaluationCases)
       ? evaluationCases
       : [];
 
   const results =
-    safeEvaluationCases.map(
-      testCase => {
-        const query = String(
-          testCase?.query ?? ""
-        );
+    safeCases.map(testCase => {
+      const query = String(
+        testCase?.query ?? ""
+      );
 
-        const ranked = rankProducts(
+      const ranked =
+        rankProducts(
           safeProducts,
           query,
           configuration
         );
 
-        const relevantIds =
-          resolveRelevantIds(
-            testCase
-          );
+      const relevantIds =
+        resolveRelevantIds(
+          testCase
+        );
 
-        const metrics =
-          evaluateRanking(
-            ranked,
-            relevantIds,
-            k
-          );
+      const metrics =
+        evaluateRanking(
+          ranked,
+          relevantIds,
+          k
+        );
 
-        return {
-          query,
-          metrics
-        };
-      }
-    );
+      return {
+        query,
+        metrics
+      };
+    });
 
   return {
     configuration,
