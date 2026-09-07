@@ -278,15 +278,17 @@ function runAblationStudy(products, evaluationCases, k = 5) {
     }
   ];
 
-  return configurations.map(configuration =>
-    runConfiguration(
-      products,
-      evaluationCases,
-      configuration,
-      k
-    )
-  );
-}
+  return {
+  query: testCase.query,
+  metrics: evaluateRanking(
+    ranked,
+    testCase.relevantIds ??
+      testCase.relevantProductIds ??
+      testCase.relevant ??
+      [],
+    k
+  )
+};
 
 function compareAblationResults(results) {
   return [...results]
