@@ -217,10 +217,11 @@ function extractFeatures(
     intent,
     options = {}
 ) {
+    const resolvedIntent =
+        intent ?? parseQuery(query);
+
     const semantic =
-        getSemanticSignal(
-            product
-        );
+        getSemanticSignal(product);
 
     const lexical =
         lexicalScore(
@@ -230,20 +231,18 @@ function extractFeatures(
 
     const attribute =
         attributeScore(
-            intent,
+            resolvedIntent,
             product
         );
 
     const budget =
         budgetScore(
-            intent.budget,
+            resolvedIntent.budget,
             product
         );
 
     const metadata =
-        getMetadataSignal(
-            product
-        );
+        getMetadataSignal(product);
 
     const fusion =
         getFusionScore(
@@ -253,24 +252,12 @@ function extractFeatures(
         );
 
     return [
-        normalizeFeature(
-            semantic
-        ),
-        normalizeFeature(
-            lexical
-        ),
-        normalizeFeature(
-            attribute
-        ),
-        normalizeFeature(
-            budget
-        ),
-        normalizeFeature(
-            metadata
-        ),
-        normalizeFeature(
-            fusion
-        )
+        normalizeFeature(semantic),
+        normalizeFeature(lexical),
+        normalizeFeature(attribute),
+        normalizeFeature(budget),
+        normalizeFeature(metadata),
+        normalizeFeature(fusion)
     ];
 }
 
