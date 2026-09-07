@@ -172,9 +172,13 @@ function rankProducts(products, query, configuration) {
 }
 
 function evaluateRanking(rankedProducts, relevantIds, k = 5) {
-  const rankedIds = rankedProducts.slice(0, k).map(product => String(product.id));
+  const rankedIds = rankedProducts
+    .slice(0, k)
+    .map(product => String(product.id));
 
-  const relevant = relevantIds.map(String);
+  const relevant = Array.isArray(relevantIds)
+    ? relevantIds.map(String)
+    : [];
 
   return {
     precisionAtK: precisionAtK(rankedIds, relevant, k),
