@@ -217,11 +217,7 @@ function resolveRelevantIds(testCase) {
   return [];
 }
 
-function evaluateRanking(
-  rankedProducts,
-  relevantIds,
-  k = 5
-) {
+function evaluateRanking(rankedProducts, relevantIds, k = 5) {
   const rankedIds = rankedProducts
     .slice(0, k)
     .map(product => String(product.id));
@@ -231,30 +227,11 @@ function evaluateRanking(
     : [];
 
   return {
-    precisionAtK: precisionAtK(
-      rankedIds,
-      relevant,
-      k
-    ),
-    recallAtK: recallAtK(
-      rankedIds,
-      relevant,
-      k
-    ),
-    f1AtK: f1AtK(
-      rankedIds,
-      relevant,
-      k
-    ),
-    mrr: mrr(
-      rankedIds,
-      relevant
-    ),
-    ndcgAtK: ndcgAtK(
-      rankedIds,
-      relevant,
-      k
-    )
+    precisionAtK: precisionAtK(rankedIds, relevant, k),
+    recallAtK: recallAtK(rankedIds, relevant, k),
+    f1AtK: f1AtK(rankedIds, relevant, k),
+    mrr: mrr(rankedIds, relevant),
+    ndcgAtK: ndcgAtK(rankedIds, relevant, k)
   };
 }
 
