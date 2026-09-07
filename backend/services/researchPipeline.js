@@ -144,17 +144,27 @@ function runResearchPipeline({
 
   const errors = {};
 
-  for (const [name, rows] of Object.entries(systemResults)) {
-    errors[name] = analyzeDataset(
-      rows.map(row => ({
-        query: row.query,
-        rankedIds: row.ranking.map(item => item.id),
-        relevantIds: evaluationCases.find(
-          testCase => testCase.query === row.query
-        )?.relevantProductIds ?? []
-      }))
-    );
-  }
+for (const [name, rows] of Object.entries(systemResults)) {
+  const rankings = new Map(
+    rows.map(row => [
+      row.query,
+      row.ranking.map(item => item.id)
+    ])
+  );
+
+  const cases = evaluationCases.map(testCase => ({
+    query: testCase.query,
+    relevantIds: Array.from(
+      relevantIds(testCase)
+    )
+  }));
+
+  errors[name] = analyzeDataset(
+    cases,
+    rankings,
+    k
+  );
+}
 
   const report = generateResearchReport({
     experiment: "fashion-retrieval-research",
