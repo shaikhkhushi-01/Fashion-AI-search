@@ -167,15 +167,16 @@ for (const [name, rows] of Object.entries(systemResults)) {
 }
 
   const report = generateResearchReport({
-    experiment: "fashion-retrieval-research",
-    systems: summaries,
-    errors,
-    configuration: {
-      k,
-      queries: evaluationCases.length,
-      catalogueSize: products.length
-    }
-  });
+  dataset: {
+    size: products.length,
+    testQueries: evaluationCases.length
+  },
+  evaluation: summaries,
+  ablation: [],
+  robustness: {},
+  errors,
+  statistics: {}
+});
 
   return {
     configuration: {
