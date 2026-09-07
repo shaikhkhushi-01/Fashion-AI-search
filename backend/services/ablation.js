@@ -1,9 +1,5 @@
 import {
-  precisionAtK,
-  recallAtK,
-  f1AtK,
-  mrr,
-  ndcgAtK
+  evaluateQuery
 } from "./evaluation.js";
 
 function normalize(value) {
@@ -265,79 +261,44 @@ function evaluateRanking(
   relevantIds = [],
   k = 5
 ) {
-  const safeRankedProducts =
-    Array.isArray(rankedProducts)
-      ? rankedProducts
-      : [];
+  const safeRankedProducts = Array.isArray(rankedProducts)
+    ? rankedProducts
+    : [];
 
-  const relevant =
-    Array.isArray(relevantIds)
-      ? relevantIds.map(String)
-      : [];
+  const relevant = Array.isArray(relevantIds)
+    ? relevantIds.map(String)
+    : [];
 
   const safeK = Math.max(
     1,
-    Math.floor(
-      safeNumber(k, 5)
-    )
+    Math.floor(safeNumber(k, 5))
   );
 
-  const rankedIds =
-    safeRankedProducts
-      .slice(0, safeK)
-      .map(product =>
-        String(product.id)
-      );
+  const rankedIds = safeRankedProducts
+    .slice(0, safeK)
+    .map(product => String(product.id));
 
-  const precision =
-    precisionAtK(
-      rankedIds,
-      relevant,
-      safeK
-    );
+  const relevanceMap = {};
 
-  const recall =
-    recallAtK(
-      rankedIds,
-      relevant,
-      safeK
-    );
+  for (const id of relevant) {
+    relevanceMap[String(id)] = 1;
+  }
 
-  const f1 =
-    f1AtK(
-      rankedIds,
-      relevant,
-      safeK
-    );
-
-  const reciprocal = mrr([rankedIds], [relevant]);
-
-  const ndcg =
-    ndcgAtK(
-      rankedIds,
-      relevant,
-      safeK
-    );
+  const metrics = evaluateQuery(
+    rankedIds,
+    relevant,
+    relevanceMap,
+    safeK
+  );
 
   return {
-    precisionAtK: safeNumber(
-      precision
-    ),
-    recallAtK: safeNumber(
-      recall
-    ),
-    f1AtK: safeNumber(
-      f1
-    ),
-    mrr: safeNumber(
-      reciprocal
-    ),
-    ndcgAtK: safeNumber(
-      ndcg
-    )
+    precisionAtK: safeNumber(metrics.precisionAtK),
+    recallAtK: safeNumber(metrics.recallAtK),
+    f1AtK: safeNumber(metrics.f1AtK),
+    mrr: safeNumber(metrics.reciprocalRank),
+    ndcgAtK: safeNumber(metrics.ndcgAtK)
   };
 }
-
 function mean(values = []) {
   if (
     !Array.isArray(values) ||
