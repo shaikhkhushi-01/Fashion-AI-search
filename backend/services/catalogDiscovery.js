@@ -1,4 +1,3 @@
-```js
 import { tokenize } from "./aiSearch.js";
 
 function normalize(value) {
@@ -432,4 +431,3 @@ export {
   getFilterValues,
   buildSearchSuggestions
 };
-```
