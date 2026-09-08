@@ -3,11 +3,6 @@ import cors from "cors";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { execFile } from "child_process";
-import { promisify } from "util";
-const PYTHON_AI_URL =
-  process.env.PYTHON_AI_URL ||
-  "http://127.0.0.1:8000";
 import {
   normalizeProfile,
   personalizeProducts
@@ -639,23 +634,33 @@ SEARCH
 =========================================================
 */
 
-function performSearch(
-  query = "",
-  filters = {},
-  sort = "relevance",
-  limit
+async function performSearch(
+  query,
+  options = {}
 ) {
-  const filteredProducts =
-    applyFilters(
-      products,
-      filters
-    );
-
   const normalizedQuery =
-    String(
-      query ?? ""
-    ).trim();
+    String(query ?? "").trim();
 
+  if (!normalizedQuery) {
+    return [];
+  }
+
+  const filteredProducts =
+    Array.isArray(options.products)
+      ? options.products
+      : products;
+
+  return searchProducts(
+    filteredProducts,
+    normalizedQuery,
+    {
+      limit:
+        options.limit ?? 20,
+      minScore:
+        options.minScore ?? 0
+    }
+  );
+}
   /*
   -------------------------------------------------------
   NO QUERY
