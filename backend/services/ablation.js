@@ -366,9 +366,9 @@ function runConfiguration(
   };
 }
 
-function runAblationStudy(
-  products,
-  evaluationCases,
+async function runAblationStudy(
+  products = [],
+  evaluationCases = [],
   k = 5
 ) {
   const configurations = [
@@ -416,14 +416,84 @@ function runAblationStudy(
     }
   ];
 
-  return configurations.map(
-    configuration =>
-      runConfiguration(
+  const semanticProductsByQuery =
+    new Map();
+
+  for (
+    const testCase of evaluationCases
+  ) {
+    const scoreMap =
+      await getSemanticScoreMap(
         products,
-        evaluationCases,
+        testCase.query
+      );
+
+    const enrichedProducts =
+      products.map(product => ({
+        ...product,
+        semanticScore:
+          Number(
+            scoreMap.get(
+              String(product.id)
+            ) ?? 0
+          )
+      }));
+
+    semanticProductsByQuery.set(
+      testCase.query,
+      enrichedProducts
+    );
+  }
+
+  return configurations.map(
+    configuration => {
+      const queryResults =
+        evaluationCases.map(
+          testCase => {
+            const enrichedProducts =
+              semanticProductsByQuery.get(
+                testCase.query
+              ) || products;
+
+            const ranked =
+              rankProducts(
+                enrichedProducts,
+                testCase.query,
+                configuration
+              );
+
+            const relevantIds =
+              resolveRelevantIds(
+                testCase
+              );
+
+            const metrics =
+              evaluateRanking(
+                ranked,
+                relevantIds,
+                k
+              );
+
+            return {
+              query:
+                testCase.query,
+              metrics
+            };
+          }
+        );
+
+      return {
         configuration,
-        k
-      )
+        queries: queryResults,
+        aggregate:
+          aggregate(
+            queryResults.map(
+              item =>
+                item.metrics
+            )
+          )
+      };
+    }
   );
 }
 
