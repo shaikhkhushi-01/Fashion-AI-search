@@ -1,6 +1,7 @@
 from pathlib import Path
-import json
+import gc
 import hashlib
+import json
 import os
 
 import numpy as np
@@ -19,6 +20,16 @@ METADATA_FILE = CACHE_DIR / "embedding_metadata.json"
 MODEL_NAME = os.getenv(
     "EMBEDDING_MODEL",
     "sentence-transformers/all-MiniLM-L6-v2"
+)
+
+MODEL_BACKEND = os.getenv(
+    "EMBEDDING_BACKEND",
+    "onnx"
+)
+
+MODEL_PROVIDER = os.getenv(
+    "ONNX_PROVIDER",
+    "CPUExecutionProvider"
 )
 
 app = FastAPI(
@@ -91,9 +102,7 @@ def normalize_product(product):
             if str(tag).strip()
         ]
     elif tags:
-        normalized["tags"] = [
-            str(tags).strip()
-        ]
+        normalized["tags"] = [str(tags).strip()]
     else:
         normalized["tags"] = []
 
@@ -120,9 +129,7 @@ def build_product_text(product):
         normalized = normalize_value(value)
 
         if normalized:
-            parts.append(
-                f"{label}: {normalized}"
-            )
+            parts.append(f"{label}: {normalized}")
 
     return " | ".join(parts)
 
@@ -180,7 +187,11 @@ def load_model():
     global model
 
     model = SentenceTransformer(
-        MODEL_NAME
+        MODEL_NAME,
+        backend=MODEL_BACKEND,
+        model_kwargs={
+            "provider": MODEL_PROVIDER
+        }
     )
 
 
@@ -197,6 +208,7 @@ def save_embeddings():
 
     metadata = {
         "model": MODEL_NAME,
+        "backend": MODEL_BACKEND,
         "catalog_hash": catalog_hash,
         "product_count": len(products),
         "embedding_dimension": int(
@@ -236,9 +248,10 @@ def load_cached_embeddings():
         if metadata.get("model") != MODEL_NAME:
             return None
 
-        if metadata.get(
-            "catalog_hash"
-        ) != catalog_hash:
+        if metadata.get("catalog_hash") != catalog_hash:
+            return None
+
+        if metadata.get("backend") != MODEL_BACKEND:
             return None
 
         cached = np.load(
@@ -252,7 +265,8 @@ def load_cached_embeddings():
             return None
 
         return cached.astype(
-            np.float32
+            np.float32,
+            copy=False
         )
 
     except Exception:
@@ -275,13 +289,19 @@ def build_embeddings():
 
     embeddings = model.encode(
         texts,
-        batch_size=32,
+        batch_size=4,
         show_progress_bar=False,
         normalize_embeddings=True,
         convert_to_numpy=True
-    ).astype(np.float32)
+    ).astype(
+        np.float32,
+        copy=False
+    )
 
     save_embeddings()
+
+    del texts
+    gc.collect()
 
 
 def initialize():
@@ -309,9 +329,13 @@ def semantic_search(
 
     query_embedding = model.encode(
         [query],
+        batch_size=1,
         normalize_embeddings=True,
         convert_to_numpy=True
-    ).astype(np.float32)[0]
+    ).astype(
+        np.float32,
+        copy=False
+    )[0]
 
     scores = np.dot(
         embeddings,
@@ -339,6 +363,9 @@ def semantic_search(
             }
         )
 
+    del query_embedding
+    gc.collect()
+
     return results
 
 
@@ -352,6 +379,8 @@ def health():
     return {
         "status": "ok",
         "model": MODEL_NAME,
+        "backend": MODEL_BACKEND,
+        "provider": MODEL_PROVIDER,
         "products": len(products),
         "embedding_dimension": (
             int(embeddings.shape[1])
@@ -367,6 +396,7 @@ def product_info():
     return {
         "count": len(products),
         "model": MODEL_NAME,
+        "backend": MODEL_BACKEND,
         "embedding_dimension": (
             int(embeddings.shape[1])
             if embeddings is not None
