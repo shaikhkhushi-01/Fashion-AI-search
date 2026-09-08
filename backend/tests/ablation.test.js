@@ -1,43 +1,63 @@
 import assert from "assert";
+
 import {
   runAblationStudy,
   compareAblationResults
 } from "../services/ablation.js";
+
 import {
   products,
   evaluationCases
 } from "./evaluation-cases.js";
 
-const results = runAblationStudy(
-  products,
-  evaluationCases,
-  5
-);
+const results =
+  await runAblationStudy(
+    products,
+    evaluationCases,
+    5
+  );
 
 assert.strictEqual(
   results.length,
   6
 );
 
-for (const result of results) {
+for (
+  const result of results
+) {
   assert.ok(
-    Number.isFinite(result.aggregate.precisionAtK)
+    Number.isFinite(
+      result.aggregate
+        .precisionAtK
+    )
   );
 
   assert.ok(
-    Number.isFinite(result.aggregate.recallAtK)
+    Number.isFinite(
+      result.aggregate
+        .recallAtK
+    )
   );
 
   assert.ok(
-    Number.isFinite(result.aggregate.f1AtK)
+    Number.isFinite(
+      result.aggregate
+        .f1AtK
+    )
   );
 
   assert.ok(
-    Number.isFinite(result.aggregate.mrr)
+    Number.isFinite(
+      result.aggregate
+        .mrr
+    )
   );
 
   assert.ok(
-    Number.isFinite(result.aggregate.ndcgAtK)
+    Number.isFinite(
+      result.aggregate
+        .ndcgAtK
+    )
   );
 
   assert.strictEqual(
@@ -47,18 +67,64 @@ for (const result of results) {
 }
 
 const comparison =
-  compareAblationResults(results);
+  compareAblationResults(
+    results
+  );
 
 assert.strictEqual(
   comparison.length,
   6
 );
 
-for (let index = 1; index < comparison.length; index += 1) {
+for (
+  let index = 1;
+  index < comparison.length;
+  index += 1
+) {
   assert.ok(
-    comparison[index - 1].ndcgAtK >=
-      comparison[index].ndcgAtK
+    comparison[
+      index - 1
+    ].ndcgAtK >=
+      comparison[
+        index
+      ].ndcgAtK
   );
 }
 
-console.log("Ablation tests passed");
+const semantic =
+  results.find(
+    result =>
+      result.configuration
+        .name ===
+      "semantic-only"
+  );
+
+const hybrid =
+  results.find(
+    result =>
+      result.configuration
+        .name ===
+      "full-hybrid"
+  );
+
+assert.ok(
+  semantic
+);
+
+assert.ok(
+  hybrid
+);
+
+assert.ok(
+  semantic.aggregate
+    .ndcgAtK > 0
+);
+
+assert.ok(
+  hybrid.aggregate
+    .ndcgAtK > 0
+);
+
+console.log(
+  "Ablation tests passed"
+);
