@@ -105,7 +105,7 @@ const cases = [
   },
   {
     query: "linen shirt",
-    relevant: ["5"]
+    relevant: ["8"]
   }
 ];
 
@@ -119,7 +119,7 @@ const comparison =
 
 assert.strictEqual(
   comparison.recovered.length,
-  2
+  1
 );
 
 assert.strictEqual(
@@ -129,12 +129,17 @@ assert.strictEqual(
 
 assert.strictEqual(
   comparison.unchanged.length,
-  1
+  2
 );
 
 assert.ok(
   comparison.recoveryRate >
     0
+);
+
+assert.strictEqual(
+  comparison.regressionRate,
+  0
 );
 
 const intents =
