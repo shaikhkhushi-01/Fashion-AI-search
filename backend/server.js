@@ -3,10 +3,14 @@ import cors from "cors";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { execFile } from "child_process";
+import { promisify } from "util";
+
 import {
   normalizeProfile,
   personalizeProducts
 } from "./services/personalization.js";
+
 import {
   buildDiscoveryResult,
   getFilterValues,
@@ -23,12 +27,6 @@ import {
 
 import { evaluationCases } from "./tests/evaluation-cases.js";
 
-/*
-=========================================================
-PATH CONFIGURATION
-=========================================================
-*/
-
 const __filename =
   fileURLToPath(import.meta.url);
 
@@ -38,20 +36,8 @@ const __dirname =
 const execFileAsync =
   promisify(execFile);
 
-/*
-=========================================================
-APPLICATION
-=========================================================
-*/
-
 const app =
   express();
-
-/*
-=========================================================
-ENVIRONMENT CONFIGURATION
-=========================================================
-*/
 
 const PORT =
   Number(process.env.PORT) || 10000;
@@ -89,35 +75,17 @@ const ENABLE_REQUEST_LOGGING =
 const CORS_ORIGIN =
   process.env.CORS_ORIGIN || "*";
 
-/*
-=========================================================
-CORS
-=========================================================
-*/
-
 app.use(
   cors({
     origin: CORS_ORIGIN
   })
 );
 
-/*
-=========================================================
-JSON BODY
-=========================================================
-*/
-
 app.use(
   express.json({
     limit: "1mb"
   })
 );
-
-/*
-=========================================================
-REQUEST LOGGING
-=========================================================
-*/
 
 if (ENABLE_REQUEST_LOGGING) {
   app.use(
@@ -143,12 +111,6 @@ if (ENABLE_REQUEST_LOGGING) {
   );
 }
 
-/*
-=========================================================
-PRODUCT DATA
-=========================================================
-*/
-
 let products = [];
 
 const productsPath =
@@ -158,12 +120,6 @@ const productsPath =
     "data",
     "products.json"
   );
-
-/*
-=========================================================
-LOAD PRODUCTS
-=========================================================
-*/
 
 function loadProducts() {
   try {
@@ -228,11 +184,9 @@ function loadProducts() {
 
 loadProducts();
 
-/*
-=========================================================
-STARTUP VALIDATION
-=========================================================
-*/
+function getProducts() {
+  return products;
+}
 
 function validateStartup() {
   const errors = [];
@@ -389,12 +343,6 @@ function validateStartup() {
 const startupValid =
   validateStartup();
 
-/*
-=========================================================
-TEXT HELPERS
-=========================================================
-*/
-
 function normalizeText(
   value
 ) {
@@ -424,12 +372,6 @@ function safeArray(
   return [];
 }
 
-/*
-=========================================================
-LIMIT
-=========================================================
-*/
-
 function normalizeLimit(
   value
 ) {
@@ -454,12 +396,6 @@ function normalizeLimit(
     )
   );
 }
-
-/*
-=========================================================
-FILTER MATCHING
-=========================================================
-*/
 
 function matchesFilter(
   product,
@@ -609,12 +545,6 @@ function matchesFilter(
   return true;
 }
 
-/*
-=========================================================
-FILTER PRODUCTS
-=========================================================
-*/
-
 function applyFilters(
   items,
   filters = {}
@@ -628,44 +558,26 @@ function applyFilters(
   );
 }
 
-/*
-=========================================================
-SEARCH
-=========================================================
-*/
-
 async function performSearch(
   query,
   options = {}
 ) {
   const normalizedQuery =
-    String(query ?? "").trim();
-
-  if (!normalizedQuery) {
-    return [];
-  }
+    String(
+      query ?? ""
+    ).trim();
 
   const filteredProducts =
-    Array.isArray(options.products)
+    Array.isArray(
+      options.products
+    )
       ? options.products
       : products;
 
-  return searchProducts(
-    filteredProducts,
-    normalizedQuery,
-    {
-      limit:
-        options.limit ?? 20,
-      minScore:
-        options.minScore ?? 0
-    }
-  );
-}
-  /*
-  -------------------------------------------------------
-  NO QUERY
-  -------------------------------------------------------
-  */
+  const limit =
+    normalizeLimit(
+      options.limit
+    );
 
   if (
     !normalizedQuery
@@ -674,21 +586,26 @@ async function performSearch(
       filteredProducts.map(
         product => ({
           ...product,
-
           matchScore: 50,
-
           score: 50,
-
+          hybridScore: 0.5,
           reasons: [
             "Matches your selected filters."
           ]
         })
       );
 
+    const sort =
+      options.sort ||
+      "relevance";
+
     if (
       normalizeText(
         sort
-      ) === "price-low"
+      ) === "price-low" ||
+      normalizeText(
+        sort
+      ) === "price-asc"
     ) {
       results.sort(
         (a, b) =>
@@ -700,7 +617,10 @@ async function performSearch(
     if (
       normalizeText(
         sort
-      ) === "price-high"
+      ) === "price-high" ||
+      normalizeText(
+        sort
+      ) === "price-desc"
     ) {
       results.sort(
         (a, b) =>
@@ -723,37 +643,33 @@ async function performSearch(
 
     return results.slice(
       0,
-      normalizeLimit(limit)
+      limit
     );
   }
 
-  /*
-  -------------------------------------------------------
-  HYBRID AI SEARCH
-  -------------------------------------------------------
-  */
-
   let results =
-    searchProducts(
+    await searchProducts(
       filteredProducts,
       normalizedQuery,
       {
-        limit:
-          normalizeLimit(limit),
-
+        limit,
         minScore:
+          options.minScore ??
           MINIMUM_SEARCH_SCORE
       }
     );
 
-  /*
-  -------------------------------------------------------
-  SORTING
-  -------------------------------------------------------
-  */
+  if (
+    !Array.isArray(results)
+  ) {
+    results = [];
+  }
 
   switch (
-    normalizeText(sort)
+    normalizeText(
+      options.sort ||
+        "relevance"
+    )
   ) {
     case "price-low":
     case "price-asc":
@@ -788,11 +704,13 @@ async function performSearch(
           Number(
             b.hybridScore ??
             b.matchScore ??
+            b.score ??
             0
           ) -
           Number(
             a.hybridScore ??
             a.matchScore ??
+            a.score ??
             0
           )
       );
@@ -801,15 +719,9 @@ async function performSearch(
 
   return results.slice(
     0,
-    normalizeLimit(limit)
+    limit
   );
 }
-
-/*
-=========================================================
-STYLIST
-=========================================================
-*/
 
 function buildStylistQuery(
   body = {}
@@ -974,12 +886,6 @@ function stylistReasons(
   );
 }
 
-/*
-=========================================================
-HEALTH
-=========================================================
-*/
-
 app.get(
   "/api/health",
   (req, res) => {
@@ -1013,12 +919,6 @@ app.get(
   }
 );
 
-/*
-=========================================================
-READINESS
-=========================================================
-*/
-
 app.get(
   "/api/ready",
   (req, res) => {
@@ -1048,12 +948,6 @@ app.get(
   }
 );
 
-/*
-=========================================================
-VERSION
-=========================================================
-*/
-
 app.get(
   "/api/version",
   (req, res) => {
@@ -1081,12 +975,6 @@ app.get(
     });
   }
 );
-
-/*
-=========================================================
-MANIFEST
-=========================================================
-*/
 
 app.get(
   "/api/manifest",
@@ -1186,12 +1074,6 @@ app.get(
   }
 );
 
-/*
-=========================================================
-PRODUCTS
-=========================================================
-*/
-
 app.get(
   "/api/products",
   (req, res) => {
@@ -1203,12 +1085,6 @@ app.get(
     });
   }
 );
-
-/*
-=========================================================
-FILTERS
-=========================================================
-*/
 
 app.get(
   "/api/filters",
@@ -1309,15 +1185,9 @@ app.get(
   }
 );
 
-/*
-=========================================================
-SEARCH API
-=========================================================
-*/
-
 app.post(
   "/api/search",
-  (req, res) => {
+  async (req, res) => {
     try {
       const body =
         req.body || {};
@@ -1352,12 +1222,24 @@ app.post(
           limit
         );
 
+      const filteredProducts =
+        applyFilters(
+          products,
+          filters
+        );
+
       const results =
-        performSearch(
+        await performSearch(
           query,
-          filters,
-          sort,
-          normalizedLimit
+          {
+            products:
+              filteredProducts,
+            sort,
+            limit:
+              normalizedLimit,
+            minScore:
+              MINIMUM_SEARCH_SCORE
+          }
         );
 
       res.json({
@@ -1403,35 +1285,99 @@ app.post(
   }
 );
 
-/*
-=========================================================
-FILTER API
-=========================================================
-*/
-
 app.post(
   "/api/filter",
   (req, res) => {
     try {
-      const filters =
+      const body =
         req.body || {};
+
+      const filters = {
+        category:
+          body.category || "",
+        gender:
+          body.gender || "",
+        color:
+          body.color || "",
+        style:
+          body.style || "",
+        occasion:
+          body.occasion || "",
+        material:
+          body.material || "",
+        minPrice:
+          body.minPrice ?? "",
+        maxPrice:
+          body.maxPrice ?? ""
+      };
 
       const limit =
         normalizeLimit(
-          filters.limit
+          body.limit
         );
 
-      const results =
-        performSearch(
-          "",
-          filters,
-          filters.sort ||
-            "relevance",
+      let results =
+        applyFilters(
+          products,
+          filters
+        ).map(
+          product => ({
+            ...product,
+            matchScore: 50,
+            score: 50,
+            hybridScore: 0.5,
+            reasons: [
+              "Matches your selected filters."
+            ]
+          })
+        );
+
+      const sort =
+        normalizeText(
+          body.sort ||
+            "relevance"
+        );
+
+      if (
+        sort === "price-low" ||
+        sort === "price-asc"
+      ) {
+        results.sort(
+          (a, b) =>
+            Number(a.price || 0) -
+            Number(b.price || 0)
+        );
+      }
+
+      if (
+        sort === "price-high" ||
+        sort === "price-desc"
+      ) {
+        results.sort(
+          (a, b) =>
+            Number(b.price || 0) -
+            Number(a.price || 0)
+        );
+      }
+
+      if (
+        sort === "newest"
+      ) {
+        results.sort(
+          (a, b) =>
+            Number(b.id || 0) -
+            Number(a.id || 0)
+        );
+      }
+
+      results =
+        results.slice(
+          0,
           limit
         );
 
       res.json({
-        filters,
+        filters: body,
 
         count:
           results.length,
@@ -1454,15 +1400,9 @@ app.post(
   }
 );
 
-/*
-=========================================================
-RECOMMENDATIONS
-=========================================================
-*/
-
 app.post(
   "/api/recommendations",
-  (req, res) => {
+  async (req, res) => {
     try {
       const {
         query = "",
@@ -1471,7 +1411,9 @@ app.post(
       } = req.body || {};
 
       const profile =
-        normalizeProfile(preferences);
+        normalizeProfile(
+          preferences
+        );
 
       const filters = {
         category:
@@ -1492,34 +1434,58 @@ app.post(
           preferences.maxPrice || ""
       };
 
+      const filteredProducts =
+        applyFilters(
+          products,
+          filters
+        );
+
       const candidates =
-        performSearch(
+        await performSearch(
           query,
-          filters,
-          "relevance",
-          50
+          {
+            products:
+              filteredProducts,
+            sort:
+              "relevance",
+            limit:
+              50
+          }
         );
 
       const queryScores = {};
 
-      for (const product of candidates) {
+      for (
+        const product of candidates
+      ) {
         const rawScore =
           product.semanticScore ??
           product.similarity ??
           product.relevanceScore ??
           product.ai_match_score ??
+          product.hybridScore ??
+          product.matchScore ??
           0;
 
-        let score = Number(rawScore);
+        let score =
+          Number(rawScore);
 
-        if (score > 1) {
-          score /= 100;
+        if (
+          score > 1
+        ) {
+          score /=
+            100;
         }
 
-        queryScores[product.id] =
+        queryScores[
+          product.id
+        ] =
           Math.max(
             0,
-            Math.min(1, score)
+            Math.min(
+              1,
+              score
+            )
           );
       }
 
@@ -1542,12 +1508,20 @@ app.post(
         );
 
       res.json({
-        status: "completed",
+        status:
+          "completed",
+
         query:
-          String(query ?? ""),
-        preferences: profile,
+          String(
+            query ?? ""
+          ),
+
+        preferences:
+          profile,
+
         count:
           recommendations.length,
+
         recommendations
       });
     } catch (error) {
@@ -1557,23 +1531,21 @@ app.post(
       );
 
       res.status(500).json({
-        status: "failed",
+        status:
+          "failed",
+
         error:
           "Personalized recommendation failed.",
+
         recommendations: []
       });
     }
   }
 );
-/*
-=========================================================
-DAY 9 - AI STYLIST
-=========================================================
-*/
 
 app.post(
   "/api/stylist",
-  (req, res) => {
+  async (req, res) => {
     try {
       const request =
         req.body || {};
@@ -1584,11 +1556,16 @@ app.post(
         );
 
       const results =
-        performSearch(
+        await performSearch(
           query,
-          {},
-          "relevance",
-          12
+          {
+            products:
+              products,
+            sort:
+              "relevance",
+            limit:
+              12
+          }
         );
 
       const enriched =
@@ -1640,59 +1617,68 @@ app.post(
   }
 );
 
-/*
-=========================================================
-RESEARCH EVALUATION
-=========================================================
-*/
-
-function runEvaluation() {
+async function runEvaluation() {
   const evaluationQueries =
     evaluationCases.map(
       item => ({
         query:
           item.query,
 
+        relevant:
+          item.relevant ||
+          item.relevance ||
+          [],
+
         relevance:
-          item.relevance
+          item.relevance || {}
       })
     );
 
-  return evaluateDataset(
-    evaluationQueries,
-    (query) =>
-      searchProducts(
+  const predictionMap =
+    new Map();
+
+  for (
+    const item of evaluationQueries
+  ) {
+    const results =
+      await searchProducts(
         products,
-        query,
+        item.query,
         {
           limit: 10,
-
           minScore: 0
         }
-      ),
+      );
+
+    predictionMap.set(
+      item.query,
+      Array.isArray(results)
+        ? results.map(
+            product =>
+              product.id
+          )
+        : []
+    );
+  }
+
+  return evaluateDataset(
+    evaluationQueries,
+    query =>
+      predictionMap.get(
+        query
+      ) || [],
     {
-      kValues: [
-        1,
-        3,
-        5,
-        10
-      ]
+      k: 5
     }
   );
 }
 
-/*
-=========================================================
-EVALUATION API
-=========================================================
-*/
-
 app.get(
   "/api/evaluation",
-  (req, res) => {
+  async (req, res) => {
     try {
       const report =
-        runEvaluation();
+        await runEvaluation();
 
       res.json({
         status:
@@ -1717,15 +1703,9 @@ app.get(
   }
 );
 
-/*
-=========================================================
-EDGE CASE EVALUATION
-=========================================================
-*/
-
 app.get(
   "/api/evaluation/edge-cases",
-  (req, res) => {
+  async (req, res) => {
     try {
       const cases = [
         "",
@@ -1745,44 +1725,50 @@ app.get(
       ];
 
       const results =
-        cases.map(
-          query => {
-            const startedAt =
-              Date.now();
+        [];
 
-            let output = [];
+      for (
+        const query of cases
+      ) {
+        const startedAt =
+          Date.now();
 
-            try {
-              output =
-                searchProducts(
-                  products,
-                  query,
-                  {
-                    limit: 10,
-                    minScore: 0
-                  }
-                );
-            } catch {
-              output = [];
-            }
+        let output = [];
 
-            return {
+        try {
+          output =
+            await searchProducts(
+              products,
               query,
+              {
+                limit: 10,
+                minScore: 0
+              }
+            );
+        } catch {
+          output = [];
+        }
 
-              resultCount:
-                output.length,
+        results.push({
+          query,
 
-              durationMs:
-                Date.now() -
-                startedAt,
+          resultCount:
+            Array.isArray(
+              output
+            )
+              ? output.length
+              : 0,
 
-              validArray:
-                Array.isArray(
-                  output
-                )
-            };
-          }
-        );
+          durationMs:
+            Date.now() -
+            startedAt,
+
+          validArray:
+            Array.isArray(
+              output
+            )
+        });
+      }
 
       const failures =
         results.filter(
@@ -1820,12 +1806,6 @@ app.get(
     }
   }
 );
-
-/*
-=========================================================
-DAY 12 - ROBUSTNESS
-=========================================================
-*/
 
 app.get(
   "/api/robustness",
@@ -1958,11 +1938,273 @@ app.get(
   }
 );
 
-/*
-=========================================================
-API ERROR FOR INVALID JSON
-=========================================================
-*/
+app.post(
+  "/api/ai-search",
+  async (req, res) => {
+    try {
+      const query =
+        String(
+          req.body?.query ?? ""
+        ).trim();
+
+      const limit =
+        normalizeLimit(
+          req.body?.limit
+        );
+
+      if (!query) {
+        return res.status(400).json({
+          success:
+            false,
+
+          error:
+            "Search query is required.",
+
+          results: []
+        });
+      }
+
+      const filters = {
+        category:
+          req.body?.category || "",
+        gender:
+          req.body?.gender || "",
+        color:
+          req.body?.color || "",
+        style:
+          req.body?.style || "",
+        occasion:
+          req.body?.occasion || "",
+        material:
+          req.body?.material || "",
+        minPrice:
+          req.body?.minPrice ?? "",
+        maxPrice:
+          req.body?.maxPrice ?? ""
+      };
+
+      const filteredProducts =
+        applyFilters(
+          products,
+          filters
+        );
+
+      const results =
+        await performSearch(
+          query,
+          {
+            products:
+              filteredProducts,
+            sort:
+              "relevance",
+            limit,
+            minScore:
+              MINIMUM_SEARCH_SCORE
+          }
+        );
+
+      return res.json({
+        success:
+          true,
+
+        query,
+
+        filters,
+
+        results,
+
+        count:
+          results.length,
+
+        model:
+          MODEL_NAME,
+
+        retrieval:
+          "hybrid",
+
+        gateway:
+          "node",
+
+        ai_backend:
+          "transformers.js"
+      });
+    } catch (error) {
+      console.error(
+        "AI search error:",
+        error
+      );
+
+      return res.status(503).json({
+        success:
+          false,
+
+        error:
+          "AI search service is unavailable.",
+
+        results: []
+      });
+    }
+  }
+);
+
+app.post(
+  "/api/discovery",
+  (req, res) => {
+    try {
+      const body =
+        req.body || {};
+
+      const currentProducts =
+        getProducts();
+
+      const result =
+        buildDiscoveryResult(
+          currentProducts,
+          {
+            query:
+              body.query || "",
+
+            category:
+              body.category || "",
+
+            gender:
+              body.gender || "",
+
+            color:
+              body.color || "",
+
+            style:
+              body.style || "",
+
+            occasion:
+              body.occasion || "",
+
+            material:
+              body.material || "",
+
+            minPrice:
+              body.minPrice ?? "",
+
+            maxPrice:
+              body.maxPrice ?? "",
+
+            sort:
+              body.sort ||
+              "relevance",
+
+            page:
+              body.page || 1,
+
+            pageSize:
+              body.pageSize || 12
+          }
+        );
+
+      res.json({
+        status:
+          "completed",
+
+        ...result
+      });
+    } catch (error) {
+      console.error(
+        "Discovery error:",
+        error
+      );
+
+      res.status(500).json({
+        status:
+          "failed",
+
+        items: [],
+
+        pagination: {
+          page: 1,
+          pageSize: 12,
+          total: 0,
+          totalPages: 1,
+          hasNext: false,
+          hasPrevious: false
+        }
+      });
+    }
+  }
+);
+
+app.get(
+  "/api/discovery/filters",
+  (req, res) => {
+    try {
+      const currentProducts =
+        getProducts();
+
+      res.json({
+        status:
+          "completed",
+
+        filters:
+          getFilterValues(
+            currentProducts
+          )
+      });
+    } catch (error) {
+      console.error(
+        "Filter metadata error:",
+        error
+      );
+
+      res.status(500).json({
+        status:
+          "failed",
+
+        filters: {
+          categories: [],
+          genders: [],
+          colors: [],
+          styles: [],
+          occasions: [],
+          materials: []
+        }
+      });
+    }
+  }
+);
+
+app.get(
+  "/api/discovery/suggestions",
+  (req, res) => {
+    try {
+      const currentProducts =
+        getProducts();
+
+      const suggestions =
+        buildSearchSuggestions(
+          currentProducts,
+          req.query.q || "",
+          req.query.limit || 8
+        );
+
+      res.json({
+        status:
+          "completed",
+
+        suggestions
+      });
+    } catch (error) {
+      console.error(
+        "Suggestion error:",
+        error
+      );
+
+      res.status(500).json({
+        status:
+          "failed",
+
+        suggestions: []
+      });
+    }
+  }
+);
 
 app.use(
   (
@@ -1987,12 +2229,6 @@ app.use(
   }
 );
 
-/*
-=========================================================
-404
-=========================================================
-*/
-
 app.use(
   (req, res) => {
     res.status(404).json({
@@ -2004,12 +2240,6 @@ app.use(
     });
   }
 );
-
-/*
-=========================================================
-GLOBAL ERROR HANDLER
-=========================================================
-*/
 
 app.use(
   (
@@ -2035,12 +2265,6 @@ app.use(
     });
   }
 );
-
-/*
-=========================================================
-SERVER START
-=========================================================
-*/
 
 app.listen(
   PORT,
@@ -2101,210 +2325,5 @@ app.listen(
     console.log(
       "=========================================================\n"
     );
-  }
-);
-
-app.post(
-  "/api/ai-search",
-  async (req, res) => {
-    try {
-      const query =
-        String(
-          req.body?.query ?? ""
-        ).trim();
-
-      const limit =
-        Math.max(
-          1,
-          Math.min(
-            Number(
-              req.body?.limit || 10
-            ),
-            50
-          )
-        );
-
-      if (!query) {
-        return res.status(400).json({
-          success: false,
-          error: "Search query is required.",
-          results: []
-        });
-      }
-
-      const response =
-        await fetch(
-          `${PYTHON_AI_URL}/api/semantic-search`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type":
-                "application/json"
-            },
-           body: JSON.stringify({
-  query,
-  top_k: limit
-})
-          }
-        );
-
-      const data =
-        await response.json();
-
-      if (!response.ok) {
-        return res.status(
-          response.status
-        ).json(data);
-      }
-
-      return res.json({
-        ...data,
-        gateway: "node",
-        ai_backend: "python_fastapi"
-      });
-    } catch (error) {
-      console.error(
-        "Python AI search error:",
-        error
-      );
-
-      return res.status(503).json({
-        success: false,
-        error:
-          "Python AI service is unavailable.",
-        results: []
-      });
-    }
-  }
-);
-
-app.post(
-  "/api/discovery",
-  (req, res) => {
-    try {
-      const body = req.body || {};
-
-      const products =
-        getProducts();
-
-      const result =
-        buildDiscoveryResult(
-          products,
-          {
-            query:
-              body.query || "",
-            category:
-              body.category || "",
-            gender:
-              body.gender || "",
-            color:
-              body.color || "",
-            style:
-              body.style || "",
-            occasion:
-              body.occasion || "",
-            material:
-              body.material || "",
-            minPrice:
-              body.minPrice ?? "",
-            maxPrice:
-              body.maxPrice ?? "",
-            sort:
-              body.sort || "relevance",
-            page:
-              body.page || 1,
-            pageSize:
-              body.pageSize || 12
-          }
-        );
-
-      res.json({
-        status: "completed",
-        ...result
-      });
-    } catch (error) {
-      console.error(
-        "Discovery error:",
-        error
-      );
-
-      res.status(500).json({
-        status: "failed",
-        items: [],
-        pagination: {
-          page: 1,
-          pageSize: 12,
-          total: 0,
-          totalPages: 1,
-          hasNext: false,
-          hasPrevious: false
-        }
-      });
-    }
-  }
-);
-
-app.get(
-  "/api/discovery/filters",
-  (req, res) => {
-    try {
-      const products =
-        getProducts();
-
-      res.json({
-        status: "completed",
-        filters:
-          getFilterValues(products)
-      });
-    } catch (error) {
-      console.error(
-        "Filter metadata error:",
-        error
-      );
-
-      res.status(500).json({
-        status: "failed",
-        filters: {
-          categories: [],
-          genders: [],
-          colors: [],
-          styles: [],
-          occasions: [],
-          materials: []
-        }
-      });
-    }
-  }
-);
-
-app.get(
-  "/api/discovery/suggestions",
-  (req, res) => {
-    try {
-      const products =
-        getProducts();
-
-      const suggestions =
-        buildSearchSuggestions(
-          products,
-          req.query.q || "",
-          req.query.limit || 8
-        );
-
-      res.json({
-        status: "completed",
-        suggestions
-      });
-    } catch (error) {
-      console.error(
-        "Suggestion error:",
-        error
-      );
-
-      res.status(500).json({
-        status: "failed",
-        suggestions: []
-      });
-    }
   }
 );
