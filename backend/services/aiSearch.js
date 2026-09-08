@@ -1,252 +1,321 @@
-import { hybridRetrieve } from "./hybridRetrieval.js";
 import { getSemanticScoreMap } from "./semanticSearch.js";
 
 function normalize(value) {
-  return String(value ?? "").trim().toLowerCase();
+  return String(value ?? "")
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[^\w\s.-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function tokenize(value) {
   return normalize(value)
-    .split(/[^a-z0-9]+/)
+    .split(/\s+/)
     .filter(Boolean);
 }
 
-function textOf(product) {
+function valuesOf(value) {
+  if (Array.isArray(value)) {
+    return value.map(item => normalize(item)).filter(Boolean);
+  }
+
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map(item => normalize(item))
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+function productText(product) {
   return [
-    product.name,
-    product.brand,
-    product.category,
-    product.gender,
-    product.color,
-    product.style,
-    product.occasion,
-    product.material,
-    product.fit,
-    product.pattern,
-    product.description,
-    Array.isArray(product.tags) ? product.tags.join(" ") : product.tags
+    product?.name,
+    product?.brand,
+    product?.category,
+    product?.description,
+    product?.color,
+    product?.style,
+    product?.occasion,
+    product?.material,
+    product?.gender,
+    product?.fit,
+    product?.pattern,
+    product?.fabric,
+    ...valuesOf(product?.tags)
   ]
     .map(normalize)
+    .filter(Boolean)
     .join(" ");
 }
 
-function keywordScore(query, product) {
-  const tokens = tokenize(query);
-  if (!tokens.length) return 0;
-
-  const text = textOf(product);
-  let matched = 0;
-
-  for (const token of tokens) {
-    if (text.includes(token)) matched += 1;
-  }
-
-  return matched / tokens.length;
-}
-
-function attributeScore(query, product) {
-  const queryTokens = tokenize(query);
-  if (!queryTokens.length) return 0;
-
-  const fields = [
-    product.category,
-    product.gender,
-    product.color,
-    product.style,
-    product.occasion,
-    product.material,
-    product.fit,
-    product.pattern
-  ];
-
-  let matchedFields = 0;
-
-  for (const field of fields) {
-    const fieldTokens = tokenize(field);
-
-    if (queryTokens.some(token => fieldTokens.includes(token))) {
-      matchedFields += 1;
-    }
-  }
-
-  return Math.min(matchedFields / 4, 1);
-}
-
-function budgetScore(query, product) {
-  const match = normalize(query).match(
-    /(?:under|below|less than|upto|up to)\s*(?:₹|rs\.?|inr)?\s*(\d+)/i
-  );
-
-  if (!match) return 1;
-
-  const budget = Number(match[1]);
-  const price = Number(product.price);
-
-  if (!Number.isFinite(price) || !Number.isFinite(budget)) {
+function keywordScore(queryTokens, product) {
+  if (!queryTokens.length) {
     return 0;
   }
 
-  if (price <= budget) return 1;
+  const textTokens = new Set(
+    tokenize(productText(product))
+  );
+
+  let matches = 0;
+
+  for (const token of queryTokens) {
+    if (textTokens.has(token)) {
+      matches += 1;
+    }
+  }
+
+  return matches / queryTokens.length;
+}
+
+function attributeScore(queryTokens, product) {
+  if (!queryTokens.length) {
+    return 0;
+  }
+
+  const attributes = [
+    product?.category,
+    product?.color,
+    product?.style,
+    product?.occasion,
+    product?.material,
+    product?.gender,
+    product?.fit,
+    product?.pattern,
+    product?.fabric,
+    ...valuesOf(product?.tags)
+  ];
+
+  const attributeTokens = new Set(
+    attributes
+      .flatMap(value => tokenize(value))
+      .filter(Boolean)
+  );
+
+  let matches = 0;
+
+  for (const token of queryTokens) {
+    if (attributeTokens.has(token)) {
+      matches += 1;
+    }
+  }
+
+  return matches / queryTokens.length;
+}
+
+function budgetScore(product, options = {}) {
+  const budget = Number(options.budget);
+
+  if (!Number.isFinite(budget) || budget <= 0) {
+    return 1;
+  }
+
+  const price = Number(
+    product?.price ??
+    product?.discountedPrice ??
+    product?.salePrice
+  );
+
+  if (!Number.isFinite(price) || price <= 0) {
+    return 0;
+  }
+
+  if (price <= budget) {
+    return 1;
+  }
+
+  const difference = price - budget;
 
   return Math.max(
     0,
-    1 - (price - budget) / Math.max(budget, 1)
+    1 - difference / budget
   );
 }
 
 function metadataScore(product) {
+  let score = 0;
+  let total = 0;
+
   const fields = [
-    product.name,
-    product.category,
-    product.brand,
-    product.description
+    product?.name,
+    product?.brand,
+    product?.category,
+    product?.description,
+    product?.color,
+    product?.style,
+    product?.occasion,
+    product?.material,
+    product?.gender,
+    product?.fit,
+    product?.pattern,
+    product?.fabric
   ];
 
-  const available = fields.filter(
-    value => String(value ?? "").trim().length > 0
-  ).length;
+  for (const field of fields) {
+    total += 1;
 
-  return available / fields.length;
-}
-
-function getSemanticScore(product, semanticScores) {
-  const id = String(product.id);
-
-  if (semanticScores && semanticScores.has(id)) {
-    const score = Number(semanticScores.get(id));
-
-    if (Number.isFinite(score)) {
-      return Math.max(0, Math.min(1, score));
+    if (
+      field !== undefined &&
+      field !== null &&
+      String(field).trim()
+    ) {
+      score += 1;
     }
   }
 
-  const fallbackValues = [
-    product.semanticScore,
-    product.semantic_similarity,
-    product.similarity,
-    product.embeddingScore,
-    product.vectorScore
-  ];
+  return total ? score / total : 0;
+}
 
-  for (const value of fallbackValues) {
-    const score = Number(value);
+function getWeights(options = {}) {
+  return {
+    semantic: Number(options.semanticWeight ?? 0.45),
+    keyword: Number(options.keywordWeight ?? 0.2),
+    attribute: Number(options.attributeWeight ?? 0.2),
+    budget: Number(options.budgetWeight ?? 0.1),
+    metadata: Number(options.metadataWeight ?? 0.05)
+  };
+}
 
-    if (Number.isFinite(score)) {
-      return Math.max(0, Math.min(1, score));
-    }
+async function searchProducts(
+  products,
+  query,
+  options = {}
+) {
+  if (
+    !Array.isArray(products) ||
+    !products.length
+  ) {
+    return [];
   }
 
-  return 0;
-}
+  const normalizedQuery = normalize(query);
 
-function buildSemanticScores(products, query) {
-  return getSemanticScoreMap(products, query);
-}
+  if (!normalizedQuery) {
+    return [];
+  }
 
-function hybridScore(product, query, semanticScores) {
-  const semantic = getSemanticScore(product, semanticScores);
-  const lexical = keywordScore(query, product);
-  const attributes = attributeScore(query, product);
-  const budget = budgetScore(query, product);
-  const metadata = metadataScore(product);
-
-  return (
-    semantic * 0.45 +
-    lexical * 0.25 +
-    attributes * 0.15 +
-    budget * 0.10 +
-    metadata * 0.05
+  const limit = Math.max(
+    1,
+    Math.min(
+      Number(options.limit) || 10,
+      100
+    )
   );
-}
 
-function searchProductsSync(products, query, options = {}) {
-  const semanticScores = options.semanticScores ?? new Map();
+  const minScore = Number(
+    options.minScore ?? 0
+  );
 
-  const scored = products
-    .map((product, index) => {
-      const semantic = getSemanticScore(product, semanticScores);
-      const lexical = keywordScore(query, product);
-      const attributes = attributeScore(query, product);
-      const budget = budgetScore(query, product);
-      const metadata = metadataScore(product);
+  const queryTokens =
+    tokenize(normalizedQuery);
+
+  let semanticScores;
+
+  try {
+    semanticScores =
+      await getSemanticScoreMap(
+        products,
+        normalizedQuery
+      );
+  } catch {
+    semanticScores = new Map();
+  }
+
+  const weights =
+    getWeights(options);
+
+  const results = products
+    .map(product => {
+      const id = String(
+        product?.id ?? ""
+      );
+
+      const semantic = Math.max(
+        0,
+        Math.min(
+          1,
+          Number(
+            semanticScores.get(id) ?? 0
+          )
+        )
+      );
+
+      const keyword =
+        keywordScore(
+          queryTokens,
+          product
+        );
+
+      const attribute =
+        attributeScore(
+          queryTokens,
+          product
+        );
+
+      const budget =
+        budgetScore(
+          product,
+          options
+        );
+
+      const metadata =
+        metadataScore(product);
+
+      const score =
+        semantic * weights.semantic +
+        keyword * weights.keyword +
+        attribute * weights.attribute +
+        budget * weights.budget +
+        metadata * weights.metadata;
 
       return {
-        product,
-        index,
-        score: hybridScore(product, query, semanticScores),
-        signals: {
-          semantic,
-          lexical,
-          attributes,
-          budget,
-          metadata
-        }
+        ...product,
+        score: Number(
+          score.toFixed(6)
+        ),
+        semanticScore: Number(
+          semantic.toFixed(6)
+        ),
+        keywordScore: Number(
+          keyword.toFixed(6)
+        ),
+        attributeScore: Number(
+          attribute.toFixed(6)
+        ),
+        budgetScore: Number(
+          budget.toFixed(6)
+        ),
+        metadataScore: Number(
+          metadata.toFixed(6)
+        )
       };
     })
-    .sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      return a.index - b.index;
-    });
+    .filter(
+      product =>
+        product.score >= minScore
+    )
+    .sort(
+      (a, b) =>
+        b.score - a.score
+    )
+    .slice(0, limit)
+    .map(
+      (product, index) => ({
+        ...product,
+        rank: index + 1
+      })
+    );
 
-  const limit = Number(options.limit ?? scored.length);
-
-  return {
-    results: scored.slice(0, limit).map((item, index) => ({
-      ...item.product,
-      hybridScore: Number(item.score.toFixed(6)),
-      semanticScore: Number(item.signals.semantic.toFixed(6)),
-      hybridSignals: item.signals,
-      rank: index + 1
-    })),
-    semanticScores
-  };
-}
-
-async function searchProducts(products, query, options = {}) {
-  const semanticScores = await buildSemanticScores(products, query);
-
-  const result = searchProductsSync(products, query, {
-    ...options,
-    semanticScores
-  });
-
-  return result;
-}
-
-async function searchProductsWithHybrid(products, query, options = {}) {
-  const semanticScores = await buildSemanticScores(products, query);
-
-  const result = hybridRetrieve(products, query, {
-    ...options,
-    semanticScores,
-    limit: options.limit ?? products.length
-  });
-
-  return {
-    ...result,
-    results: result.results.map((item, index) => ({
-      ...item.product,
-      hybridScore: Number(
-        Number(item.score ?? item.fusionScore ?? 0).toFixed(6)
-      ),
-      semanticScore: Number(
-        getSemanticScore(item.product, semanticScores).toFixed(6)
-      ),
-      hybridSignals: item.signals ?? {},
-      hybridSources: item.sources ?? [],
-      rank: index + 1
-    }))
-  };
+  return results;
 }
 
 export {
+  searchProducts,
   keywordScore,
   attributeScore,
   budgetScore,
-  metadataScore,
-  getSemanticScore,
-  hybridScore,
-  searchProductsSync,
-  searchProducts,
-  searchProductsWithHybrid
+  metadataScore
 };
