@@ -1,81 +1,73 @@
+function numericValues(values) {
+  return values
+    .map(Number)
+    .filter(Number.isFinite);
+}
+
 function mean(values) {
-  const valid =
-    values
-      .map(Number)
-      .filter(Number.isFinite);
+  const valid = numericValues(values);
+
+  if (!valid.length) {
+    return 0;
+  }
+
+  return valid.reduce(
+    (sum, value) => sum + value,
+    0
+  ) / valid.length;
+}
+
+function variance(values) {
+  const valid = numericValues(values);
+
+  if (valid.length < 2) {
+    return 0;
+  }
+
+  const average = mean(valid);
+
+  return valid.reduce(
+    (sum, value) =>
+      sum + Math.pow(value - average, 2),
+    0
+  ) / (valid.length - 1);
+}
+
+function standardDeviation(values) {
+  return Math.sqrt(variance(values));
+}
+
+function standardError(values) {
+  const valid = numericValues(values);
 
   if (!valid.length) {
     return 0;
   }
 
   return (
-    valid.reduce(
-      (sum, value) =>
-        sum + value,
-      0
-    ) / valid.length
+    standardDeviation(valid) /
+    Math.sqrt(valid.length)
   );
 }
 
-function variance(values) {
-  const valid =
-    values
-      .map(Number)
-      .filter(Number.isFinite);
+function createRandom(seed = 42) {
+  let state = seed >>> 0;
 
-  if (valid.length < 2) {
-    return 0;
-  }
+  return function random() {
+    state =
+      (state * 1664525 + 1013904223) >>>
+      0;
 
-  const average =
-    mean(valid);
-
-  return (
-    valid.reduce(
-      (sum, value) =>
-        sum +
-        Math.pow(
-          value - average,
-          2
-        ),
-      0
-    ) /
-    (valid.length - 1)
-  );
-}
-
-function standardDeviation(
-  values
-) {
-  return Math.sqrt(
-    variance(values)
-  );
-}
-
-function standardError(
-  values
-) {
-  if (!values.length) {
-    return 0;
-  }
-
-  return (
-    standardDeviation(
-      values
-    ) /
-    Math.sqrt(values.length)
-  );
+    return state / 4294967296;
+  };
 }
 
 function bootstrapMean(
   values,
-  iterations = 1000,
+  iterations = 2000,
   seed = 42
 ) {
-  const valid =
-    values
-      .map(Number)
-      .filter(Number.isFinite);
+  const valid = numericValues(values);
 
   if (!valid.length) {
     return {
@@ -85,19 +77,7 @@ function bootstrapMean(
     };
   }
 
-  let state = seed >>> 0;
-
-  function random() {
-    state =
-      (state * 1664525 +
-        1013904223) >>>
-      0;
-
-    return (
-      state / 4294967296
-    );
-  }
-
+  const random = createRandom(seed);
   const samples = [];
 
   for (
@@ -112,40 +92,29 @@ function bootstrapMean(
       index < valid.length;
       index += 1
     ) {
-      const target =
-        Math.floor(
-          random() *
-            valid.length
-        );
-
-      sample.push(
-        valid[target]
+      const target = Math.floor(
+        random() * valid.length
       );
+
+      sample.push(valid[target]);
     }
 
-    samples.push(
-      mean(sample)
-    );
+    samples.push(mean(sample));
   }
 
-  samples.sort(
-    (a, b) => a - b
+  samples.sort((a, b) => a - b);
+
+  const lowerIndex = Math.floor(
+    samples.length * 0.025
   );
 
-  const lowerIndex =
-    Math.floor(
-      samples.length * 0.025
-    );
-
-  const upperIndex =
-    Math.floor(
-      samples.length * 0.975
-    );
+  const upperIndex = Math.floor(
+    samples.length * 0.975
+  );
 
   return {
     mean: mean(valid),
-    lower:
-      samples[lowerIndex],
+    lower: samples[lowerIndex],
     upper:
       samples[
         Math.min(
@@ -156,15 +125,16 @@ function bootstrapMean(
   };
 }
 
-function compareMetricSamples(
+function bootstrapDifference(
   systemA,
-  systemB
+  systemB,
+  iterations = 2000,
+  seed = 42
 ) {
-  const length =
-    Math.min(
-      systemA.length,
-      systemB.length
-    );
+  const length = Math.min(
+    systemA.length,
+    systemB.length
+  );
 
   const differences = [];
 
@@ -173,43 +143,140 @@ function compareMetricSamples(
     index < length;
     index += 1
   ) {
-    differences.push(
-      Number(systemA[index]) -
-      Number(systemB[index])
-    );
+    const a = Number(systemA[index]);
+    const b = Number(systemB[index]);
+
+    if (
+      Number.isFinite(a) &&
+      Number.isFinite(b)
+    ) {
+      differences.push(a - b);
+    }
   }
 
+  if (!differences.length) {
+    return {
+      mean: 0,
+      lower: 0,
+      upper: 0,
+      samples: []
+    };
+  }
+
+  const random = createRandom(seed);
+  const samples = [];
+
+  for (
+    let iteration = 0;
+    iteration < iterations;
+    iteration += 1
+  ) {
+    const sample = [];
+
+    for (
+      let index = 0;
+      index < differences.length;
+      index += 1
+    ) {
+      const target = Math.floor(
+        random() * differences.length
+      );
+
+      sample.push(differences[target]);
+    }
+
+    samples.push(mean(sample));
+  }
+
+  samples.sort((a, b) => a - b);
+
+  const lowerIndex = Math.floor(
+    samples.length * 0.025
+  );
+
+  const upperIndex = Math.floor(
+    samples.length * 0.975
+  );
+
   return {
-    meanDifference:
-      mean(differences),
-    standardDeviation:
-      standardDeviation(
-        differences
-      ),
-    standardError:
-      standardError(
-        differences
-      ),
+    mean: mean(differences),
+    lower: samples[lowerIndex],
+    upper:
+      samples[
+        Math.min(
+          upperIndex,
+          samples.length - 1
+        )
+      ],
     samples: differences
   };
 }
 
-function summarizeMetric(
-  values
+function compareMetricSamples(
+  systemA,
+  systemB
 ) {
+  const comparison =
+    bootstrapDifference(
+      systemA,
+      systemB
+    );
+
+  const differences =
+    comparison.samples;
+
+  const meanDifference =
+    comparison.mean;
+
+  const baselineMean =
+    mean(systemB);
+
+  const relativeImprovement =
+    baselineMean === 0
+      ? 0
+      : meanDifference /
+        Math.abs(baselineMean);
+
+  const differenceStd =
+    standardDeviation(differences);
+
+  const effectSize =
+    differenceStd === 0
+      ? 0
+      : meanDifference /
+        differenceStd;
+
+  return {
+    meanDifference,
+    standardDeviation: differenceStd,
+    standardError:
+      standardError(differences),
+    relativeImprovement,
+    effectSize,
+    confidenceInterval95: {
+      lower: comparison.lower,
+      upper: comparison.upper
+    },
+    samples: differences
+  };
+}
+
+function summarizeMetric(values) {
+  const valid = numericValues(values);
   const confidence =
-    bootstrapMean(values);
+    bootstrapMean(valid);
 
   return {
     mean: confidence.mean,
     standardDeviation:
-      standardDeviation(values),
+      standardDeviation(valid),
     standardError:
-      standardError(values),
+      standardError(valid),
     confidenceInterval95: {
       lower: confidence.lower,
       upper: confidence.upper
-    }
+    },
+    samples: valid.length
   };
 }
 
@@ -219,6 +286,7 @@ export {
   standardDeviation,
   standardError,
   bootstrapMean,
+  bootstrapDifference,
   compareMetricSamples,
   summarizeMetric
 };
