@@ -5,6 +5,9 @@ import {
   mrr,
   ndcgAtK
 } from "./evaluation.js";
+import {
+  getSemanticScoreMap
+} from "./semanticSearch.js";
 
 function normalize(value) {
   return String(value ?? "").trim().toLowerCase();
