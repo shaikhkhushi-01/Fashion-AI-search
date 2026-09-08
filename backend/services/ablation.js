@@ -1,11 +1,13 @@
 import {
-  evaluateQuery
+  precisionAtK,
+  recallAtK,
+  f1AtK,
+  mrr,
+  ndcgAtK
 } from "./evaluation.js";
 
 function normalize(value) {
-  return String(value ?? "")
-    .trim()
-    .toLowerCase();
+  return String(value ?? "").trim().toLowerCase();
 }
 
 function tokenize(value) {
@@ -14,15 +16,7 @@ function tokenize(value) {
     .filter(Boolean);
 }
 
-function safeNumber(value, fallback = 0) {
-  const number = Number(value);
-
-  return Number.isFinite(number)
-    ? number
-    : fallback;
-}
-
-function textOf(product = {}) {
+function textOf(product) {
   return [
     product.name,
     product.brand,
@@ -43,7 +37,7 @@ function textOf(product = {}) {
     .join(" ");
 }
 
-function lexicalScore(product = {}, query = "") {
+function lexicalScore(product, query) {
   const queryTokens = tokenize(query);
 
   if (!queryTokens.length) {
@@ -59,7 +53,7 @@ function lexicalScore(product = {}, query = "") {
   return matched.length / queryTokens.length;
 }
 
-function attributeScore(product = {}, query = "") {
+function attributeScore(product, query) {
   const fields = [
     product.category,
     product.gender,
@@ -94,7 +88,7 @@ function attributeScore(product = {}, query = "") {
   return Math.min(matches / 4, 1);
 }
 
-function budgetScore(product = {}, query = "") {
+function budgetScore(product, query) {
   const match = normalize(query).match(
     /(?:under|below|less than|upto|up to)\s*(?:₹|rs\.?|inr)?\s*(\d+)/i
   );
@@ -103,12 +97,12 @@ function budgetScore(product = {}, query = "") {
     return 1;
   }
 
-  const budget = safeNumber(match[1]);
-  const price = safeNumber(product.price);
+  const budget = Number(match[1]);
+  const price = Number(product.price);
 
   if (
-    budget <= 0 ||
-    price < 0
+    !Number.isFinite(price) ||
+    !Number.isFinite(budget)
   ) {
     return 0;
   }
@@ -117,13 +111,15 @@ function budgetScore(product = {}, query = "") {
     return 1;
   }
 
+  const difference = price - budget;
+
   return Math.max(
     0,
-    1 - (price - budget) / budget
+    1 - difference / Math.max(budget, 1)
   );
 }
 
-function semanticScore(product = {}) {
+function semanticScore(product) {
   const values = [
     product.semanticScore,
     product.semantic_similarity,
@@ -133,9 +129,9 @@ function semanticScore(product = {}) {
   ];
 
   for (const value of values) {
-    const score = safeNumber(value, -1);
+    const score = Number(value);
 
-    if (score >= 0) {
+    if (Number.isFinite(score)) {
       return Math.max(
         0,
         Math.min(1, score)
@@ -147,46 +143,38 @@ function semanticScore(product = {}) {
 }
 
 function scoreProduct(
-  product = {},
-  query = "",
-  configuration = {}
+  product,
+  query,
+  configuration
 ) {
   let score = 0;
   let totalWeight = 0;
 
   if (configuration.lexical) {
     score +=
-      lexicalScore(product, query) *
-      0.35;
-
+      lexicalScore(product, query) * 0.35;
     totalWeight += 0.35;
   }
 
   if (configuration.semantic) {
     score +=
-      semanticScore(product) *
-      0.45;
-
+      semanticScore(product) * 0.45;
     totalWeight += 0.45;
   }
 
   if (configuration.attributes) {
     score +=
-      attributeScore(product, query) *
-      0.15;
-
+      attributeScore(product, query) * 0.15;
     totalWeight += 0.15;
   }
 
   if (configuration.budget) {
     score +=
-      budgetScore(product, query) *
-      0.05;
-
+      budgetScore(product, query) * 0.05;
     totalWeight += 0.05;
   }
 
-  if (totalWeight === 0) {
+  if (!totalWeight) {
     return 0;
   }
 
@@ -194,14 +182,10 @@ function scoreProduct(
 }
 
 function rankProducts(
-  products = [],
-  query = "",
-  configuration = {}
+  products,
+  query,
+  configuration
 ) {
-  if (!Array.isArray(products)) {
-    return [];
-  }
-
   return products
     .map((product, index) => ({
       product,
@@ -222,201 +206,166 @@ function rankProducts(
     .map(item => item.product);
 }
 
-function resolveRelevantIds(testCase = {}) {
+function getRelevantIds(testCase) {
+  const values =
+    testCase.relevant ??
+    testCase.relevantIds ??
+    testCase.relevantProductIds ??
+    [];
+
+  return Array.isArray(values)
+    ? values.map(String)
+    : [];
+}
+
+function getRelevanceMap(testCase) {
   if (
-    Array.isArray(
-      testCase.relevantIds
-    )
+    testCase.relevance &&
+    typeof testCase.relevance === "object" &&
+    !Array.isArray(testCase.relevance)
   ) {
-    return testCase.relevantIds.map(
-      String
+    return Object.fromEntries(
+      Object.entries(testCase.relevance).map(
+        ([id, value]) => [
+          String(id),
+          Number(value) || 0
+        ]
+      )
     );
   }
 
-  if (
-    Array.isArray(
-      testCase.relevantProductIds
-    )
-  ) {
-    return testCase.relevantProductIds.map(
-      String
-    );
-  }
+  const relevantIds =
+    getRelevantIds(testCase);
 
-  if (
-    Array.isArray(
-      testCase.relevant
-    )
-  ) {
-    return testCase.relevant.map(
-      String
-    );
-  }
-
-  return [];
+  return Object.fromEntries(
+    relevantIds.map(id => [String(id), 1])
+  );
 }
 
 function evaluateRanking(
-  rankedProducts = [],
-  relevantIds = [],
+  rankedProducts,
+  testCase,
   k = 5
 ) {
-  const safeRankedProducts = Array.isArray(rankedProducts)
-    ? rankedProducts
-    : [];
-
-  const relevant = Array.isArray(relevantIds)
-    ? relevantIds.map(String)
-    : [];
-
-  const safeK = Math.max(
-    1,
-    Math.floor(safeNumber(k, 5))
-  );
-
-  const rankedIds = safeRankedProducts
-    .slice(0, safeK)
+  const rankedIds = rankedProducts
+    .slice(0, k)
     .map(product => String(product.id));
 
-  const relevanceMap = {};
+  const relevant =
+    getRelevantIds(testCase);
 
-  for (const id of relevant) {
-    relevanceMap[String(id)] = 1;
-  }
-
-  const metrics = evaluateQuery(
-    rankedIds,
-    relevant,
-    relevanceMap,
-    safeK
-  );
+  const relevanceMap =
+    getRelevanceMap(testCase);
 
   return {
-    precisionAtK: safeNumber(metrics.precisionAtK),
-    recallAtK: safeNumber(metrics.recallAtK),
-    f1AtK: safeNumber(metrics.f1AtK),
-    mrr: safeNumber(metrics.reciprocalRank),
-    ndcgAtK: safeNumber(metrics.ndcgAtK)
+    precisionAtK: precisionAtK(
+      rankedIds,
+      relevant,
+      k
+    ),
+    recallAtK: recallAtK(
+      rankedIds,
+      relevant,
+      k
+    ),
+    f1AtK: f1AtK(
+      rankedIds,
+      relevant,
+      k
+    ),
+    mrr: mrr(
+      [rankedIds],
+      [relevant]
+    ),
+    ndcgAtK: ndcgAtK(
+      rankedIds,
+      relevanceMap,
+      k
+    )
   };
 }
-function mean(values = []) {
-  if (
-    !Array.isArray(values) ||
-    values.length === 0
-  ) {
+
+function mean(values) {
+  if (!values.length) {
     return 0;
   }
 
   return (
     values.reduce(
       (sum, value) =>
-        sum + safeNumber(value),
+        sum + Number(value || 0),
       0
     ) / values.length
   );
 }
 
-function aggregate(results = []) {
-  const metrics =
-    Array.isArray(results)
-      ? results
-      : [];
-
+function aggregate(results) {
   return {
     precisionAtK: mean(
-      metrics.map(
-        item =>
-          item.precisionAtK
+      results.map(
+        item => item.precisionAtK
       )
     ),
     recallAtK: mean(
-      metrics.map(
-        item =>
-          item.recallAtK
+      results.map(
+        item => item.recallAtK
       )
     ),
     f1AtK: mean(
-      metrics.map(
-        item =>
-          item.f1AtK
+      results.map(
+        item => item.f1AtK
       )
     ),
     mrr: mean(
-      metrics.map(
-        item =>
-          item.mrr
+      results.map(
+        item => item.mrr
       )
     ),
     ndcgAtK: mean(
-      metrics.map(
-        item =>
-          item.ndcgAtK
+      results.map(
+        item => item.ndcgAtK
       )
     )
   };
 }
 
 function runConfiguration(
-  products = [],
-  evaluationCases = [],
-  configuration = {},
+  products,
+  evaluationCases,
+  configuration,
   k = 5
 ) {
-  const safeProducts =
-    Array.isArray(products)
-      ? products
-      : [];
-
-  const safeCases =
-    Array.isArray(evaluationCases)
-      ? evaluationCases
-      : [];
-
   const results =
-    safeCases.map(testCase => {
-      const query = String(
-        testCase?.query ?? ""
-      );
-
+    evaluationCases.map(testCase => {
       const ranked =
         rankProducts(
-          safeProducts,
-          query,
+          products,
+          testCase.query,
           configuration
         );
 
-      const relevantIds =
-        resolveRelevantIds(
-          testCase
-        );
-
-      const metrics =
-        evaluateRanking(
-          ranked,
-          relevantIds,
-          k
-        );
-
       return {
-        query,
-        metrics
+        query: testCase.query,
+        metrics:
+          evaluateRanking(
+            ranked,
+            testCase,
+            k
+          )
       };
     });
 
   return {
     configuration,
     queries: results,
-    aggregate: aggregate(
-      results.map(
-        item => item.metrics
-      )
-    )
+    aggregate:
+      aggregate(results)
   };
 }
 
 function runAblationStudy(
-  products = [],
-  evaluationCases = [],
+  products,
+  evaluationCases,
   k = 5
 ) {
   const configurations = [
@@ -476,52 +425,31 @@ function runAblationStudy(
 }
 
 function compareAblationResults(
-  results = []
+  results
 ) {
-  if (!Array.isArray(results)) {
-    return [];
-  }
-
   return [...results]
-    .sort((a, b) => {
-      const aScore =
-        safeNumber(
-          a?.aggregate?.ndcgAtK
-        );
-
-      const bScore =
-        safeNumber(
-          b?.aggregate?.ndcgAtK
-        );
-
-      return bScore - aScore;
-    })
-    .map((result, index) => ({
-      rank: index + 1,
-      configuration:
-        result?.configuration?.name ??
-        "unknown",
-      precisionAtK:
-        safeNumber(
-          result?.aggregate?.precisionAtK
-        ),
-      recallAtK:
-        safeNumber(
-          result?.aggregate?.recallAtK
-        ),
-      f1AtK:
-        safeNumber(
-          result?.aggregate?.f1AtK
-        ),
-      mrr:
-        safeNumber(
-          result?.aggregate?.mrr
-        ),
-      ndcgAtK:
-        safeNumber(
-          result?.aggregate?.ndcgAtK
-        )
-    }));
+    .sort(
+      (a, b) =>
+        b.aggregate.ndcgAtK -
+        a.aggregate.ndcgAtK
+    )
+    .map(
+      (result, index) => ({
+        rank: index + 1,
+        configuration:
+          result.configuration.name,
+        precisionAtK:
+          result.aggregate.precisionAtK,
+        recallAtK:
+          result.aggregate.recallAtK,
+        f1AtK:
+          result.aggregate.f1AtK,
+        mrr:
+          result.aggregate.mrr,
+        ndcgAtK:
+          result.aggregate.ndcgAtK
+      })
+    );
 }
 
 export {
