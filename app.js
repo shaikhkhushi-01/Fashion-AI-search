@@ -323,6 +323,12 @@ async function searchFashion(query) {
     state.searchResults = [...state.allProducts];
     applyAllFilters();
     updateSearchSummary();
+
+    $("results")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+
     return;
   }
 
@@ -349,10 +355,20 @@ async function searchFashion(query) {
 
     trackSearch(cleanQuery);
     applyAllFilters();
+
+    $("results")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
   } catch {
     state.searchResults = localSearch(cleanQuery);
     trackSearch(cleanQuery);
     applyAllFilters();
+
+    $("results")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
   }
 }
 
