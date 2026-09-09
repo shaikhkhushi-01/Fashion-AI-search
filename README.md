@@ -1,15 +1,18 @@
 # Fashion AI Discovery
 
-Fashion AI Discovery is an AI-oriented fashion search and recommendation system designed around natural-language product discovery.
+Fashion AI Discovery is an AI-first fashion search and recommendation system designed to study whether combining semantic, lexical, attribute and personalized signals can improve fashion retrieval compared with conventional keyword-based search.
 
 ## Research Question
 
 Can combining semantic, lexical, attribute and personalized signals improve fashion retrieval compared with conventional keyword-based search?
 
-## System Architecture
+## Research Hypothesis
 
-User Query
-→ Query Understanding
+A retrieval pipeline that combines semantic similarity with lexical relevance, attribute matching, budget constraints and ranking signals should provide more robust retrieval quality than relying on a single retrieval strategy.
+
+## Research Architecture
+
+Query Understanding
 → Semantic Retrieval
 → Lexical Retrieval
 → Attribute Matching
@@ -19,148 +22,317 @@ User Query
 → Explainability
 → Evaluation
 
-## Core Components
+## System Overview
 
-- Natural-language fashion query understanding
-- Embedding-based semantic retrieval
+The system contains the following components:
+
+- Natural-language query understanding
+- Semantic retrieval using transformer embeddings
 - Lexical retrieval
 - Attribute-aware retrieval
-- Hybrid candidate fusion
-- Learning-to-rank experimentation
-- Personalized recommendations
-- AI Stylist
+- Hybrid candidate generation
+- Reciprocal Rank Fusion
+- Learning-to-rank
+- Budget-aware hard constraints
+- Personalized ranking
+- AI stylist recommendations
 - Explainable recommendations
-- Multimodal retrieval infrastructure
-- Baseline comparison
-- Ablation experiments
-- Error analysis
-- Statistical analysis
-- Dataset splitting
-- Reproducibility
-- Performance benchmarking
+- Evaluation and error analysis
+- Reproducible research artifacts
 
 ## Semantic Retrieval
 
-Semantic retrieval uses the `Xenova/all-MiniLM-L6-v2` transformer encoder through Transformers.js.
+Semantic retrieval uses the `Xenova/all-MiniLM-L6-v2` sentence-transformer model through Transformers.js.
 
-Product and query representations are converted into normalized embeddings and compared using cosine similarity.
+The system:
 
-The deployed backend performs semantic retrieval directly in Node.js.
+1. Converts product text into embeddings
+2. Converts the user query into an embedding
+3. Applies mean pooling
+4. Normalizes embeddings
+5. Computes cosine similarity
+6. Uses semantic similarity as a retrieval signal
 
-## Evaluation
+This enables retrieval based on semantic meaning rather than exact keyword overlap.
 
-The evaluation framework supports:
+## Hybrid Retrieval
 
-- Precision@K
-- Recall@K
-- F1@K
-- MRR
-- NDCG@K
-- Average Precision
-- Bootstrap confidence intervals
-- Baseline comparison
-- Ablation experiments
-- Error analysis
-- Statistical comparison
+The production retrieval system combines multiple signals:
 
-### Current Evaluation Results
+- Semantic similarity: 0.45
+- Lexical relevance: 0.20
+- Attribute matching: 0.20
+- Budget matching: 0.10
+- Metadata quality: 0.05
 
-On the project's curated evaluation set:
+Semantic and lexical candidate lists are combined using Reciprocal Rank Fusion before final reranking.
 
-| Retrieval System | MRR | NDCG@5 |
+Hard budget constraints are applied before candidate fusion.
+
+## Experimental Setup
+
+The current evaluation uses:
+
+- Dataset size: 10 products
+- Evaluation queries: 41
+- Evaluation cutoff: K = 5
+- Deterministic execution
+- Paired evaluation queries
+- Bootstrap statistical analysis
+- 2,000 bootstrap iterations
+- 95% confidence intervals
+
+The benchmark is a small curated evaluation set intended for controlled experimentation and system validation rather than broad generalization.
+
+## Baselines
+
+The evaluation compares the following retrieval systems:
+
+| System | Description |
+|---|---|
+| Keyword | Conventional keyword-based retrieval |
+| Category | Category-oriented baseline |
+| Price | Price-oriented retrieval |
+| Popularity | Popularity-based retrieval |
+| Lexical | Lexical relevance scoring |
+| Attribute | Attribute matching |
+| Semantic | Transformer embedding retrieval |
+| Hybrid | Combined semantic, lexical, attribute and ranking signals |
+
+## Main Evaluation Results
+
+| System | MRR | NDCG@5 |
 |---|---:|---:|
+| Keyword | 0.9085 | 0.9053 |
+| Category | 0.9065 | 0.9070 |
+| Price | 0.3446 | 0.3282 |
+| Popularity | 0.3446 | 0.3299 |
 | Lexical | 0.9593 | 0.9311 |
+| Attribute | 0.3446 | 0.3299 |
 | Semantic | 0.9390 | 0.9207 |
 | Hybrid | 0.9878 | 0.9745 |
 
-The current results indicate that combining retrieval signals improves ranking quality on the project's evaluation queries compared with the individual lexical and semantic retrieval configurations.
+The hybrid system achieves the highest MRR and NDCG@5 among the evaluated production systems.
 
-These results are project-level experimental measurements and should not be interpreted as performance on a large-scale public fashion-search benchmark.
+## Statistical Analysis
 
-## Research Methodology
+Statistical comparisons use paired evaluation queries and deterministic bootstrap confidence intervals with 2,000 iterations.
 
-The system is evaluated against simpler retrieval strategies and progressively stronger retrieval configurations.
+The comparison direction is:
 
-Experiments cover:
+Hybrid − Comparison System
 
-- Retrieval quality
-- Baseline comparison
-- Ablation analysis
-- Personalization
-- Robustness
-- Reproducibility
-- Computational performance
-- Error analysis
+### Hybrid vs Semantic
 
-Statistical analysis uses paired evaluation queries and bootstrap confidence intervals with 2,000 bootstrap iterations.
+MRR difference:
+
+0.0488
+
+95% confidence interval:
+
+[0.0122, 0.0976]
+
+NDCG@5 difference:
+
+0.0538
+
+95% confidence interval:
+
+[0.0247, 0.0869]
+
+Both intervals exclude zero, providing evidence of improved ranking quality for the hybrid system on this benchmark.
+
+### Hybrid vs Keyword
+
+MRR difference:
+
+0.0793
+
+95% confidence interval:
+
+[0.0122, 0.1463]
+
+NDCG@5 difference:
+
+0.0692
+
+95% confidence interval:
+
+[0.0307, 0.1126]
+
+Both intervals exclude zero, providing evidence of improved ranking quality for the hybrid system on this benchmark.
+
+### Hybrid vs Lexical
+
+MRR difference:
+
+0.0285
+
+95% confidence interval:
+
+[-0.0203, 0.0854]
+
+NDCG@5 difference:
+
+0.0433
+
+95% confidence interval:
+
+[0.0119, 0.0798]
+
+The MRR interval crosses zero, so the MRR improvement over lexical retrieval is not established by this analysis.
+
+The NDCG@5 interval is above zero, indicating evidence of improved ranking quality on this metric.
+
+## Ablation Study
+
+The ablation study evaluates the effect of individual ranking signals while keeping the production hybrid candidate pool fixed.
+
+| Configuration | MRR | NDCG@5 |
+|---|---:|---:|
+| Lexical-only | 0.9878 | 0.9747 |
+| Lexical-budget | 0.9878 | 0.9747 |
+| Semantic-attributes | 0.9878 | 0.9654 |
+| Lexical-attributes | 0.9756 | 0.9590 |
+| Full-hybrid | 0.9878 | 0.9745 |
+| Semantic-only | 0.9390 | 0.9207 |
+
+The controlled ablation shows that semantic retrieval alone performs below the stronger combined configurations.
+
+The lexical-only configuration is extremely competitive on this small benchmark and slightly exceeds the full-hybrid configuration on NDCG@5 while producing the same MRR.
+
+This indicates that the contribution of hybrid reranking is metric-dependent and that the current benchmark is not sufficient to establish universal superiority over lexical retrieval.
+
+## Robustness
+
+The robustness evaluation contains 15 test cases.
+
+Results:
+
+- Successful cases: 15
+- Failed cases: 0
+- Success rate: 100%
+
+The robustness evaluation is intended to validate system stability across the current edge-case test set.
 
 ## Reproducibility
 
-The project includes:
+The research pipeline records:
 
-- Deterministic dataset splitting
-- Experiment configuration
-- Evaluation scripts
+- Dataset size
+- Evaluation query count
+- Evaluation cutoff
+- Deterministic execution status
+- Dataset hash
+- Experiment fingerprint
+- Runtime environment
+- Model information
+- Evaluation results
+- Ablation results
+- Baseline comparisons
+- Robustness results
 - Statistical analysis
-- Research report generation
-- Project file hashing
-- Automated research-quality testing through GitHub Actions
 
-## Backend
+The generated research artifacts are stored through the project evaluation pipeline.
 
-The Node.js backend provides:
+## Error Analysis
 
-- Query understanding
-- Semantic retrieval
-- Lexical retrieval
-- Hybrid retrieval
-- Ranking
-- Personalization
-- Evaluation
-- Research utilities
+The evaluation framework supports per-query inspection of retrieval results.
 
-Transformers.js is used for transformer-based embedding inference.
+This enables analysis of:
 
-## Frontend
+- Relevant items ranked too low
+- Semantic mismatches
+- Lexical mismatches
+- Attribute failures
+- Budget constraint failures
+- Ranking disagreements
+- Cases where hybrid retrieval differs from individual retrieval strategies
 
-The frontend provides:
+Per-query analysis is important because aggregate metrics alone cannot explain why a retrieval system succeeds or fails.
 
-- Natural-language search
-- AI relevance indicators
-- Product discovery
-- Advanced filters
-- Personalized recommendations
-- AI Stylist
-- Recommendation explanations
+## Research Findings
 
-## Research Limitations
+The current experiments provide three main observations.
 
-The current system is a research prototype rather than a production-scale fashion search engine.
+First, semantic retrieval substantially improves over weaker non-semantic baselines on ranking-oriented metrics, but semantic retrieval alone does not achieve the strongest performance.
 
-The current catalogue and evaluation set are relatively small and curated. Therefore, the reported metrics demonstrate the behaviour of the implemented retrieval systems on the project's evaluation data, but do not establish generalization to large commercial catalogues or real-world user traffic.
+Second, combining retrieval and ranking signals produces strong performance and improves over semantic and keyword baselines on the current benchmark.
 
-Future experiments should use larger and independently constructed datasets with stronger leakage controls and broader query coverage.
+Third, lexical retrieval remains highly competitive. The controlled ablation therefore does not justify claiming that hybrid retrieval universally outperforms lexical retrieval.
 
-## Research Direction
+These findings motivate evaluation on larger and more diverse datasets.
 
-Future work can investigate:
+## Limitations
 
-- Larger fashion datasets
-- Stronger transformer encoders
+The current evaluation has several limitations:
+
+- The dataset contains only 10 products.
+- The benchmark contains only 41 evaluation queries.
+- The evaluation is curated rather than based on a large public benchmark.
+- Statistical confidence intervals are based on the current evaluation cases.
+- No human relevance judgments are currently used.
+- Online user interaction metrics are not yet available.
+- The current semantic encoder is relatively lightweight.
+- The results should not be interpreted as evidence of general performance across large-scale fashion catalogues.
+
+## Future Research
+
+Future work will investigate:
+
+- Larger public fashion datasets
+- Stronger embedding models
 - Vision-language models
-- Learned multimodal fusion
+- Multimodal image-text retrieval
+- Query-image fusion
 - User-level ranking models
-- Larger-scale retrieval benchmarks
-- Online evaluation
-- Human relevance judgments
 - Cold-start personalization
+- Human relevance judgments
+- Larger evaluation benchmarks
+- Online A/B evaluation
+- Calibration and uncertainty analysis
+- Statistical significance across larger query collections
 
-## Links
+## Reproducible Research Artifacts
 
-Live application:
+The evaluation pipeline generates machine-readable research artifacts including:
+
+- Baseline comparison reports
+- Statistical analysis reports
+- Ablation reports
+- Robustness reports
+- Ranking model results
+- Reproducibility manifests
+
+These artifacts are intended to make experiments inspectable and reproducible.
+
+## Conclusion
+
+Fashion AI Discovery demonstrates a complete experimental retrieval pipeline that combines semantic search, lexical retrieval, attribute matching, candidate fusion, ranking and personalization.
+
+On the current curated benchmark, hybrid retrieval achieves strong ranking performance and shows evidence of improvement over semantic and keyword baselines.
+
+However, the results also demonstrate that lexical retrieval remains highly competitive. The current evidence therefore supports the hybrid approach as a promising research direction rather than establishing universal superiority.
+
+The next research stage is to scale the evaluation to larger datasets and human-judged benchmarks while studying multimodal retrieval, personalization and stronger ranking models.
+
+## Technology Stack
+
+- Node.js
+- Express
+- Transformers.js
+- Hugging Face Transformers
+- JavaScript
+- GitHub Actions
+- GitHub Pages
+- Render
+- HTML
+- CSS
+
+## Live Demo
 
 https://shaikhkhushi-01.github.io/Fashion-AI-search/
 
-Repository:
+## Backend API
 
-https://github.com/shaikhkhushi-01/Fashion-AI-search
+https://fashion-ai-search-lj6s.onrender.com
