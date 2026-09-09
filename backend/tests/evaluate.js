@@ -30,6 +30,10 @@ import {
   getSemanticScoreMap
 } from "../services/semanticSearch.js";
 
+import {
+  compareMetricSamples
+} from "../services/statistics.js";
+
 const __filename =
   fileURLToPath(import.meta.url);
 
@@ -291,6 +295,103 @@ async function main() {
     "semantic",
     "hybrid"
   ];
+
+  report.statisticalAnalysisGenerated = true;
+
+  const statisticalComparisons = {};
+
+const comparisonPairs = [
+  ["hybrid", "lexical"],
+  ["hybrid", "semantic"],
+  ["hybrid", "keyword"],
+  ["hybrid", "category"]
+];
+
+for (const [systemA, systemB] of comparisonPairs) {
+  const resultA = results[systemA];
+  const resultB = results[systemB];
+
+  if (!resultA || !resultB) {
+    continue;
+  }
+
+  statisticalComparisons[
+    `${systemA}_vs_${systemB}`
+  ] = {
+    systemA,
+    systemB,
+    metrics: {
+      precisionAtK:
+        compareMetricSamples(
+          resultA.queries.map(
+            item =>
+              item.metrics.precisionAtK
+          ),
+          resultB.queries.map(
+            item =>
+              item.metrics.precisionAtK
+          )
+        ),
+      recallAtK:
+        compareMetricSamples(
+          resultA.queries.map(
+            item =>
+              item.metrics.recallAtK
+          ),
+          resultB.queries.map(
+            item =>
+              item.metrics.recallAtK
+          )
+        ),
+      f1AtK:
+        compareMetricSamples(
+          resultA.queries.map(
+            item =>
+              item.metrics.f1AtK
+          ),
+          resultB.queries.map(
+            item =>
+              item.metrics.f1AtK
+          )
+        ),
+      mrr:
+        compareMetricSamples(
+          resultA.queries.map(
+            item =>
+              item.metrics.reciprocalRank
+          ),
+          resultB.queries.map(
+            item =>
+              item.metrics.reciprocalRank
+          )
+        ),
+      ndcgAtK:
+        compareMetricSamples(
+          resultA.queries.map(
+            item =>
+              item.metrics.ndcgAtK
+          ),
+          resultB.queries.map(
+            item =>
+              item.metrics.ndcgAtK
+          )
+        )
+    }
+  };
+}
+
+report.statisticalAnalysis = {
+  confidenceLevel: 0.95,
+  bootstrapIterations: 2000,
+  comparisonUnit:
+    "paired evaluation query",
+  effectSize:
+    "standardized paired mean difference",
+  relativeImprovement:
+    "mean difference divided by comparison system mean",
+  comparisons:
+    statisticalComparisons
+};
 
   const outputDirectory =
     path.join(
