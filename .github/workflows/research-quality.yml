@@ -37,3 +37,12 @@ jobs:
 
       - name: Run complete research test suite
         run: npm run all-tests
+
+      - name: Upload research results
+        uses: actions/upload-artifact@v4
+        with:
+          name: fashion-ai-research-results
+          path: |
+            backend/evaluation-results/**
+            backend/research-results/**
+          if-no-files-found: ignore
