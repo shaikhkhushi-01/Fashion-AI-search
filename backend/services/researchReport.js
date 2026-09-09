@@ -8,13 +8,10 @@ function round(value, digits = 4) {
     return 0;
   }
 
-  const factor =
-    10 ** digits;
+  const factor = 10 ** digits;
 
   return (
-    Math.round(
-      number * factor
-    ) / factor
+    Math.round(number * factor) / factor
   );
 }
 
@@ -74,6 +71,77 @@ function rankConfigurations(
     );
 }
 
+function summarizeStatistics(
+  statistics
+) {
+  const comparisons =
+    statistics?.comparisons;
+
+  if (
+    !comparisons ||
+    typeof comparisons !== "object"
+  ) {
+    return [];
+  }
+
+  return Object.entries(
+    comparisons
+  ).map(
+    ([name, comparison]) => {
+      const metrics =
+        comparison?.metrics ?? {};
+
+      return {
+        comparison: name,
+        systemA:
+          comparison?.systemA ??
+          "unknown",
+        systemB:
+          comparison?.systemB ??
+          "unknown",
+        metrics:
+          Object.fromEntries(
+            Object.entries(
+              metrics
+            ).map(
+              ([metric, value]) => [
+                metric,
+                {
+                  meanDifference:
+                    round(
+                      value?.meanDifference
+                    ),
+                  relativeImprovement:
+                    round(
+                      value?.relativeImprovement
+                    ),
+                  effectSize:
+                    round(
+                      value?.effectSize
+                    ),
+                  confidenceInterval95: {
+                    lower:
+                      round(
+                        value
+                          ?.confidenceInterval95
+                          ?.lower
+                      ),
+                    upper:
+                      round(
+                        value
+                          ?.confidenceInterval95
+                          ?.upper
+                      )
+                  }
+                }
+              ]
+            )
+          )
+      };
+    }
+  );
+}
+
 function generateResearchReport({
   dataset,
   evaluation,
@@ -111,7 +179,13 @@ function generateResearchReport({
     },
     robustness,
     errorAnalysis: errors,
-    statistics
+    statistics: {
+      ...statistics,
+      summaries:
+        summarizeStatistics(
+          statistics
+        )
+    }
   };
 }
 
@@ -179,6 +253,35 @@ function generateMarkdownSummary(
       best?.mrr
     );
 
+  const statistics =
+    report?.statistics
+      ?.summaries ?? [];
+
+  const statisticalLines =
+    [];
+
+  for (
+    const comparison
+      of statistics
+  ) {
+    const metric =
+      comparison
+        ?.metrics
+        ?.reciprocalRank;
+
+    if (!metric) {
+      continue;
+    }
+
+    const ci =
+      metric
+        ?.confidenceInterval95;
+
+    statisticalLines.push(
+      `- ${comparison.systemA} vs ${comparison.systemB}: mean difference ${round(metric.meanDifference)}, relative improvement ${round(metric.relativeImprovement * 100, 2)}%, effect size ${round(metric.effectSize)}, 95% CI [${round(ci?.lower)}, ${round(ci?.upper)}]`
+    );
+  }
+
   return [
     "# Fashion AI Discovery Research Report",
     "",
@@ -190,6 +293,12 @@ function generateMarkdownSummary(
     `Configuration: ${bestName}`,
     `NDCG@K: ${ndcg}`,
     `MRR: ${mrr}`,
+    "",
+    "## Statistical Analysis",
+    "",
+    statisticalLines.length
+      ? statisticalLines.join("\n")
+      : "No pairwise statistical comparisons available.",
     "",
     "## Experimental Components",
     "",
@@ -247,6 +356,7 @@ export {
   round,
   summarizeConfiguration,
   rankConfigurations,
+  summarizeStatistics,
   generateResearchReport,
   writeResearchReport,
   generateMarkdownSummary,
