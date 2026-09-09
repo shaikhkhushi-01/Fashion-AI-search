@@ -456,29 +456,24 @@ async function runAblationStudy(
               ) || products;
 
             const ranked =
-              rankProducts(
-                enrichedProducts,
-                testCase.query,
-                configuration
-              );
+  rankProducts(
+    enrichedProducts,
+    testCase.query,
+    configuration
+  );
 
-            const relevantIds =
-              resolveRelevantIds(
-                testCase
-              );
+const metrics =
+  evaluateRanking(
+    ranked,
+    testCase,
+    k
+  );
 
-            const metrics =
-              evaluateRanking(
-                ranked,
-                relevantIds,
-                k
-              );
-
-            return {
-              query:
-                testCase.query,
-              metrics
-            };
+return {
+  query:
+    testCase.query,
+  metrics
+};
           }
         );
 
