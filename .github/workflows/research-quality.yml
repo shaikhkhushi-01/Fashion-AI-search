@@ -46,3 +46,14 @@ jobs:
             backend/evaluation-results/**
             backend/research-results/**
           if-no-files-found: ignore
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install figure dependencies
+        run: pip install matplotlib
+
+      - name: Generate research figures
+        run: python research/generate_figures.py
