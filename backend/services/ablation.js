@@ -5,9 +5,14 @@ import {
   mrr,
   ndcgAtK
 } from "./evaluation.js";
+
 import {
   getSemanticScoreMap
 } from "./semanticSearch.js";
+
+import {
+  hybridRetrieve
+} from "./hybridRetrieval.js";
 
 function normalize(value) {
   return String(value ?? "").trim().toLowerCase();
@@ -145,43 +150,70 @@ function semanticScore(product) {
   return 0;
 }
 
-function scoreProduct(
-  product,
-  query,
+function scoreRerankedItem(
+  item,
   configuration
 ) {
+  const signals = item.signals || {};
+
+  const weights = {
+    semantic: 0.45,
+    lexical: 0.20,
+    attributes: 0.20,
+    budget: 0.10,
+    metadata: 0.05
+  };
+
   let score = 0;
   let totalWeight = 0;
 
-  if (configuration.lexical) {
-    score +=
-      lexicalScore(product, query) * 0.35;
-    totalWeight += 0.35;
-  }
-
   if (configuration.semantic) {
     score +=
-      semanticScore(product) * 0.45;
-    totalWeight += 0.45;
+      Number(signals.semantic || 0) *
+      weights.semantic;
+
+    totalWeight += weights.semantic;
+  }
+
+  if (configuration.lexical) {
+    score +=
+      Number(signals.lexical || 0) *
+      weights.lexical;
+
+    totalWeight += weights.lexical;
   }
 
   if (configuration.attributes) {
     score +=
-      attributeScore(product, query) * 0.15;
-    totalWeight += 0.15;
+      Number(signals.attribute || 0) *
+      weights.attributes;
+
+    totalWeight += weights.attributes;
   }
 
   if (configuration.budget) {
     score +=
-      budgetScore(product, query) * 0.05;
-    totalWeight += 0.05;
+      Number(signals.budget || 0) *
+      weights.budget;
+
+    totalWeight += weights.budget;
+  }
+
+  if (configuration.metadata) {
+    score +=
+      Number(signals.metadata || 0) *
+      weights.metadata;
+
+    totalWeight += weights.metadata;
   }
 
   if (!totalWeight) {
     return 0;
   }
 
-  return score / totalWeight;
+  return Number(
+    (score / totalWeight).toFixed(6)
+  );
 }
 
 function rankProducts(
@@ -189,15 +221,26 @@ function rankProducts(
   query,
   configuration
 ) {
-  return products
-    .map((product, index) => ({
-      product,
-      index,
-      score: scoreProduct(
-        product,
-        query,
+  const retrieval = hybridRetrieve(
+    products,
+    query,
+    {
+      limit: products.length,
+      candidateLimit: products.length,
+      lexicalLimit: products.length,
+      semanticLimit: products.length,
+      rrfK: 60
+    }
+  );
+
+  return retrieval.results
+    .map((item, index) => ({
+      product: item.product,
+      score: scoreRerankedItem(
+        item,
         configuration
-      )
+      ),
+      index
     }))
     .sort((a, b) => {
       if (b.score !== a.score) {
@@ -250,9 +293,10 @@ function evaluateRanking(
   testCase,
   k = 5
 ) {
-  const rankedIds = rankedProducts
-    .slice(0, k)
-    .map(product => String(product.id));
+  const rankedIds =
+    rankedProducts
+      .slice(0, k)
+      .map(product => String(product.id));
 
   const relevant =
     getRelevantIds(testCase);
@@ -360,6 +404,12 @@ function runConfiguration(
 
   return {
     configuration,
+    methodology:
+      "fixed-production-hybrid-candidate-pool-reranking",
+    candidateGeneration: {
+      method: "semantic-lexical-rrf",
+      rrfK: 60
+    },
     queries: results,
     aggregate:
       aggregate(
@@ -381,42 +431,48 @@ async function runAblationStudy(
       lexical: true,
       semantic: false,
       attributes: false,
-      budget: false
+      budget: false,
+      metadata: false
     },
     {
       name: "semantic-only",
       lexical: false,
       semantic: true,
       attributes: false,
-      budget: false
+      budget: false,
+      metadata: false
     },
     {
       name: "lexical-attributes",
       lexical: true,
       semantic: false,
       attributes: true,
-      budget: false
+      budget: false,
+      metadata: false
     },
     {
       name: "lexical-budget",
       lexical: true,
       semantic: false,
       attributes: false,
-      budget: true
+      budget: true,
+      metadata: false
     },
     {
       name: "semantic-attributes",
       lexical: false,
       semantic: true,
       attributes: true,
-      budget: false
+      budget: false,
+      metadata: false
     },
     {
       name: "full-hybrid",
       lexical: true,
       semantic: true,
       attributes: true,
-      budget: true
+      budget: true,
+      metadata: true
     }
   ];
 
@@ -448,63 +504,23 @@ async function runAblationStudy(
   }
 
   return configurations.map(
-    configuration => {
-      const queryResults =
-        evaluationCases.map(
-          testCase => {
-            const enrichedProducts =
-              semanticProductsByQuery.get(
-                testCase.query
-              ) || products;
-
-            const ranked =
-              rankProducts(
-                enrichedProducts,
-                testCase.query,
-                configuration
-              );
-
-            const metrics =
-              evaluateRanking(
-                ranked,
-                testCase,
-                k
-              );
-
-            return {
-              query: testCase.query,
-              metrics
-            };
-          }
-        );
-
-      return {
+    configuration =>
+      runConfiguration(
+        semanticProductsByQuery.get(
+          evaluationCases[0]?.query
+        ) || products,
+        evaluationCases,
         configuration,
-        queries: queryResults,
-        aggregate:
-          aggregate(
-            queryResults.map(
-              item => item.metrics
-            )
-          )
-      };
-    }
+        k
+      )
   );
 }
 
 function compareAblationResults(
   results
 ) {
-  const ranked =
-    [...results]
-      .sort(
-        (a, b) =>
-          b.aggregate.ndcgAtK -
-          a.aggregate.ndcgAtK
-      );
-
   const fullHybrid =
-    ranked.find(
+    results.find(
       result =>
         result.configuration.name ===
         "full-hybrid"
@@ -512,7 +528,6 @@ function compareAblationResults(
 
   const baseline =
     fullHybrid?.aggregate ??
-    ranked[0]?.aggregate ??
     {
       precisionAtK: 0,
       recallAtK: 0,
@@ -520,6 +535,14 @@ function compareAblationResults(
       mrr: 0,
       ndcgAtK: 0
     };
+
+  const ranked =
+    [...results]
+      .sort(
+        (a, b) =>
+          b.aggregate.ndcgAtK -
+          a.aggregate.ndcgAtK
+      );
 
   return ranked.map(
     (result, index) => ({
