@@ -15,7 +15,9 @@ import {
 } from "./hybridRetrieval.js";
 
 function normalize(value) {
-  return String(value ?? "").trim().toLowerCase();
+  return String(value ?? "")
+    .trim()
+    .toLowerCase();
 }
 
 function tokenize(value) {
@@ -221,25 +223,27 @@ function rankProducts(
   query,
   configuration
 ) {
-  const retrieval = hybridRetrieve(
-    products,
-    query,
-    {
-      limit: products.length,
-      candidateLimit: products.length,
-      lexicalLimit: products.length,
-      semanticLimit: products.length,
-      rrfK: 60
-    }
-  );
+  const retrieval =
+    hybridRetrieve(
+      products,
+      query,
+      {
+        limit: products.length,
+        candidateLimit: products.length,
+        lexicalLimit: products.length,
+        semanticLimit: products.length,
+        rrfK: 60
+      }
+    );
 
   return retrieval.results
     .map((item, index) => ({
       product: item.product,
-      score: scoreRerankedItem(
-        item,
-        configuration
-      ),
+      score:
+        scoreRerankedItem(
+          item,
+          configuration
+        ),
       index
     }))
     .sort((a, b) => {
@@ -284,7 +288,10 @@ function getRelevanceMap(testCase) {
     getRelevantIds(testCase);
 
   return Object.fromEntries(
-    relevantIds.map(id => [String(id), 1])
+    relevantIds.map(id => [
+      String(id),
+      1
+    ])
   );
 }
 
@@ -305,30 +312,35 @@ function evaluateRanking(
     getRelevanceMap(testCase);
 
   return {
-    precisionAtK: precisionAtK(
-      rankedIds,
-      relevant,
-      k
-    ),
-    recallAtK: recallAtK(
-      rankedIds,
-      relevant,
-      k
-    ),
-    f1AtK: f1AtK(
-      rankedIds,
-      relevant,
-      k
-    ),
-    mrr: mrr(
-      [rankedIds],
-      [relevant]
-    ),
-    ndcgAtK: ndcgAtK(
-      rankedIds,
-      relevanceMap,
-      k
-    )
+    precisionAtK:
+      precisionAtK(
+        rankedIds,
+        relevant,
+        k
+      ),
+    recallAtK:
+      recallAtK(
+        rankedIds,
+        relevant,
+        k
+      ),
+    f1AtK:
+      f1AtK(
+        rankedIds,
+        relevant,
+        k
+      ),
+    mrr:
+      mrr(
+        [rankedIds],
+        [relevant]
+      ),
+    ndcgAtK:
+      ndcgAtK(
+        rankedIds,
+        relevanceMap,
+        k
+      )
   };
 }
 
@@ -348,31 +360,36 @@ function mean(values) {
 
 function aggregate(results) {
   return {
-    precisionAtK: mean(
-      results.map(
-        item => item.precisionAtK
+    precisionAtK:
+      mean(
+        results.map(
+          item => item.precisionAtK
+        )
+      ),
+    recallAtK:
+      mean(
+        results.map(
+          item => item.recallAtK
+        )
+      ),
+    f1AtK:
+      mean(
+        results.map(
+          item => item.f1AtK
+        )
+      ),
+    mrr:
+      mean(
+        results.map(
+          item => item.mrr
+        )
+      ),
+    ndcgAtK:
+      mean(
+        results.map(
+          item => item.ndcgAtK
+        )
       )
-    ),
-    recallAtK: mean(
-      results.map(
-        item => item.recallAtK
-      )
-    ),
-    f1AtK: mean(
-      results.map(
-        item => item.f1AtK
-      )
-    ),
-    mrr: mean(
-      results.map(
-        item => item.mrr
-      )
-    ),
-    ndcgAtK: mean(
-      results.map(
-        item => item.ndcgAtK
-      )
-    )
   };
 }
 
@@ -383,31 +400,34 @@ function runConfiguration(
   k = 5
 ) {
   const results =
-    evaluationCases.map(testCase => {
-      const ranked =
-        rankProducts(
-          products,
-          testCase.query,
-          configuration
-        );
+    evaluationCases.map(
+      testCase => {
+        const ranked =
+          rankProducts(
+            products,
+            testCase.query,
+            configuration
+          );
 
-      return {
-        query: testCase.query,
-        metrics:
-          evaluateRanking(
-            ranked,
-            testCase,
-            k
-          )
-      };
-    });
+        return {
+          query: testCase.query,
+          metrics:
+            evaluateRanking(
+              ranked,
+              testCase,
+              k
+            )
+        };
+      }
+    );
 
   return {
     configuration,
     methodology:
       "fixed-production-hybrid-candidate-pool-reranking",
     candidateGeneration: {
-      method: "semantic-lexical-rrf",
+      method:
+        "semantic-lexical-rrf",
       rrfK: 60
     },
     queries: results,
@@ -479,7 +499,9 @@ async function runAblationStudy(
   const semanticProductsByQuery =
     new Map();
 
-  for (const testCase of evaluationCases) {
+  for (
+    const testCase of evaluationCases
+  ) {
     const scoreMap =
       await getSemanticScoreMap(
         products,
@@ -503,17 +525,59 @@ async function runAblationStudy(
     );
   }
 
-  return configurations.map(
-    configuration =>
-      runConfiguration(
+  const results = [];
+
+  for (
+    const configuration of configurations
+  ) {
+    const queryResults = [];
+
+    for (
+      const testCase of evaluationCases
+    ) {
+      const enrichedProducts =
         semanticProductsByQuery.get(
-          evaluationCases[0]?.query
-        ) || products,
-        evaluationCases,
-        configuration,
-        k
-      )
-  );
+          testCase.query
+        ) || products;
+
+      const ranked =
+        rankProducts(
+          enrichedProducts,
+          testCase.query,
+          configuration
+        );
+
+      queryResults.push({
+        query: testCase.query,
+        metrics:
+          evaluateRanking(
+            ranked,
+            testCase,
+            k
+          )
+      });
+    }
+
+    results.push({
+      configuration,
+      methodology:
+        "fixed-production-hybrid-candidate-pool-reranking",
+      candidateGeneration: {
+        method:
+          "semantic-lexical-rrf",
+        rrfK: 60
+      },
+      queries: queryResults,
+      aggregate:
+        aggregate(
+          queryResults.map(
+            item => item.metrics
+          )
+        )
+    });
+  }
+
+  return results;
 }
 
 function compareAblationResults(
@@ -527,8 +591,7 @@ function compareAblationResults(
     );
 
   const baseline =
-    fullHybrid?.aggregate ??
-    {
+    fullHybrid?.aggregate ?? {
       precisionAtK: 0,
       recallAtK: 0,
       f1AtK: 0,
@@ -537,12 +600,11 @@ function compareAblationResults(
     };
 
   const ranked =
-    [...results]
-      .sort(
-        (a, b) =>
-          b.aggregate.ndcgAtK -
-          a.aggregate.ndcgAtK
-      );
+    [...results].sort(
+      (a, b) =>
+        b.aggregate.ndcgAtK -
+        a.aggregate.ndcgAtK
+    );
 
   return ranked.map(
     (result, index) => ({
