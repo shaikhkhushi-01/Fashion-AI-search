@@ -362,7 +362,11 @@ function runConfiguration(
     configuration,
     queries: results,
     aggregate:
-      aggregate(results)
+      aggregate(
+        results.map(
+          item => item.metrics
+        )
+      )
   };
 }
 
@@ -419,9 +423,7 @@ async function runAblationStudy(
   const semanticProductsByQuery =
     new Map();
 
-  for (
-    const testCase of evaluationCases
-  ) {
+  for (const testCase of evaluationCases) {
     const scoreMap =
       await getSemanticScoreMap(
         products,
@@ -456,24 +458,23 @@ async function runAblationStudy(
               ) || products;
 
             const ranked =
-  rankProducts(
-    enrichedProducts,
-    testCase.query,
-    configuration
-  );
+              rankProducts(
+                enrichedProducts,
+                testCase.query,
+                configuration
+              );
 
-const metrics =
-  evaluateRanking(
-    ranked,
-    testCase,
-    k
-  );
+            const metrics =
+              evaluateRanking(
+                ranked,
+                testCase,
+                k
+              );
 
-return {
-  query:
-    testCase.query,
-  metrics
-};
+            return {
+              query: testCase.query,
+              metrics
+            };
           }
         );
 
@@ -483,8 +484,7 @@ return {
         aggregate:
           aggregate(
             queryResults.map(
-              item =>
-                item.metrics
+              item => item.metrics
             )
           )
       };
@@ -495,29 +495,55 @@ return {
 function compareAblationResults(
   results
 ) {
-  return [...results]
-    .sort(
-      (a, b) =>
-        b.aggregate.ndcgAtK -
-        a.aggregate.ndcgAtK
-    )
-    .map(
-      (result, index) => ({
-        rank: index + 1,
-        configuration:
-          result.configuration.name,
-        precisionAtK:
-          result.aggregate.precisionAtK,
-        recallAtK:
-          result.aggregate.recallAtK,
-        f1AtK:
-          result.aggregate.f1AtK,
-        mrr:
-          result.aggregate.mrr,
-        ndcgAtK:
-          result.aggregate.ndcgAtK
-      })
+  const ranked =
+    [...results]
+      .sort(
+        (a, b) =>
+          b.aggregate.ndcgAtK -
+          a.aggregate.ndcgAtK
+      );
+
+  const fullHybrid =
+    ranked.find(
+      result =>
+        result.configuration.name ===
+        "full-hybrid"
     );
+
+  const baseline =
+    fullHybrid?.aggregate ??
+    ranked[0]?.aggregate ??
+    {
+      precisionAtK: 0,
+      recallAtK: 0,
+      f1AtK: 0,
+      mrr: 0,
+      ndcgAtK: 0
+    };
+
+  return ranked.map(
+    (result, index) => ({
+      rank: index + 1,
+      configuration:
+        result.configuration.name,
+      precisionAtK:
+        result.aggregate.precisionAtK,
+      recallAtK:
+        result.aggregate.recallAtK,
+      f1AtK:
+        result.aggregate.f1AtK,
+      mrr:
+        result.aggregate.mrr,
+      ndcgAtK:
+        result.aggregate.ndcgAtK,
+      ndcgDeltaVsFullHybrid:
+        result.aggregate.ndcgAtK -
+        baseline.ndcgAtK,
+      mrrDeltaVsFullHybrid:
+        result.aggregate.mrr -
+        baseline.mrr
+    })
+  );
 }
 
 export {
