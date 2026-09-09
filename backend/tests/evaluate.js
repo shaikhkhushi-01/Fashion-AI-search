@@ -220,6 +220,174 @@ function printComparison(report) {
       })
     )
   );
+
+  if (
+    report.statisticalAnalysis
+  ) {
+    console.log(
+      "\nStatistical Comparisons"
+    );
+
+    console.table(
+      Object.entries(
+        report.statisticalAnalysis
+          .comparisons
+      ).map(
+        ([comparison, value]) => ({
+          comparison,
+          MRR:
+            value.metrics.mrr
+              .meanDifference,
+          MRR_CI_Lower:
+            value.metrics.mrr
+              .confidenceInterval95.lower,
+          MRR_CI_Upper:
+            value.metrics.mrr
+              .confidenceInterval95.upper,
+          MRR_EffectSize:
+            value.metrics.mrr
+              .effectSize,
+          NDCG:
+            value.metrics.ndcgAtK
+              .meanDifference,
+          NDCG_CI_Lower:
+            value.metrics.ndcgAtK
+              .confidenceInterval95.lower,
+          NDCG_CI_Upper:
+            value.metrics.ndcgAtK
+              .confidenceInterval95.upper,
+          NDCG_EffectSize:
+            value.metrics.ndcgAtK
+              .effectSize
+        })
+      )
+    );
+  }
+}
+
+function buildStatisticalComparisons(
+  results
+) {
+  const statisticalComparisons = {};
+
+  const comparisonPairs = [
+    ["hybrid", "lexical"],
+    ["hybrid", "semantic"],
+    ["hybrid", "keyword"],
+    ["hybrid", "category"]
+  ];
+
+  for (
+    const [systemA, systemB]
+      of comparisonPairs
+  ) {
+    const resultA =
+      results[systemA];
+
+    const resultB =
+      results[systemB];
+
+    if (
+      !resultA ||
+      !resultB
+    ) {
+      continue;
+    }
+
+    statisticalComparisons[
+      `${systemA}_vs_${systemB}`
+    ] = {
+      systemA,
+      systemB,
+      metrics: {
+        precisionAtK:
+          compareMetricSamples(
+            resultA.queries.map(
+              item =>
+                item.metrics
+                  .precisionAtK
+            ),
+            resultB.queries.map(
+              item =>
+                item.metrics
+                  .precisionAtK
+            )
+          ),
+        recallAtK:
+          compareMetricSamples(
+            resultA.queries.map(
+              item =>
+                item.metrics
+                  .recallAtK
+            ),
+            resultB.queries.map(
+              item =>
+                item.metrics
+                  .recallAtK
+            )
+          ),
+        f1AtK:
+          compareMetricSamples(
+            resultA.queries.map(
+              item =>
+                item.metrics
+                  .f1AtK
+            ),
+            resultB.queries.map(
+              item =>
+                item.metrics
+                  .f1AtK
+            )
+          ),
+        mrr:
+          compareMetricSamples(
+            resultA.queries.map(
+              item =>
+                item.metrics
+                  .reciprocalRank
+            ),
+            resultB.queries.map(
+              item =>
+                item.metrics
+                  .reciprocalRank
+            )
+          ),
+        ndcgAtK:
+          compareMetricSamples(
+            resultA.queries.map(
+              item =>
+                item.metrics
+                  .ndcgAtK
+            ),
+            resultB.queries.map(
+              item =>
+                item.metrics
+                  .ndcgAtK
+            )
+          )
+      }
+    };
+  }
+
+  return statisticalComparisons;
+}
+
+function buildStatisticalAnalysis(
+  comparisons
+) {
+  return {
+    confidenceLevel: 0.95,
+    bootstrapIterations: 2000,
+    comparisonUnit:
+      "paired evaluation query",
+    effectSize:
+      "standardized paired mean difference",
+    relativeImprovement:
+      "mean difference divided by comparison system mean",
+    interpretationRule:
+      "A 95% confidence interval excluding zero indicates evidence of a non-zero paired difference.",
+    comparisons
+  };
 }
 
 async function main() {
@@ -296,102 +464,18 @@ async function main() {
     "hybrid"
   ];
 
-  report.statisticalAnalysisGenerated = true;
+  const statisticalComparisons =
+    buildStatisticalComparisons(
+      results
+    );
 
-  const statisticalComparisons = {};
+  report.statisticalAnalysis =
+    buildStatisticalAnalysis(
+      statisticalComparisons
+    );
 
-const comparisonPairs = [
-  ["hybrid", "lexical"],
-  ["hybrid", "semantic"],
-  ["hybrid", "keyword"],
-  ["hybrid", "category"]
-];
-
-for (const [systemA, systemB] of comparisonPairs) {
-  const resultA = results[systemA];
-  const resultB = results[systemB];
-
-  if (!resultA || !resultB) {
-    continue;
-  }
-
-  statisticalComparisons[
-    `${systemA}_vs_${systemB}`
-  ] = {
-    systemA,
-    systemB,
-    metrics: {
-      precisionAtK:
-        compareMetricSamples(
-          resultA.queries.map(
-            item =>
-              item.metrics.precisionAtK
-          ),
-          resultB.queries.map(
-            item =>
-              item.metrics.precisionAtK
-          )
-        ),
-      recallAtK:
-        compareMetricSamples(
-          resultA.queries.map(
-            item =>
-              item.metrics.recallAtK
-          ),
-          resultB.queries.map(
-            item =>
-              item.metrics.recallAtK
-          )
-        ),
-      f1AtK:
-        compareMetricSamples(
-          resultA.queries.map(
-            item =>
-              item.metrics.f1AtK
-          ),
-          resultB.queries.map(
-            item =>
-              item.metrics.f1AtK
-          )
-        ),
-      mrr:
-        compareMetricSamples(
-          resultA.queries.map(
-            item =>
-              item.metrics.reciprocalRank
-          ),
-          resultB.queries.map(
-            item =>
-              item.metrics.reciprocalRank
-          )
-        ),
-      ndcgAtK:
-        compareMetricSamples(
-          resultA.queries.map(
-            item =>
-              item.metrics.ndcgAtK
-          ),
-          resultB.queries.map(
-            item =>
-              item.metrics.ndcgAtK
-          )
-        )
-    }
-  };
-}
-
-report.statisticalAnalysis = {
-  confidenceLevel: 0.95,
-  bootstrapIterations: 2000,
-  comparisonUnit:
-    "paired evaluation query",
-  effectSize:
-    "standardized paired mean difference",
-  relativeImprovement:
-    "mean difference divided by comparison system mean",
-  comparisons:
-    statisticalComparisons
-};
+  report.statisticalAnalysisGenerated =
+    true;
 
   const outputDirectory =
     path.join(
@@ -413,10 +497,34 @@ report.statisticalAnalysis = {
       "baseline-comparison-report.json"
     );
 
+  const statisticalOutputPath =
+    path.join(
+      outputDirectory,
+      "statistical-analysis-report.json"
+    );
+
   fs.writeFileSync(
     outputPath,
     JSON.stringify(
       report,
+      null,
+      2
+    )
+  );
+
+  fs.writeFileSync(
+    statisticalOutputPath,
+    JSON.stringify(
+      {
+        experiment:
+          report.experiment,
+        datasetSize:
+          report.datasetSize,
+        evaluationQueries:
+          report.evaluationQueries,
+        methodology:
+          report.statisticalAnalysis
+      },
       null,
       2
     )
@@ -428,6 +536,10 @@ report.statisticalAnalysis = {
 
   console.log(
     `\nReport written to ${outputPath}`
+  );
+
+  console.log(
+    `Statistical report written to ${statisticalOutputPath}`
   );
 }
 
