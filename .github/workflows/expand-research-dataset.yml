@@ -1,0 +1,38 @@
+name: Expand Research Dataset
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - backend/scripts/generateResearchDataset.js
+
+permissions:
+  contents: write
+
+jobs:
+  expand:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Generate dataset
+        run: node backend/scripts/generateResearchDataset.js
+
+      - name: Validate dataset
+        run: |
+          node --input-type=module -e "import fs from 'fs'; const products=JSON.parse(fs.readFileSync('backend/data/products.json','utf8')); if(products.length!==1000) process.exit(1); const ids=new Set(products.map(p=>String(p.id))); if(ids.size!==1000) process.exit(1); console.log('Products:',products.length); console.log('Unique IDs:',ids.size)"
+
+      - name: Commit generated dataset
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/data/products.json backend/tests/evaluation-cases.js
+          git diff --cached --quiet || git commit -m "Expand research dataset and evaluation benchmark"
+          git push
