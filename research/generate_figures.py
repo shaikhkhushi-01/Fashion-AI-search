@@ -2,20 +2,18 @@ import json
 import os
 import matplotlib.pyplot as plt
 
-
 BASE_DIR = os.path.dirname(
     os.path.dirname(os.path.abspath(__file__))
 )
 
 RESULTS_DIR = os.path.join(
     BASE_DIR,
-    "backend",
     "evaluation-results"
 )
 
 OUTPUT_DIR = os.path.join(
     BASE_DIR,
-    "research",
+    "research-results",
     "figures"
 )
 
@@ -154,13 +152,15 @@ def generate_ablation_figure():
         "Semantic"
     ]
 
+    results = report["results"]
+
     mrr = [
-        report["results"][name]["metrics"]["mrr"]
+        results[name]["metrics"]["mrr"]
         for name in configurations
     ]
 
     ndcg = [
-        report["results"][name]["metrics"]["ndcgAtK"]
+        results[name]["metrics"]["ndcgAtK"]
         for name in configurations
     ]
 
@@ -225,10 +225,12 @@ def generate_statistical_figure():
     lower = []
     upper = []
 
+    comparison_data = report[
+        "methodology"
+    ]["comparisons"]
+
     for comparison in comparisons:
-        metric = report[
-            "methodology"
-        ]["comparisons"][
+        metric = comparison_data[
             comparison
         ]["metrics"]["ndcgAtK"]
 
@@ -250,20 +252,24 @@ def generate_statistical_figure():
 
     x = list(range(len(labels)))
 
+    lower_errors = [
+        differences[i] - lower[i]
+        for i in range(len(differences))
+    ]
+
+    upper_errors = [
+        upper[i] - differences[i]
+        for i in range(len(differences))
+    ]
+
     plt.figure(figsize=(10, 6))
 
     plt.errorbar(
         x,
         differences,
         yerr=[
-            [
-                differences[i] - lower[i]
-                for i in range(len(differences))
-            ],
-            [
-                upper[i] - differences[i]
-                for i in range(len(differences))
-            ]
+            lower_errors,
+            upper_errors
         ],
         fmt="o",
         capsize=6
