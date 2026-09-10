@@ -134,33 +134,38 @@ def generate_ablation_figure():
         "ablation-report.json"
     )
 
+    comparison = report["comparison"]
+
     configurations = [
         "lexical-only",
         "lexical-budget",
+        "full-hybrid",
         "semantic-attributes",
         "lexical-attributes",
-        "full-hybrid",
         "semantic-only"
     ]
 
     labels = [
         "Lexical",
         "Lexical + Budget",
+        "Full Hybrid",
         "Semantic + Attributes",
         "Lexical + Attributes",
-        "Full Hybrid",
         "Semantic"
     ]
 
-    results = report["results"]
+    lookup = {
+        item["configuration"]: item
+        for item in comparison
+    }
 
     mrr = [
-        results[name]["metrics"]["mrr"]
+        lookup[name]["mrr"]
         for name in configurations
     ]
 
     ndcg = [
-        results[name]["metrics"]["ndcgAtK"]
+        lookup[name]["ndcgAtK"]
         for name in configurations
     ]
 
@@ -254,12 +259,16 @@ def generate_statistical_figure():
 
     lower_errors = [
         differences[i] - lower[i]
-        for i in range(len(differences))
+        for i in range(
+            len(differences)
+        )
     ]
 
     upper_errors = [
         upper[i] - differences[i]
-        for i in range(len(differences))
+        for i in range(
+            len(differences)
+        )
     ]
 
     plt.figure(figsize=(10, 6))
