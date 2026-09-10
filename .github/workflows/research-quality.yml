@@ -32,11 +32,18 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r requirements.txt
 
+      - name: Install figure dependencies
+        run: pip install matplotlib
+
       - name: Install dependencies
         run: npm install
 
       - name: Run complete research test suite
         run: npm run all-tests
+
+      - name: Generate research figures
+        working-directory: ..
+        run: python research/generate_figures.py
 
       - name: Upload research results
         uses: actions/upload-artifact@v4
@@ -45,16 +52,5 @@ jobs:
           path: |
             backend/evaluation-results/**
             backend/research-results/**
+            research/figures/**
           if-no-files-found: ignore
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install figure dependencies
-        run: pip install matplotlib
-
-      - name: Generate research figures
-        working-directory: ..
-        run: python research/generate_figures.py
