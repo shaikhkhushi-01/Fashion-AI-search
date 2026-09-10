@@ -887,6 +887,24 @@ function stylistReasons(
 }
 
 app.get(
+  "/",
+  (req, res) => {
+    res.json({
+      status: "ok",
+      service: "Fashion AI Discovery API",
+      version: APP_VERSION,
+      environment: NODE_ENV,
+      products: products.length,
+      model: MODEL_NAME,
+      retrieval: "hybrid",
+      health: "/api/health",
+      ready: "/api/ready",
+      search: "/api/ai-search"
+    });
+  }
+);
+
+app.get(
   "/api/health",
   (req, res) => {
     res.json({
