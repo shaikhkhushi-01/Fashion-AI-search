@@ -46,7 +46,8 @@
     "research-pipeline-test": "node tests/research-pipeline.test.js",
     "project-manifest-test": "node tests/project-manifest.test.js",
     "all-tests": "node tests/run-all-tests.js",
-    "semantic-quality-test": "node tests/semantic-quality.test.js"
+    "semantic-quality-test": "node tests/semantic-quality.test.js",
+    "weight-tuning": "node tests/hybrid-weight-tuning.js"
   },
   "engines": {
     "node": ">=18"
