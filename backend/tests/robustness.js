@@ -1,27 +1,40 @@
 import fs from "fs";
 import path from "path";
+
 import {
   sanitizeProducts,
   runRobustnessChecks,
   benchmarkSearch,
   createRobustnessReport
 } from "../services/robustness.js";
-import { products } from "./evaluation-cases.js";
 
-const catalogue = sanitizeProducts(products);
+const products =
+  JSON.parse(
+    fs.readFileSync(
+      path.resolve(
+        "data/products.json"
+      ),
+      "utf8"
+    )
+  );
+
+const catalogue =
+  sanitizeProducts(products);
 
 function searchProducts(query) {
-  const normalized = String(query ?? "")
-    .toLowerCase()
-    .trim();
+  const normalized =
+    String(query ?? "")
+      .toLowerCase()
+      .trim();
 
   if (!normalized) {
     return catalogue;
   }
 
-  const tokens = normalized
-    .split(/[^a-z0-9]+/)
-    .filter(Boolean);
+  const tokens =
+    normalized
+      .split(/[^a-z0-9]+/)
+      .filter(Boolean);
 
   return catalogue
     .map(product => {
@@ -40,20 +53,29 @@ function searchProducts(query) {
         .join(" ")
         .toLowerCase();
 
-      const matched = tokens.filter(
-        token => text.includes(token)
-      );
+      const matched =
+        tokens.filter(
+          token =>
+            text.includes(token)
+        );
 
       return {
         ...product,
         score:
           tokens.length > 0
-            ? matched.length / tokens.length
+            ? matched.length /
+              tokens.length
             : 0
       };
     })
-    .filter(product => product.score > 0)
-    .sort((a, b) => b.score - a.score);
+    .filter(
+      product =>
+        product.score > 0
+    )
+    .sort(
+      (a, b) =>
+        b.score - a.score
+    );
 }
 
 const robustness =
@@ -70,11 +92,12 @@ const benchmarkQueries = [
   "shirt under 3000"
 ];
 
-const benchmark = benchmarkSearch(
-  searchProducts,
-  benchmarkQueries,
-  100
-);
+const benchmark =
+  benchmarkSearch(
+    searchProducts,
+    benchmarkQueries,
+    100
+  );
 
 const report =
   createRobustnessReport(
@@ -83,18 +106,27 @@ const report =
   );
 
 const outputDirectory =
-  path.resolve("evaluation-results");
+  path.resolve(
+    "evaluation-results"
+  );
 
-fs.mkdirSync(outputDirectory, {
-  recursive: true
-});
+fs.mkdirSync(
+  outputDirectory,
+  {
+    recursive: true
+  }
+);
 
 fs.writeFileSync(
   path.join(
     outputDirectory,
     "robustness-report.json"
   ),
-  JSON.stringify(report, null, 2)
+  JSON.stringify(
+    report,
+    null,
+    2
+  )
 );
 
 console.log(
