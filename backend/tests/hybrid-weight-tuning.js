@@ -10,9 +10,14 @@ const backendDir = path.resolve(__dirname, "..");
 
 const productsPath = path.join(backendDir, "data", "products.json");
 const outputDir = path.join(backendDir, "evaluation-results");
-const outputPath = path.join(outputDir, "hybrid-weight-tuning-report.json");
+const outputPath = path.join(
+  outputDir,
+  "hybrid-weight-tuning-report.json"
+);
 
-const products = JSON.parse(fs.readFileSync(productsPath, "utf8"));
+const products = JSON.parse(
+  fs.readFileSync(productsPath, "utf8")
+);
 
 const baselineWeights = {
   semantic: 0.45,
@@ -22,13 +27,22 @@ const baselineWeights = {
   metadata: 0.05
 };
 
-const testCases = evaluationCases.filter((_, index) => index % 5 === 0);
-const validationCases = evaluationCases.filter((_, index) => index % 5 !== 0);
+const testCases = evaluationCases.filter(
+  (_, index) => index % 5 === 0
+);
 
-const clamp = value => Math.max(0, Math.min(1, value));
+const validationCases = evaluationCases.filter(
+  (_, index) => index % 5 !== 0
+);
+
+const clamp = value =>
+  Math.max(0, Math.min(1, value));
 
 const normalizeWeights = weights => {
-  const total = Object.values(weights).reduce((sum, value) => sum + value, 0);
+  const total = Object.values(weights).reduce(
+    (sum, value) => sum + value,
+    0
+  );
 
   if (total === 0) {
     return { ...baselineWeights };
@@ -44,9 +58,19 @@ const normalizeWeights = weights => {
 
 const generateCandidates = () => {
   const candidates = [];
-  const deltas = [-0.15, -0.1, -0.05, 0, 0.05, 0.1, 0.15];
+  const deltas = [
+    -0.15,
+    -0.1,
+    -0.05,
+    0,
+    0.05,
+    0.1,
+    0.15
+  ];
 
-  candidates.push(normalizeWeights(baselineWeights));
+  candidates.push(
+    normalizeWeights(baselineWeights)
+  );
 
   for (const signal of Object.keys(baselineWeights)) {
     for (const delta of deltas) {
@@ -57,7 +81,9 @@ const generateCandidates = () => {
       candidates.push(
         normalizeWeights({
           ...baselineWeights,
-          [signal]: clamp(baselineWeights[signal] + delta)
+          [signal]: clamp(
+            baselineWeights[signal] + delta
+          )
         })
       );
     }
@@ -68,7 +94,8 @@ const generateCandidates = () => {
       index ===
       array.findIndex(
         candidate =>
-          JSON.stringify(candidate) === JSON.stringify(weights)
+          JSON.stringify(candidate) ===
+          JSON.stringify(weights)
       )
   );
 };
@@ -76,14 +103,18 @@ const generateCandidates = () => {
 const dcg = values =>
   values.reduce(
     (sum, value, index) =>
-      sum + ((2 ** value) - 1) / Math.log2(index + 2),
+      sum +
+      ((2 ** value) - 1) /
+        Math.log2(index + 2),
     0
   );
 
 const ndcgAt5 = (rankedIds, relevance) => {
   const actual = rankedIds
     .slice(0, 5)
-    .map(id => Number(relevance[String(id)] || 0));
+    .map(id =>
+      Number(relevance[String(id)] || 0)
+    );
 
   const ideal = Object.values(relevance)
     .map(Number)
@@ -100,10 +131,20 @@ const ndcgAt5 = (rankedIds, relevance) => {
 };
 
 const mrr = (rankedIds, relevant) => {
-  const relevantSet = new Set(relevant.map(Number));
+  const relevantSet = new Set(
+    relevant.map(Number)
+  );
 
-  for (let index = 0; index < rankedIds.length; index += 1) {
-    if (relevantSet.has(Number(rankedIds[index]))) {
+  for (
+    let index = 0;
+    index < rankedIds.length;
+    index += 1
+  ) {
+    if (
+      relevantSet.has(
+        Number(rankedIds[index])
+      )
+    ) {
       return 1 / (index + 1);
     }
   }
@@ -111,31 +152,44 @@ const mrr = (rankedIds, relevant) => {
   return 0;
 };
 
-const precisionAt5 = (rankedIds, relevant) => {
-  const relevantSet = new Set(relevant.map(Number));
+const precisionAt5 = (
+  rankedIds,
+  relevant
+) => {
+  const relevantSet = new Set(
+    relevant.map(Number)
+  );
+
   const hits = rankedIds
     .slice(0, 5)
-    .filter(id => relevantSet.has(Number(id))).length;
+    .filter(id =>
+      relevantSet.has(Number(id))
+    ).length;
 
   return hits / 5;
 };
 
-const evaluateWeights = async (weights, cases) => {
+const evaluateWeights = async (
+  weights,
+  cases
+) => {
   let precision = 0;
   let reciprocalRank = 0;
   let ndcg = 0;
 
   for (const evaluationCase of cases) {
     const results = await hybridRetrieve(
-      evaluationCase.query,
       products,
+      evaluationCase.query,
       {
         limit: 20,
         weights
       }
     );
 
-    const rankedIds = results.map(product => Number(product.id));
+    const rankedIds = results.map(
+      product => Number(product.id)
+    );
 
     precision += precisionAt5(
       rankedIds,
@@ -164,16 +218,35 @@ const evaluateWeights = async (weights, cases) => {
 
 const candidates = generateCandidates();
 
-console.log(`Products: ${products.length}`);
-console.log(`Evaluation cases: ${evaluationCases.length}`);
-console.log(`Validation cases: ${validationCases.length}`);
-console.log(`Held-out test cases: ${testCases.length}`);
-console.log(`Weight configurations: ${candidates.length}`);
+console.log(
+  `Products: ${products.length}`
+);
+
+console.log(
+  `Evaluation cases: ${evaluationCases.length}`
+);
+
+console.log(
+  `Validation cases: ${validationCases.length}`
+);
+
+console.log(
+  `Held-out test cases: ${testCases.length}`
+);
+
+console.log(
+  `Weight configurations: ${candidates.length}`
+);
 
 let best = null;
+
 const validationResults = [];
 
-for (let index = 0; index < candidates.length; index += 1) {
+for (
+  let index = 0;
+  index < candidates.length;
+  index += 1
+) {
   const weights = candidates[index];
 
   console.log(
@@ -212,39 +285,57 @@ for (let index = 0; index < candidates.length; index += 1) {
   );
 }
 
-console.log("\nBest validation configuration:");
-console.log(JSON.stringify(best, null, 2));
-
-const baselineValidation = await evaluateWeights(
-  baselineWeights,
-  validationCases
+console.log(
+  "\nBest validation configuration:"
 );
 
-const baselineTest = await evaluateWeights(
-  baselineWeights,
-  testCases
+console.log(
+  JSON.stringify(best, null, 2)
 );
 
-const tunedTest = await evaluateWeights(
-  best.weights,
-  testCases
-);
+const baselineValidation =
+  await evaluateWeights(
+    baselineWeights,
+    validationCases
+  );
+
+const baselineTest =
+  await evaluateWeights(
+    baselineWeights,
+    testCases
+  );
+
+const tunedTest =
+  await evaluateWeights(
+    best.weights,
+    testCases
+  );
 
 const report = {
   experiment: "hybrid-weight-tuning",
   methodology: {
-    totalEvaluationCases: evaluationCases.length,
-    validationCases: validationCases.length,
-    heldOutTestCases: testCases.length,
-    splitMethod: "deterministic index modulo 5",
-    validationRule: "four cases validation for every one held-out test case",
-    selectionObjective: "0.5*NDCG@5 + 0.3*MRR + 0.2*Precision@5",
-    weightSearchMethod: "deterministic local perturbation around production baseline",
-    productionBaselineWeights: baselineWeights
+    totalEvaluationCases:
+      evaluationCases.length,
+    validationCases:
+      validationCases.length,
+    heldOutTestCases:
+      testCases.length,
+    splitMethod:
+      "deterministic index modulo 5",
+    validationRule:
+      "four cases validation for every one held-out test case",
+    selectionObjective:
+      "0.5*NDCG@5 + 0.3*MRR + 0.2*Precision@5",
+    weightSearchMethod:
+      "deterministic local perturbation around production baseline",
+    productionBaselineWeights:
+      baselineWeights
   },
   datasetSize: products.length,
-  configurationsEvaluated: candidates.length,
-  bestValidationConfiguration: best,
+  configurationsEvaluated:
+    candidates.length,
+  bestValidationConfiguration:
+    best,
   baselineValidation,
   heldOutComparison: {
     baseline: {
@@ -270,19 +361,30 @@ const report = {
   validationResults
 };
 
-fs.mkdirSync(outputDir, { recursive: true });
+fs.mkdirSync(
+  outputDir,
+  { recursive: true }
+);
 
 fs.writeFileSync(
   outputPath,
   JSON.stringify(report, null, 2)
 );
 
-console.log(`\nReport written to ${outputPath}`);
+console.log(
+  `\nReport written to ${outputPath}`
+);
 
 if (
-  !Number.isFinite(tunedTest.ndcgAt5) ||
-  !Number.isFinite(tunedTest.mrr) ||
-  !Number.isFinite(tunedTest.precisionAt5)
+  !Number.isFinite(
+    tunedTest.ndcgAt5
+  ) ||
+  !Number.isFinite(
+    tunedTest.mrr
+  ) ||
+  !Number.isFinite(
+    tunedTest.precisionAt5
+  )
 ) {
   process.exit(1);
 }
