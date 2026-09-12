@@ -35,7 +35,8 @@ const tests = [
   ["research-report-test", "Research report"],
   ["performance-test", "Performance"],
   ["research-pipeline-test", "Research pipeline"],
-  ["project-manifest-test", "Project manifest"]
+  ["project-manifest-test", "Project manifest"],
+  ["weight-tuning", "Hybrid weight tuning"]
 ];
 
 const results = [];
