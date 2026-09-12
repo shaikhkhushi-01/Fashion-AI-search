@@ -5,20 +5,14 @@ import {
   createExperimentFingerprint,
   createReproducibilityManifest
 } from "../services/reproducibility.js";
-import {
-  evaluationCases
-} from "./evaluation-cases.js";
+import { evaluationCases } from "./evaluation-cases.js";
 
-const productsPath =
-  path.resolve("data/products.json");
-
-const products =
-  JSON.parse(
-    fs.readFileSync(
-      productsPath,
-      "utf8"
-    )
-  );
+const products = JSON.parse(
+  fs.readFileSync(
+    path.resolve("data/products.json"),
+    "utf8"
+  )
+);
 
 const configuration = {
   k: 5,
