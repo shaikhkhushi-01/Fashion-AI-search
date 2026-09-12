@@ -8,7 +8,6 @@ import {
 } from "../services/evaluation.js";
 
 import {
-  products,
   evaluationCases
 } from "./evaluation-cases.js";
 
@@ -39,6 +38,19 @@ const __filename =
 
 const __dirname =
   path.dirname(__filename);
+
+const products =
+  JSON.parse(
+    fs.readFileSync(
+      path.join(
+        __dirname,
+        "..",
+        "data",
+        "products.json"
+      ),
+      "utf8"
+    )
+  );
 
 function rankByScore(
   items,
