@@ -6,9 +6,19 @@ import {
   createReproducibilityManifest
 } from "../services/reproducibility.js";
 import {
-  products,
   evaluationCases
 } from "./evaluation-cases.js";
+
+const productsPath =
+  path.resolve("data/products.json");
+
+const products =
+  JSON.parse(
+    fs.readFileSync(
+      productsPath,
+      "utf8"
+    )
+  );
 
 const configuration = {
   k: 5,
