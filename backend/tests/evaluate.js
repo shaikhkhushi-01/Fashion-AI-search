@@ -17,6 +17,7 @@ import {
   attributeScore,
   hybridRetrieve
 } from "../services/hybridRetrieval.js";
+import { parseQuery } from "../services/queryUnderstanding.js";
 import { getSemanticScoreMap } from "../services/semanticSearch.js";
 import { compareMetricSamples } from "../services/statistics.js";
 
@@ -61,11 +62,9 @@ function lexicalSystem(query) {
   return rankByScore(products, product => lexicalScore(query, product));
 }
 
-function attributeSystem(query, testCase) {
-  return rankByScore(
-    products,
-    product => attributeScore(testCase.parsedQuery || {}, product)
-  );
+function attributeSystem(query) {
+  const intent = parseQuery(query);
+  return rankByScore(products, product => attributeScore(intent, product));
 }
 
 function semanticSystem(query, semanticProducts) {
@@ -87,8 +86,8 @@ async function buildSemanticProducts() {
   return cache;
 }
 
-async function hybridSystem(query, semanticProducts) {
-  const result = await hybridRetrieve(semanticProducts, query, {
+function hybridSystem(query, semanticProducts) {
+  const result = hybridRetrieve(semanticProducts, query, {
     limit: products.length,
     candidateLimit: products.length,
     lexicalLimit: products.length,
@@ -201,9 +200,9 @@ async function main() {
     price: query => priceSystem(query),
     popularity: () => popularitySystem(),
     lexical: query => lexicalSystem(query),
-    attribute: (query, testCase) => attributeSystem(query, testCase),
+    attribute: query => attributeSystem(query),
     semantic: query => semanticSystem(query, semanticProducts.get(query) || products),
-    hybrid: async query => hybridSystem(query, semanticProducts.get(query) || products)
+    hybrid: query => hybridSystem(query, semanticProducts.get(query) || products)
   };
 
   const results = compareSystems(evaluationCases, systems, { k: 5 });
