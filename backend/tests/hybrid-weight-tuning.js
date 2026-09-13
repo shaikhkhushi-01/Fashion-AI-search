@@ -8,8 +8,17 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const backendDir = path.resolve(__dirname, "..");
 
-const productsPath = path.join(backendDir, "data", "products.json");
-const outputDir = path.join(backendDir, "evaluation-results");
+const productsPath = path.join(
+  backendDir,
+  "data",
+  "products.json"
+);
+
+const outputDir = path.join(
+  backendDir,
+  "evaluation-results"
+);
+
 const outputPath = path.join(
   outputDir,
   "hybrid-weight-tuning-report.json"
@@ -49,15 +58,18 @@ const normalizeWeights = weights => {
   }
 
   return Object.fromEntries(
-    Object.entries(weights).map(([key, value]) => [
-      key,
-      value / total
-    ])
+    Object.entries(weights).map(
+      ([key, value]) => [
+        key,
+        value / total
+      ]
+    )
   );
 };
 
 const generateCandidates = () => {
   const candidates = [];
+
   const deltas = [
     -0.15,
     -0.1,
@@ -69,11 +81,19 @@ const generateCandidates = () => {
   ];
 
   candidates.push(
-    normalizeWeights(baselineWeights)
+    normalizeWeights(
+      baselineWeights
+    )
   );
 
-  for (const signal of Object.keys(baselineWeights)) {
-    for (const delta of deltas) {
+  for (
+    const signal of Object.keys(
+      baselineWeights
+    )
+  ) {
+    for (
+      const delta of deltas
+    ) {
       if (delta === 0) {
         continue;
       }
@@ -82,7 +102,8 @@ const generateCandidates = () => {
         normalizeWeights({
           ...baselineWeights,
           [signal]: clamp(
-            baselineWeights[signal] + delta
+            baselineWeights[signal] +
+              delta
           )
         })
       );
@@ -94,8 +115,12 @@ const generateCandidates = () => {
       index ===
       array.findIndex(
         candidate =>
-          JSON.stringify(candidate) ===
-          JSON.stringify(weights)
+          JSON.stringify(
+            candidate
+          ) ===
+          JSON.stringify(
+            weights
+          )
       )
   );
 };
@@ -109,14 +134,21 @@ const dcg = values =>
     0
   );
 
-const ndcgAt5 = (rankedIds, relevance) => {
+const ndcgAt5 = (
+  rankedIds,
+  relevance
+) => {
   const actual = rankedIds
     .slice(0, 5)
     .map(id =>
-      Number(relevance[String(id)] || 0)
+      Number(
+        relevance[String(id)] || 0
+      )
     );
 
-  const ideal = Object.values(relevance)
+  const ideal = Object.values(
+    relevance
+  )
     .map(Number)
     .sort((a, b) => b - a)
     .slice(0, 5);
@@ -130,7 +162,10 @@ const ndcgAt5 = (rankedIds, relevance) => {
   return dcg(actual) / idealDcg;
 };
 
-const mrr = (rankedIds, relevant) => {
+const mrr = (
+  rankedIds,
+  relevant
+) => {
   const relevantSet = new Set(
     relevant.map(Number)
   );
@@ -142,7 +177,9 @@ const mrr = (rankedIds, relevant) => {
   ) {
     if (
       relevantSet.has(
-        Number(rankedIds[index])
+        Number(
+          rankedIds[index]
+        )
       )
     ) {
       return 1 / (index + 1);
@@ -163,8 +200,11 @@ const precisionAt5 = (
   const hits = rankedIds
     .slice(0, 5)
     .filter(id =>
-      relevantSet.has(Number(id))
-    ).length;
+      relevantSet.has(
+        Number(id)
+      )
+    )
+    .length;
 
   return hits / 5;
 };
@@ -177,56 +217,84 @@ const evaluateWeights = async (
   let reciprocalRank = 0;
   let ndcg = 0;
 
-  for (const evaluationCase of cases) {
-    const results = await hybridRetrieve(
-      products,
-      evaluationCase.query,
-      {
-        limit: 20,
-        weights
-      }
-    );
+  for (
+    const evaluationCase of cases
+  ) {
+    const results =
+      await hybridRetrieve(
+        products,
+        evaluationCase.query,
+        {
+          limit: 20,
+          semanticWeight:
+            weights.semantic,
+          lexicalWeight:
+            weights.lexical,
+          attributeWeight:
+            weights.attribute,
+          budgetWeight:
+            weights.budget,
+          metadataWeight:
+            weights.metadata
+        }
+      );
 
-    const rankedProducts = Array.isArray(results)
-  ? results
-  : results.results;
+    const rankedProducts =
+      Array.isArray(results)
+        ? results
+        : results.results;
 
-if (!Array.isArray(rankedProducts)) {
-  throw new Error(
-    "Hybrid retrieval did not return a results array"
-  );
-}
+    if (
+      !Array.isArray(
+        rankedProducts
+      )
+    ) {
+      throw new Error(
+        "Hybrid retrieval did not return a results array"
+      );
+    }
 
-const rankedIds = rankedProducts.map(
-  item => Number(item.product.id)
-);
+    const rankedIds =
+      rankedProducts.map(
+        item =>
+          Number(
+            item.product.id
+          )
+      );
 
-    precision += precisionAt5(
-      rankedIds,
-      evaluationCase.relevant
-    );
+    precision +=
+      precisionAt5(
+        rankedIds,
+        evaluationCase.relevant
+      );
 
-    reciprocalRank += mrr(
-      rankedIds,
-      evaluationCase.relevant
-    );
+    reciprocalRank +=
+      mrr(
+        rankedIds,
+        evaluationCase.relevant
+      );
 
-    ndcg += ndcgAt5(
-      rankedIds,
-      evaluationCase.relevance
-    );
+    ndcg +=
+      ndcgAt5(
+        rankedIds,
+        evaluationCase.relevance
+      );
   }
 
   const count = cases.length;
 
   return {
-    precisionAt5: precision / count,
-    mrr: reciprocalRank / count,
-    ndcgAt5: ndcg / count
+    precisionAt5:
+      precision / count,
+    mrr:
+      reciprocalRank / count,
+    ndcgAt5:
+      ndcg / count
   };
 };
 
-const candidates = generateCandidates();
+const candidates =
+  generateCandidates();
 
 console.log(
   `Products: ${products.length}`
@@ -257,23 +325,27 @@ for (
   index < candidates.length;
   index += 1
 ) {
-  const weights = candidates[index];
+  const weights =
+    candidates[index];
 
   console.log(
     `\nConfiguration ${index + 1}/${candidates.length}`
   );
 
-  const metrics = await evaluateWeights(
-    weights,
-    validationCases
-  );
+  const metrics =
+    await evaluateWeights(
+      weights,
+      validationCases
+    );
 
   const result = {
     weights,
     ...metrics
   };
 
-  validationResults.push(result);
+  validationResults.push(
+    result
+  );
 
   const score =
     metrics.ndcgAt5 * 0.5 +
@@ -282,7 +354,8 @@ for (
 
   if (
     !best ||
-    score > best.selectionScore
+    score >
+      best.selectionScore
   ) {
     best = {
       ...result,
@@ -300,7 +373,11 @@ console.log(
 );
 
 console.log(
-  JSON.stringify(best, null, 2)
+  JSON.stringify(
+    best,
+    null,
+    2
+  )
 );
 
 const baselineValidation =
@@ -322,7 +399,8 @@ const tunedTest =
   );
 
 const report = {
-  experiment: "hybrid-weight-tuning",
+  experiment:
+    "hybrid-weight-tuning",
   methodology: {
     totalEvaluationCases:
       evaluationCases.length,
@@ -341,7 +419,8 @@ const report = {
     productionBaselineWeights:
       baselineWeights
   },
-  datasetSize: products.length,
+  datasetSize:
+    products.length,
   configurationsEvaluated:
     candidates.length,
   bestValidationConfiguration:
@@ -349,12 +428,16 @@ const report = {
   baselineValidation,
   heldOutComparison: {
     baseline: {
-      weights: baselineWeights,
-      metrics: baselineTest
+      weights:
+        baselineWeights,
+      metrics:
+        baselineTest
     },
     tuned: {
-      weights: best.weights,
-      metrics: tunedTest
+      weights:
+        best.weights,
+      metrics:
+        tunedTest
     },
     delta: {
       precisionAt5:
@@ -373,12 +456,18 @@ const report = {
 
 fs.mkdirSync(
   outputDir,
-  { recursive: true }
+  {
+    recursive: true
+  }
 );
 
 fs.writeFileSync(
   outputPath,
-  JSON.stringify(report, null, 2)
+  JSON.stringify(
+    report,
+    null,
+    2
+  )
 );
 
 console.log(
