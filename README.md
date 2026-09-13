@@ -38,6 +38,7 @@ The system contains the following components:
 - AI stylist recommendations
 - Explainable recommendations
 - Evaluation and error analysis
+- Robustness testing
 - Reproducible research artifacts
 
 ## Semantic Retrieval
@@ -69,20 +70,74 @@ Semantic and lexical candidate lists are combined using Reciprocal Rank Fusion b
 
 Hard budget constraints are applied before candidate fusion.
 
+The production weights were retained after held-out evaluation because local weight tuning did not produce a measurable improvement on the held-out test set.
+
+## Learning-to-Rank
+
+The project includes a pairwise logistic ranking model using retrieval signals as ranking features.
+
+The ranking features include:
+
+- Semantic similarity
+- Lexical relevance
+- Attribute matching
+- Budget compatibility
+- Metadata relevance
+- Fusion score
+
+The model is trained using pairwise preferences derived from relevance information.
+
+## Personalization
+
+The recommendation pipeline supports query-driven and preference-driven ranking.
+
+Personalization can incorporate signals such as:
+
+- Category
+- Gender
+- Color
+- Style
+- Occasion
+- Material
+- Price range
+
+## AI Stylist
+
+The AI Stylist layer converts user preferences and natural-language requests into structured fashion search signals and generates recommendations.
+
+## Explainability
+
+The recommendation pipeline exposes supporting retrieval signals that can be used to explain why products were selected or ranked for a query.
+
+## Multimodal Retrieval
+
+The repository includes image retrieval, visual client and multimodal fusion components as an extensible foundation for future vision-language retrieval experiments.
+
 ## Experimental Setup
 
-The current evaluation uses:
+The current research benchmark uses:
 
-- Dataset size: 10 products
-- Evaluation queries: 41
+- Dataset size: 1,000 products
+- Evaluation queries: 250
 - Evaluation cutoff: K = 5
-- Deterministic execution
+- Validation queries: 200
+- Held-out test queries: 50
+- Weight configurations evaluated: 28
+- Deterministic dataset generation
 - Paired evaluation queries
 - Bootstrap statistical analysis
 - 2,000 bootstrap iterations
 - 95% confidence intervals
 
-The benchmark is a small curated evaluation set intended for controlled experimentation and system validation rather than broad generalization.
+The dataset is a controlled synthetic benchmark intended for system evaluation and reproducible experimentation rather than broad real-world generalization.
+
+## Dataset
+
+The current dataset contains 1,000 deterministically generated fashion products across multiple categories, genders, colors, materials, styles and occasions.
+
+The evaluation benchmark contains 250 natural-language fashion queries with relevance annotations.
+
+The dataset generation process is deterministic so that experiments can be reproduced from the same configuration.
 
 ## Baselines
 
@@ -101,22 +156,26 @@ The evaluation compares the following retrieval systems:
 
 ## Main Evaluation Results
 
-| System | MRR | NDCG@5 |
-|---|---:|---:|
-| Keyword | 0.9085 | 0.9053 |
-| Category | 0.9065 | 0.9070 |
-| Price | 0.3446 | 0.3282 |
-| Popularity | 0.3446 | 0.3299 |
-| Lexical | 0.9593 | 0.9311 |
-| Attribute | 0.3446 | 0.3299 |
-| Semantic | 0.9390 | 0.9207 |
-| Hybrid | 0.9878 | 0.9745 |
+The latest evaluation on the 1,000-product and 250-query benchmark produced the following results:
 
-The hybrid system achieves the highest MRR and NDCG@5 among the evaluated production systems.
+| System | Precision@5 | Recall@5 | F1@5 | MRR | NDCG@5 | MAP |
+|---|---:|---:|---:|---:|---:|---:|
+| Keyword | 0.9128 | 0.3803 | 0.5369 | 0.9531 | 0.9137 | 0.7314 |
+| Category | 0.9504 | 0.3960 | 0.5591 | 0.9672 | 0.9548 | 0.7518 |
+| Price | 0.0360 | 0.0150 | 0.0212 | 0.0622 | 0.0360 | 0.0579 |
+| Popularity | 0.0440 | 0.0183 | 0.0259 | 0.0812 | 0.0392 | 0.0530 |
+| Lexical | 0.9104 | 0.3793 | 0.5355 | 1.0000 | 0.9728 | 0.7416 |
+| Attribute | 0.0440 | 0.0183 | 0.0259 | 0.0812 | 0.0392 | 0.0530 |
+| Semantic | 0.7064 | 0.2943 | 0.4155 | 0.8723 | 0.7947 | 0.5569 |
+| Hybrid | 0.7384 | 0.3077 | 0.4344 | 0.8540 | 0.8710 | 0.5508 |
+
+The latest benchmark shows that lexical and category-based retrieval remain strong baselines on the current curated dataset.
+
+Hybrid retrieval improves NDCG@5 relative to semantic retrieval, but does not outperform the strongest lexical and category baselines on the aggregate benchmark metrics.
 
 ## Statistical Analysis
 
-Statistical comparisons use paired evaluation queries and deterministic bootstrap confidence intervals with 2,000 iterations.
+Statistical comparisons use paired evaluation queries and bootstrap confidence intervals with 2,000 iterations.
 
 The comparison direction is:
 
@@ -124,84 +183,164 @@ Hybrid − Comparison System
 
 ### Hybrid vs Semantic
 
-MRR difference:
+Precision@5 difference:
 
-0.0488
+0.0320
 
 95% confidence interval:
 
-[0.0122, 0.0976]
+[-0.0144, 0.0800]
+
+MRR difference:
+
+-0.0183
+
+95% confidence interval:
+
+[-0.0723, 0.0334]
 
 NDCG@5 difference:
 
-0.0538
+0.0763
 
 95% confidence interval:
 
-[0.0247, 0.0869]
+[0.0282, 0.1259]
 
-Both intervals exclude zero, providing evidence of improved ranking quality for the hybrid system on this benchmark.
+The NDCG@5 interval excludes zero, providing evidence that hybrid retrieval improves this ranking metric relative to semantic retrieval on the current benchmark.
+
+The Precision@5 and MRR intervals cross zero.
 
 ### Hybrid vs Keyword
 
-MRR difference:
+Precision@5 difference:
 
-0.0793
+-0.1744
 
 95% confidence interval:
 
-[0.0122, 0.1463]
+[-0.2200, -0.1304]
+
+MRR difference:
+
+-0.0992
+
+95% confidence interval:
+
+[-0.1424, -0.0562]
 
 NDCG@5 difference:
 
-0.0692
+-0.0427
 
 95% confidence interval:
 
-[0.0307, 0.1126]
+[-0.0822, -0.0014]
 
-Both intervals exclude zero, providing evidence of improved ranking quality for the hybrid system on this benchmark.
+The current benchmark therefore provides evidence that hybrid retrieval performs below keyword retrieval on these aggregate metrics.
+
+### Hybrid vs Category
+
+Precision@5 difference:
+
+-0.2120
+
+95% confidence interval:
+
+[-0.2592, -0.1640]
+
+MRR difference:
+
+-0.1133
+
+95% confidence interval:
+
+[-0.1528, -0.0729]
+
+NDCG@5 difference:
+
+-0.0838
+
+95% confidence interval:
+
+[-0.1239, -0.0423]
+
+The category baseline also outperforms the current hybrid configuration on the evaluated metrics.
 
 ### Hybrid vs Lexical
 
-MRR difference:
+Precision@5 difference:
 
-0.0285
+-0.1720
 
 95% confidence interval:
 
-[-0.0203, 0.0854]
+[-0.2096, -0.1328]
+
+MRR difference:
+
+-0.1460
+
+95% confidence interval:
+
+[-0.1796, -0.1116]
 
 NDCG@5 difference:
 
-0.0433
+-0.1018
 
 95% confidence interval:
 
-[0.0119, 0.0798]
+[-0.1353, -0.0683]
 
-The MRR interval crosses zero, so the MRR improvement over lexical retrieval is not established by this analysis.
-
-The NDCG@5 interval is above zero, indicating evidence of improved ranking quality on this metric.
+The current statistical analysis does not support a claim that hybrid retrieval outperforms lexical retrieval on the current benchmark.
 
 ## Ablation Study
 
-The ablation study evaluates the effect of individual ranking signals while keeping the production hybrid candidate pool fixed.
+The ablation study evaluates different combinations of retrieval signals.
 
-| Configuration | MRR | NDCG@5 |
+| Configuration | Precision@5 | Recall@5 | F1@5 | MRR | NDCG@5 |
+|---|---:|---:|---:|---:|---:|
+| Lexical-only | 0.7656 | 0.3190 | 0.4504 | 0.8830 | 0.9035 |
+| Lexical-budget | 0.7656 | 0.3190 | 0.4504 | 0.8830 | 0.9035 |
+| Full-hybrid | 0.7384 | 0.3077 | 0.4344 | 0.8490 | 0.8710 |
+| Semantic-attributes | 0.7096 | 0.2957 | 0.4174 | 0.8373 | 0.8342 |
+| Lexical-attributes | 0.6984 | 0.2910 | 0.4108 | 0.8090 | 0.8310 |
+| Semantic-only | 0.6712 | 0.2797 | 0.3948 | 0.8398 | 0.7593 |
+
+The ablation results show that lexical retrieval is highly competitive on the current benchmark.
+
+The full hybrid configuration improves NDCG@5 relative to semantic-only retrieval but does not exceed lexical-only retrieval in the controlled ablation.
+
+This indicates that the contribution of individual signals is metric-dependent and that the current benchmark is not sufficient to establish universal superiority of the hybrid configuration.
+
+## Weight Tuning
+
+A controlled weight-search experiment evaluated 28 hybrid configurations.
+
+The search was performed using a validation split of 200 queries, followed by evaluation on a held-out test split of 50 queries.
+
+The best validation configuration used approximately:
+
+- Semantic: 0.5294
+- Lexical: 0.2353
+- Attribute: 0.0588
+- Budget: 0.1176
+- Metadata: 0.0588
+
+The tuned configuration produced a small validation improvement.
+
+However, the held-out test results were unchanged:
+
+| Metric | Production | Tuned |
 |---|---:|---:|
-| Lexical-only | 0.9878 | 0.9747 |
-| Lexical-budget | 0.9878 | 0.9747 |
-| Semantic-attributes | 0.9878 | 0.9654 |
-| Lexical-attributes | 0.9756 | 0.9590 |
-| Full-hybrid | 0.9878 | 0.9745 |
-| Semantic-only | 0.9390 | 0.9207 |
+| Precision@5 | 0.896 | 0.896 |
+| MRR | 0.980 | 0.980 |
+| NDCG@5 | 0.9509 | 0.9509 |
 
-The controlled ablation shows that semantic retrieval alone performs below the stronger combined configurations.
+Therefore, the tuned configuration was not promoted to production.
 
-The lexical-only configuration is extremely competitive on this small benchmark and slightly exceeds the full-hybrid configuration on NDCG@5 while producing the same MRR.
-
-This indicates that the contribution of hybrid reranking is metric-dependent and that the current benchmark is not sufficient to establish universal superiority over lexical retrieval.
+This experiment suggests that the observed validation improvement did not demonstrate measurable generalization to the held-out queries.
 
 ## Robustness
 
@@ -213,7 +352,19 @@ Results:
 - Failed cases: 0
 - Success rate: 100%
 
-The robustness evaluation is intended to validate system stability across the current edge-case test set.
+The robustness suite evaluates edge cases including:
+
+- Empty queries
+- Whitespace-only queries
+- Very short queries
+- Case variations
+- Spacing variations
+- Budget queries
+- Repeated characters
+- Special characters
+- Unrelated queries
+
+The results demonstrate stable behavior across the current robustness test set.
 
 ## Reproducibility
 
@@ -233,7 +384,15 @@ The research pipeline records:
 - Robustness results
 - Statistical analysis
 
-The generated research artifacts are stored through the project evaluation pipeline.
+The current reproducibility benchmark reports deterministic execution.
+
+The research artifact records the dataset hash:
+
+`564b0d515265c5c22baac085098dd3bb397ece49b4d97fa50a5b058a537a621`
+
+The experiment fingerprint is:
+
+`fac2446d622c4d1ae78dc5d7d395285f05a17dcdcffd31113699c19e25f60d5a`
 
 ## Error Analysis
 
@@ -253,35 +412,40 @@ Per-query analysis is important because aggregate metrics alone cannot explain w
 
 ## Research Findings
 
-The current experiments provide three main observations.
+The current experiments provide several observations.
 
-First, semantic retrieval substantially improves over weaker non-semantic baselines on ranking-oriented metrics, but semantic retrieval alone does not achieve the strongest performance.
+First, lexical retrieval is a very strong baseline on the current curated dataset.
 
-Second, combining retrieval and ranking signals produces strong performance and improves over semantic and keyword baselines on the current benchmark.
+Second, semantic retrieval provides a different retrieval signal and achieves meaningful ranking performance, but performs below the strongest lexical and category baselines on the current benchmark.
 
-Third, lexical retrieval remains highly competitive. The controlled ablation therefore does not justify claiming that hybrid retrieval universally outperforms lexical retrieval.
+Third, hybrid retrieval improves NDCG@5 relative to semantic retrieval, demonstrating complementary ranking behavior.
 
-These findings motivate evaluation on larger and more diverse datasets.
+Fourth, the current hybrid configuration does not outperform the strongest lexical and category baselines on aggregate benchmark metrics.
+
+Fifth, local weight tuning produces a small validation improvement but does not improve the held-out test results.
+
+These findings suggest that hybrid retrieval remains a promising research direction, but stronger claims require larger, more diverse and human-judged datasets.
 
 ## Limitations
 
 The current evaluation has several limitations:
 
-- The dataset contains only 10 products.
-- The benchmark contains only 41 evaluation queries.
-- The evaluation is curated rather than based on a large public benchmark.
-- Statistical confidence intervals are based on the current evaluation cases.
-- No human relevance judgments are currently used.
-- Online user interaction metrics are not yet available.
-- The current semantic encoder is relatively lightweight.
-- The results should not be interpreted as evidence of general performance across large-scale fashion catalogues.
+- The dataset is synthetic and curated rather than a large public fashion benchmark.
+- The benchmark contains 250 evaluation queries.
+- Relevance labels are generated rather than obtained from large-scale human judgments.
+- The current embedding model is relatively lightweight.
+- The evaluation does not represent a large real-world fashion catalogue.
+- Online user interaction metrics are not currently available.
+- Personalization evaluation is not based on a large real-world user dataset.
+- Multimodal retrieval components provide an experimental foundation but are not yet validated at large scale.
+- Results should not be interpreted as evidence of universal superiority of hybrid retrieval.
 
 ## Future Research
 
 Future work will investigate:
 
 - Larger public fashion datasets
-- Stronger embedding models
+- Stronger domain-specific embedding models
 - Vision-language models
 - Multimodal image-text retrieval
 - Query-image fusion
@@ -291,7 +455,8 @@ Future work will investigate:
 - Larger evaluation benchmarks
 - Online A/B evaluation
 - Calibration and uncertainty analysis
-- Statistical significance across larger query collections
+- Larger-scale statistical validation
+- Human preference studies
 
 ## Reproducible Research Artifacts
 
@@ -303,18 +468,21 @@ The evaluation pipeline generates machine-readable research artifacts including:
 - Robustness reports
 - Ranking model results
 - Reproducibility manifests
+- Research figures
 
 These artifacts are intended to make experiments inspectable and reproducible.
 
 ## Conclusion
 
-Fashion AI Discovery demonstrates a complete experimental retrieval pipeline that combines semantic search, lexical retrieval, attribute matching, candidate fusion, ranking and personalization.
+Fashion AI Discovery demonstrates an end-to-end experimental retrieval pipeline combining semantic search, lexical retrieval, attribute matching, candidate fusion, ranking, personalization and explainability.
 
-On the current curated benchmark, hybrid retrieval achieves strong ranking performance and shows evidence of improvement over semantic and keyword baselines.
+The latest benchmark shows that hybrid retrieval provides complementary behavior to semantic retrieval and improves NDCG@5 relative to semantic-only retrieval.
 
-However, the results also demonstrate that lexical retrieval remains highly competitive. The current evidence therefore supports the hybrid approach as a promising research direction rather than establishing universal superiority.
+However, lexical and category-based retrieval remain stronger baselines on the current curated dataset, and local weight tuning did not improve held-out performance.
 
-The next research stage is to scale the evaluation to larger datasets and human-judged benchmarks while studying multimodal retrieval, personalization and stronger ranking models.
+The current evidence therefore supports hybrid retrieval as a promising research direction rather than establishing universal superiority.
+
+The next research stage is to evaluate the approach on larger datasets with human relevance judgments while investigating stronger embedding models, multimodal retrieval, personalization and improved ranking methods.
 
 ## Technology Stack
 
@@ -323,6 +491,8 @@ The next research stage is to scale the evaluation to larger datasets and human-
 - Transformers.js
 - Hugging Face Transformers
 - JavaScript
+- Python
+- Matplotlib
 - GitHub Actions
 - GitHub Pages
 - Render
