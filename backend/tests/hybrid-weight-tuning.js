@@ -198,7 +198,7 @@ if (!Array.isArray(rankedProducts)) {
 }
 
 const rankedIds = rankedProducts.map(
-  product => Number(product.id)
+  item => Number(item.product.id)
 );
 
     precision += precisionAt5(
