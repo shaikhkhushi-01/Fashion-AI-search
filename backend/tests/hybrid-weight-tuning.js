@@ -187,9 +187,19 @@ const evaluateWeights = async (
       }
     );
 
-    const rankedIds = results.map(
-      product => Number(product.id)
-    );
+    const rankedProducts = Array.isArray(results)
+  ? results
+  : results.results;
+
+if (!Array.isArray(rankedProducts)) {
+  throw new Error(
+    "Hybrid retrieval did not return a results array"
+  );
+}
+
+const rankedIds = rankedProducts.map(
+  product => Number(product.id)
+);
 
     precision += precisionAt5(
       rankedIds,
