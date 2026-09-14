@@ -70,7 +70,7 @@ function renderAIInsight(data) {
   const container = ensureAIInsight();
   if (!container) return;
 
-  const intent = data.intent || {};
+  const intent = data.intent || data.results?.[0]?.aiIntent || {};
   const chips = [
     intent.category,
     intent.color,
@@ -81,8 +81,8 @@ function renderAIInsight(data) {
     intent.budget != null ? `Under ₹${Math.round(intent.budget).toLocaleString("en-IN")}` : null
   ].filter(Boolean);
 
-  const outfit = data.outfitPlan;
-  const style = data.stylePlan;
+  const outfit = data.outfitPlan || data.results?.[0]?.outfitPlan;
+  const style = data.stylePlan || data.results?.[0]?.stylePlan;
   const outfitItems = outfit?.items || [];
   const styleAdditions = style?.additions || [];
 
