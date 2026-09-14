@@ -1,0 +1,56 @@
+name: Finish AI V2
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  finish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Finish AI V2
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          ai = Path('backend/services/aiSearch.js')
+          text = ai.read_text()
+          if 'aiDiscoveryV2.js' not in text:
+              marker = 'import {\n  getSemanticScoreMap\n} from "./semanticSearch.js";'
+              if marker not in text:
+                  raise SystemExit('AI search import marker not found')
+              text = text.replace(marker, marker + '\n\nimport { discover } from "./aiDiscoveryV2.js";', 1)
+          start = text.index('async function hybridRetrieve')
+          end = text.index('async function searchProducts', start)
+          replacement = '''async function hybridRetrieve(\n  products,\n  query,\n  options = {}\n) {\n  const response = await discover(products, query, options);\n  return response.results;\n}\n\n'''
+          text = text[:start] + replacement + text[end:]
+          ai.write_text(text)
+
+          html = Path('index.html')
+          text = html.read_text()
+          marker = '<script src="./app.js"></script>'
+          if 'ai-experience.js' not in text:
+              if marker not in text:
+                  raise SystemExit('index script marker not found')
+              text = text.replace(marker, marker + '\n  <script src="./ai-experience.js"></script>', 1)
+              html.write_text(text)
+
+          sem = Path('backend/services/semanticSearch.js')
+          text = sem.read_text()
+          start = text.index('async function embedProducts')
+          end = text.index('async function semanticSearch', start)
+          replacement = '''async function embedProducts(\n  products\n) {\n  if (!Array.isArray(products) || !products.length) {\n    return [];\n  }\n\n  const results = new Array(products.length);\n  const missing = [];\n\n  products.forEach((product, index) => {\n    const id = String(product?.id ?? "");\n    const text = productToText(product);\n    const cacheKey = `${id}::${text}`;\n    const embedding = productCache.get(cacheKey);\n    if (embedding) {\n      results[index] = { product, embedding };\n    } else {\n      missing.push({ product, index, cacheKey, text });\n    }\n  });\n\n  if (missing.length) {\n    const model = await getExtractor();\n    const outputs = await model(missing.map(item => item.text), { pooling: "mean", normalize: true });\n    const values = typeof outputs?.tolist === "function" ? outputs.tolist() : outputs;\n    missing.forEach((item, index) => {\n      const raw = Array.isArray(values?.[index]) ? values[index] : [];\n      const embedding = normalizeVector(raw);\n      cacheSet(item.cacheKey, embedding);\n      results[item.index] = { product: item.product, embedding };\n    });\n  }\n\n  return results.filter(Boolean);\n}\n\n'''
+          text = text[:start] + replacement + text[end:]
+          sem.write_text(text)
+          PY
+          git rm -f .github/workflows/finish-ai-v2.yml
+          git add backend/services/aiSearch.js backend/services/semanticSearch.js index.html
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Activate AI discovery V2"
+          git push
