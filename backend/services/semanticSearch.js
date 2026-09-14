@@ -9,6 +9,9 @@ const MODEL_NAME =
 const MAX_CACHE_SIZE =
   Number(process.env.SEMANTIC_CACHE_SIZE) || 5000;
 
+const EMBEDDING_BATCH_SIZE =
+  Number(process.env.SEMANTIC_BATCH_SIZE) || 24;
+
 let extractor = null;
 let extractorPromise = null;
 
@@ -267,6 +270,7 @@ async function embedProducts(
     const text = productToText(product);
     const cacheKey = `${id}::${text}`;
     const embedding = productCache.get(cacheKey);
+
     if (embedding) {
       results[index] = { product, embedding };
     } else {
@@ -276,14 +280,47 @@ async function embedProducts(
 
   if (missing.length) {
     const model = await getExtractor();
-    const outputs = await model(missing.map(item => item.text), { pooling: "mean", normalize: true });
-    const values = typeof outputs?.tolist === "function" ? outputs.tolist() : outputs;
-    missing.forEach((item, index) => {
-      const raw = Array.isArray(values?.[index]) ? values[index] : [];
-      const embedding = normalizeVector(raw);
-      cacheSet(item.cacheKey, embedding);
-      results[item.index] = { product: item.product, embedding };
-    });
+
+    for (
+      let start = 0;
+      start < missing.length;
+      start += EMBEDDING_BATCH_SIZE
+    ) {
+      const batch = missing.slice(
+        start,
+        start + EMBEDDING_BATCH_SIZE
+      );
+
+      const outputs = await model(
+        batch.map(item => item.text),
+        {
+          pooling: "mean",
+          normalize: true
+        }
+      );
+
+      const values =
+        typeof outputs?.tolist === "function"
+          ? outputs.tolist()
+          : outputs;
+
+      batch.forEach((item, index) => {
+        const raw = Array.isArray(values?.[index])
+          ? values[index]
+          : [];
+        const embedding = normalizeVector(raw);
+
+        cacheSet(
+          item.cacheKey,
+          embedding
+        );
+
+        results[item.index] = {
+          product: item.product,
+          embedding
+        };
+      });
+    }
   }
 
   return results.filter(Boolean);
@@ -426,7 +463,9 @@ function getSemanticStatus() {
     loaded:
       Boolean(extractor),
     cachedProducts:
-      productCache.size
+      productCache.size,
+    batchSize:
+      EMBEDDING_BATCH_SIZE
   };
 }
 
