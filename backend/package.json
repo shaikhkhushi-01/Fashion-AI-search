@@ -18,6 +18,7 @@
     "semantic-test": "python tests/semantic-search.py",
     "hybrid-test": "node tests/hybrid-retrieval.js",
     "train-ranker": "node tests/train-ranker.js",
+    "ranker-cross-validation": "node tests/ranker-cross-validation.js",
     "ranker-inference": "node tests/ranker-inference.js",
     "stylist-test": "node tests/stylist.js",
     "explainability-test": "node tests/explainability.js",
