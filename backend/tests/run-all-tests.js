@@ -7,6 +7,7 @@ const tests = [
   ["hybrid-test", "Hybrid retrieval"],
   ["train-ranker", "Learning-to-rank training"],
   ["ranker-cross-validation", "Ranker held-out cross-validation"],
+  ["ranker-research-report", "Ranker research report"],
   ["ranker-inference", "Ranker inference"],
   ["personalization-test", "Personalization"],
   ["catalog-discovery-test", "Catalog discovery"],
