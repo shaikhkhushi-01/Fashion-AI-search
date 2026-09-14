@@ -255,55 +255,38 @@ async function embedText(
 async function embedProducts(
   products
 ) {
-  if (
-    !Array.isArray(products) ||
-    !products.length
-  ) {
+  if (!Array.isArray(products) || !products.length) {
     return [];
   }
 
-  const results = [];
+  const results = new Array(products.length);
+  const missing = [];
 
-  for (
-    const product of products
-  ) {
-    const id =
-      String(
-        product?.id ?? ""
-      );
-
-    const text =
-      productToText(
-        product
-      );
-
-    const cacheKey =
-      `${id}::${text}`;
-
-    let embedding =
-      productCache.get(
-        cacheKey
-      );
-
-    if (!embedding) {
-      embedding =
-        await embedText(
-          text
-        );
-
-      cacheSet(
-        cacheKey,
-        embedding
-      );
+  products.forEach((product, index) => {
+    const id = String(product?.id ?? "");
+    const text = productToText(product);
+    const cacheKey = `${id}::${text}`;
+    const embedding = productCache.get(cacheKey);
+    if (embedding) {
+      results[index] = { product, embedding };
+    } else {
+      missing.push({ product, index, cacheKey, text });
     }
+  });
 
-    results.push({
-      product,
-      embedding
+  if (missing.length) {
+    const model = await getExtractor();
+    const outputs = await model(missing.map(item => item.text), { pooling: "mean", normalize: true });
+    const values = typeof outputs?.tolist === "function" ? outputs.tolist() : outputs;
+    missing.forEach((item, index) => {
+      const raw = Array.isArray(values?.[index]) ? values[index] : [];
+      const embedding = normalizeVector(raw);
+      cacheSet(item.cacheKey, embedding);
+      results[item.index] = { product: item.product, embedding };
     });
   }
 
-  return results;
+  return results.filter(Boolean);
 }
 
 async function semanticSearch(

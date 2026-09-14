@@ -2,6 +2,8 @@ import {
   getSemanticScoreMap
 } from "./semanticSearch.js";
 
+import { discover } from "./aiDiscoveryV2.js";
+
 function normalizeText(value) {
   return String(value ?? "")
     .toLowerCase()
@@ -649,100 +651,8 @@ async function hybridRetrieve(
   query,
   options = {}
 ) {
-  if (
-    !Array.isArray(products)
-  ) {
-    return [];
-  }
-
-  const cleanQuery =
-    String(
-      query ?? ""
-    ).trim();
-
-  if (!cleanQuery) {
-    return [];
-  }
-
-  const limit =
-    Math.max(
-      1,
-      Math.min(
-        Number(options.limit) || 20,
-        100
-      )
-    );
-
-  const minScore =
-    Number.isFinite(
-      Number(
-        options.minScore
-      )
-    )
-      ? Number(
-          options.minScore
-        )
-      : 0;
-
-  const budget =
-    options.budget ||
-    extractBudget(
-      cleanQuery
-    );
-
-  const semanticScores =
-    await getSemanticScoreMap(
-      products,
-      cleanQuery
-    );
-
-  return products
-    .map(
-      product => {
-        const result =
-          calculateHybridScore(
-            product,
-            cleanQuery,
-            {
-              ...options,
-              budget,
-              semanticScores
-            }
-          );
-
-        return {
-          ...product,
-          score:
-            result.score,
-          relevance:
-            result.score,
-          semanticScore:
-            result.components.semantic,
-          components:
-            result.components,
-          reasons:
-            generateReasons(
-              product,
-              cleanQuery,
-              result.components
-            )
-        };
-      }
-    )
-    .filter(
-      product =>
-        product.score >=
-        minScore
-    )
-    .sort(
-      (a, b) =>
-        b.score -
-        a.score
-    )
-    .slice(
-      0,
-      limit
-    );
+  const response = await discover(products, query, options);
+  return response.results;
 }
 
 async function searchProducts(
