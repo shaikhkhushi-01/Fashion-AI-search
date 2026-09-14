@@ -2,7 +2,7 @@ import { getSemanticScoreMap } from "./semanticSearch.js";
 import { extractIntent, expandQueryTerms, normalizeText } from "./aiIntent.js";
 import { selectBestOutfit, buildStylePlan } from "./aiOutfit.js";
 
-const CANDIDATE_LIMIT = 240;
+const CANDIDATE_LIMIT = 120;
 const QUERY_CACHE_SIZE = 80;
 const queryCache = new Map();
 
@@ -97,7 +97,7 @@ function cacheSet(key, value) {
 async function discover(products, query, options = {}) {
   const cleanQuery = String(query ?? "").trim();
   const intent = extractIntent(cleanQuery);
-  if (!Array.isArray(products) || !products.length || !cleanQuery) return { results: [], intent, outfitPlan: null, stylePlan: null };
+  if (!Array.isArray(products) || !products.length || !cleanQuery) return { results: [], intent, outfitPlan: null, stylePlan: null, semanticAvailable: false };
 
   const cacheKey = `${products.length}::${normalizeText(cleanQuery)}::${intent.budget ?? ""}`;
   const cached = cacheGet(cacheKey);
@@ -115,16 +115,28 @@ async function discover(products, query, options = {}) {
     if (withinBudget.length) candidates = withinBudget;
   }
 
-  const semanticScores = await getSemanticScoreMap(candidates, cleanQuery);
+  let semanticScores = new Map();
+  let semanticAvailable = false;
+
+  try {
+    semanticScores = await getSemanticScoreMap(candidates, cleanQuery);
+    semanticAvailable = semanticScores.size > 0;
+  } catch (error) {
+    console.error("Semantic discovery error:", error);
+  }
 
   const ranked = candidates.map(product => {
     const rawSemantic = Number(semanticScores.get(String(product.id)) ?? 0);
-    const semantic = Math.max(0, Math.min(1, (rawSemantic + 1) / 2));
+    const semantic = semanticAvailable
+      ? Math.max(0, Math.min(1, (rawSemantic + 1) / 2))
+      : 0;
     const keyword = keywordScore(queryTerms, product);
     const constraints = constraintScore(product, intent);
     const budget = budgetScore(product, intent.budget);
     const compatibility = compatibilityScore(product, intent);
-    let score = semantic * 0.34 + keyword * 0.18 + constraints * 0.3 + budget * 0.1 + compatibility * 0.08;
+    let score = semanticAvailable
+      ? semantic * 0.34 + keyword * 0.18 + constraints * 0.3 + budget * 0.1 + compatibility * 0.08
+      : keyword * 0.5 + constraints * 0.35 + budget * 0.1 + compatibility * 0.05;
 
     if (intent.category && exactMatch(product.category, intent.category)) score += 0.08;
     if (intent.color && exactMatch(product.color, intent.color)) score += 0.07;
@@ -166,7 +178,7 @@ async function discover(products, query, options = {}) {
   const outfitPlan = selectBestOutfit(ranked, intent);
   const stylePlan = buildStylePlan(ranked[0], ranked, intent);
   const results = ranked.slice(0, limit);
-  const payload = { results, intent, outfitPlan, stylePlan };
+  const payload = { results, intent, outfitPlan, stylePlan, semanticAvailable };
 
   results.forEach(product => {
     product.aiIntent = intent;
