@@ -180,12 +180,6 @@ async function discover(products, query, options = {}) {
   const results = ranked.slice(0, limit);
   const payload = { results, intent, outfitPlan, stylePlan, semanticAvailable };
 
-  results.forEach(product => {
-    product.aiIntent = intent;
-    product.outfitPlan = outfitPlan;
-    product.stylePlan = stylePlan;
-  });
-
   cacheSet(cacheKey, payload);
   return payload;
 }
