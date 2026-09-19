@@ -6,14 +6,36 @@
     "category": "Shirts",
     "gender": "Unisex",
     "color": "White",
-    "material": ["Linen"],
-    "style": ["Relaxed", "Minimal", "Casual"],
-    "occasion": ["Summer", "Casual", "Travel", "Everyday"],
-    "sizes": ["S", "M", "L", "XL"],
+    "material": [
+      "Linen"
+    ],
+    "style": [
+      "Relaxed",
+      "Minimal",
+      "Casual"
+    ],
+    "occasion": [
+      "Summer",
+      "Casual",
+      "Travel",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
     "price": 2499,
     "currency": "INR",
     "availability": "In Stock",
-    "tags": ["breathable", "lightweight", "summer", "minimal", "comfortable"],
+    "tags": [
+      "breathable",
+      "lightweight",
+      "summer",
+      "minimal",
+      "comfortable"
+    ],
     "description": "Relaxed-fit lightweight linen shirt designed for warm weather, everyday wear and comfortable minimal styling."
   },
   {
@@ -23,14 +45,37 @@
     "category": "Shirts",
     "gender": "Unisex",
     "color": "Black",
-    "material": ["Cotton"],
-    "style": ["Oversized", "Minimal", "Streetwear", "Casual"],
-    "occasion": ["College", "Casual", "Everyday", "Travel"],
-    "sizes": ["S", "M", "L", "XL"],
+    "material": [
+      "Cotton"
+    ],
+    "style": [
+      "Oversized",
+      "Minimal",
+      "Streetwear",
+      "Casual"
+    ],
+    "occasion": [
+      "College",
+      "Casual",
+      "Everyday",
+      "Travel"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
     "price": 1999,
     "currency": "INR",
     "availability": "In Stock",
-    "tags": ["oversized", "comfortable", "black", "college", "minimal"],
+    "tags": [
+      "oversized",
+      "comfortable",
+      "black",
+      "college",
+      "minimal"
+    ],
     "description": "Minimal oversized black cotton shirt with a clean silhouette for comfortable college and everyday outfits."
   },
   {
@@ -40,14 +85,36 @@
     "category": "Dresses",
     "gender": "Women",
     "color": "Cream",
-    "material": ["Cotton"],
-    "style": ["Minimal", "Elegant", "Relaxed"],
-    "occasion": ["Summer", "Casual", "Date", "Travel"],
-    "sizes": ["XS", "S", "M", "L"],
+    "material": [
+      "Cotton"
+    ],
+    "style": [
+      "Minimal",
+      "Elegant",
+      "Relaxed"
+    ],
+    "occasion": [
+      "Summer",
+      "Casual",
+      "Date",
+      "Travel"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L"
+    ],
     "price": 3299,
     "currency": "INR",
     "availability": "In Stock",
-    "tags": ["summer", "lightweight", "elegant", "comfortable", "minimal"],
+    "tags": [
+      "summer",
+      "lightweight",
+      "elegant",
+      "comfortable",
+      "minimal"
+    ],
     "description": "Lightweight cream cotton summer dress with a relaxed elegant fit for warm-weather occasions and casual dates."
   },
   {
@@ -57,14 +124,36 @@
     "category": "Trousers",
     "gender": "Unisex",
     "color": "Black",
-    "material": ["Cotton Blend"],
-    "style": ["Relaxed", "Minimal", "Classic"],
-    "occasion": ["College", "Office", "Casual", "Everyday"],
-    "sizes": ["S", "M", "L", "XL"],
+    "material": [
+      "Cotton Blend"
+    ],
+    "style": [
+      "Relaxed",
+      "Minimal",
+      "Classic"
+    ],
+    "occasion": [
+      "College",
+      "Office",
+      "Casual",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
     "price": 2799,
     "currency": "INR",
     "availability": "In Stock",
-    "tags": ["black", "relaxed", "comfortable", "minimal", "office"],
+    "tags": [
+      "black",
+      "relaxed",
+      "comfortable",
+      "minimal",
+      "office"
+    ],
     "description": "Straight relaxed black trousers designed for comfortable everyday, college and smart casual outfits."
   },
   {
@@ -74,14 +163,38 @@
     "category": "Sneakers",
     "gender": "Unisex",
     "color": "White",
-    "material": ["Mesh"],
-    "style": ["Sporty", "Minimal", "Modern"],
-    "occasion": ["Everyday", "Travel", "College", "Casual"],
-    "sizes": ["6", "7", "8", "9", "10", "11"],
+    "material": [
+      "Mesh"
+    ],
+    "style": [
+      "Sporty",
+      "Minimal",
+      "Modern"
+    ],
+    "occasion": [
+      "Everyday",
+      "Travel",
+      "College",
+      "Casual"
+    ],
+    "sizes": [
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11"
+    ],
     "price": 4499,
     "currency": "INR",
     "availability": "In Stock",
-    "tags": ["lightweight", "breathable", "comfortable", "sporty", "everyday"],
+    "tags": [
+      "lightweight",
+      "breathable",
+      "comfortable",
+      "sporty",
+      "everyday"
+    ],
     "description": "Lightweight white performance sneakers with breathable mesh construction for everyday movement, travel and college."
   },
   {
@@ -91,14 +204,37 @@
     "category": "Blazers",
     "gender": "Unisex",
     "color": "Black",
-    "material": ["Wool Blend"],
-    "style": ["Formal", "Minimal", "Classic", "Elegant"],
-    "occasion": ["Office", "Formal", "Evening", "Wedding"],
-    "sizes": ["S", "M", "L", "XL"],
+    "material": [
+      "Wool Blend"
+    ],
+    "style": [
+      "Formal",
+      "Minimal",
+      "Classic",
+      "Elegant"
+    ],
+    "occasion": [
+      "Office",
+      "Formal",
+      "Evening",
+      "Wedding"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
     "price": 5999,
     "currency": "INR",
     "availability": "In Stock",
-    "tags": ["formal", "office", "elegant", "black", "structured"],
+    "tags": [
+      "formal",
+      "office",
+      "elegant",
+      "black",
+      "structured"
+    ],
     "description": "Clean structured black blazer designed for formal occasions, office wear, evening events and elegant styling."
   },
   {
@@ -108,14 +244,37 @@
     "category": "Jeans",
     "gender": "Unisex",
     "color": "Blue",
-    "material": ["Denim"],
-    "style": ["Classic", "Casual", "Relaxed"],
-    "occasion": ["College", "Casual", "Everyday", "Travel"],
-    "sizes": ["28", "30", "32", "34", "36"],
+    "material": [
+      "Denim"
+    ],
+    "style": [
+      "Classic",
+      "Casual",
+      "Relaxed"
+    ],
+    "occasion": [
+      "College",
+      "Casual",
+      "Everyday",
+      "Travel"
+    ],
+    "sizes": [
+      "28",
+      "30",
+      "32",
+      "34",
+      "36"
+    ],
     "price": 2299,
     "currency": "INR",
     "availability": "In Stock",
-    "tags": ["denim", "blue", "casual", "college", "everyday"],
+    "tags": [
+      "denim",
+      "blue",
+      "casual",
+      "college",
+      "everyday"
+    ],
     "description": "Classic blue denim jeans with a relaxed comfortable fit suitable for college, travel and everyday casual outfits."
   },
   {
@@ -125,14 +284,36 @@
     "category": "Dresses",
     "gender": "Women",
     "color": "Black",
-    "material": ["Satin"],
-    "style": ["Elegant", "Luxury", "Modern"],
-    "occasion": ["Evening", "Party", "Date", "Wedding"],
-    "sizes": ["XS", "S", "M", "L"],
+    "material": [
+      "Satin"
+    ],
+    "style": [
+      "Elegant",
+      "Luxury",
+      "Modern"
+    ],
+    "occasion": [
+      "Evening",
+      "Party",
+      "Date",
+      "Wedding"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L"
+    ],
     "price": 4999,
     "currency": "INR",
     "availability": "In Stock",
-    "tags": ["evening", "party", "luxury", "elegant", "black"],
+    "tags": [
+      "evening",
+      "party",
+      "luxury",
+      "elegant",
+      "black"
+    ],
     "description": "Elegant black satin evening dress designed for parties, dates, weddings and sophisticated evening occasions."
   },
   {
@@ -142,14 +323,37 @@
     "category": "Hoodies",
     "gender": "Unisex",
     "color": "Grey",
-    "material": ["Cotton"],
-    "style": ["Oversized", "Minimal", "Streetwear", "Comfortable"],
-    "occasion": ["College", "Casual", "Travel", "Everyday"],
-    "sizes": ["S", "M", "L", "XL"],
+    "material": [
+      "Cotton"
+    ],
+    "style": [
+      "Oversized",
+      "Minimal",
+      "Streetwear",
+      "Comfortable"
+    ],
+    "occasion": [
+      "College",
+      "Casual",
+      "Travel",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
     "price": 1899,
     "currency": "INR",
     "availability": "In Stock",
-    "tags": ["hoodie", "comfortable", "oversized", "college", "streetwear"],
+    "tags": [
+      "hoodie",
+      "comfortable",
+      "oversized",
+      "college",
+      "streetwear"
+    ],
     "description": "Soft grey cotton hoodie with a minimal oversized silhouette designed for comfortable college and everyday streetwear."
   },
   {
@@ -159,14 +363,1478 @@
     "category": "Sneakers",
     "gender": "Unisex",
     "color": "White",
-    "material": ["Leather"],
-    "style": ["Minimal", "Classic", "Modern"],
-    "occasion": ["College", "Casual", "Everyday", "Travel"],
-    "sizes": ["6", "7", "8", "9", "10", "11"],
+    "material": [
+      "Leather"
+    ],
+    "style": [
+      "Minimal",
+      "Classic",
+      "Modern"
+    ],
+    "occasion": [
+      "College",
+      "Casual",
+      "Everyday",
+      "Travel"
+    ],
+    "sizes": [
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11"
+    ],
     "price": 3999,
     "currency": "INR",
     "availability": "In Stock",
-    "tags": ["white", "minimal", "clean", "everyday", "college"],
+    "tags": [
+      "white",
+      "minimal",
+      "clean",
+      "everyday",
+      "college"
+    ],
     "description": "Clean white minimal sneakers designed to pair with everyday, college and smart casual outfits."
+  },
+  {
+    "id": 11,
+    "brand": "NOVA",
+    "name": "Minimal Black Shirts",
+    "category": "Shirts",
+    "gender": "Unisex",
+    "color": "Black",
+    "material": [
+      "Cotton"
+    ],
+    "style": [
+      "Minimal",
+      "Modern"
+    ],
+    "occasion": [
+      "Casual",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 1799,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "black",
+      "shirts",
+      "minimal",
+      "casual"
+    ],
+    "description": "Minimal black shirts in cotton designed for casual and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 12,
+    "brand": "FORM",
+    "name": "Elegant Black Dresses",
+    "category": "Dresses",
+    "gender": "Women",
+    "color": "Black",
+    "material": [
+      "Cotton"
+    ],
+    "style": [
+      "Elegant",
+      "Modern"
+    ],
+    "occasion": [
+      "Summer",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 2499,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "black",
+      "dresses",
+      "elegant",
+      "summer"
+    ],
+    "description": "Elegant black dresses in cotton designed for summer and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 13,
+    "brand": "ATELIER",
+    "name": "Relaxed Black Trousers",
+    "category": "Trousers",
+    "gender": "Men",
+    "color": "Black",
+    "material": [
+      "Cotton Blend"
+    ],
+    "style": [
+      "Relaxed",
+      "Modern"
+    ],
+    "occasion": [
+      "College",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 3199,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "black",
+      "trousers",
+      "relaxed",
+      "college"
+    ],
+    "description": "Relaxed black trousers in cotton blend designed for college and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 14,
+    "brand": "STUDIO 09",
+    "name": "Sporty Black Sneakers",
+    "category": "Sneakers",
+    "gender": "Unisex",
+    "color": "Black",
+    "material": [
+      "Mesh"
+    ],
+    "style": [
+      "Sporty",
+      "Modern"
+    ],
+    "occasion": [
+      "Everyday",
+      "Everyday"
+    ],
+    "sizes": [
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11"
+    ],
+    "price": 3899,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "black",
+      "sneakers",
+      "sporty",
+      "everyday"
+    ],
+    "description": "Sporty black sneakers in mesh designed for everyday and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 15,
+    "brand": "MOTION",
+    "name": "Oversized Black Hoodies",
+    "category": "Hoodies",
+    "gender": "Women",
+    "color": "Black",
+    "material": [
+      "Cotton"
+    ],
+    "style": [
+      "Oversized",
+      "Modern"
+    ],
+    "occasion": [
+      "College",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 4599,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "black",
+      "hoodies",
+      "oversized",
+      "college"
+    ],
+    "description": "Oversized black hoodies in cotton designed for college and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 16,
+    "brand": "NOVA",
+    "name": "Elegant White Dresses",
+    "category": "Dresses",
+    "gender": "Unisex",
+    "color": "White",
+    "material": [
+      "Cotton"
+    ],
+    "style": [
+      "Elegant",
+      "Modern"
+    ],
+    "occasion": [
+      "Summer",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 1879,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "white",
+      "dresses",
+      "elegant",
+      "summer"
+    ],
+    "description": "Elegant white dresses in cotton designed for summer and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 17,
+    "brand": "FORM",
+    "name": "Relaxed White Trousers",
+    "category": "Trousers",
+    "gender": "Women",
+    "color": "White",
+    "material": [
+      "Cotton Blend"
+    ],
+    "style": [
+      "Relaxed",
+      "Modern"
+    ],
+    "occasion": [
+      "College",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 2579,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "white",
+      "trousers",
+      "relaxed",
+      "college"
+    ],
+    "description": "Relaxed white trousers in cotton blend designed for college and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 18,
+    "brand": "ATELIER",
+    "name": "Sporty White Sneakers",
+    "category": "Sneakers",
+    "gender": "Men",
+    "color": "White",
+    "material": [
+      "Mesh"
+    ],
+    "style": [
+      "Sporty",
+      "Modern"
+    ],
+    "occasion": [
+      "Everyday",
+      "Everyday"
+    ],
+    "sizes": [
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11"
+    ],
+    "price": 3279,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "white",
+      "sneakers",
+      "sporty",
+      "everyday"
+    ],
+    "description": "Sporty white sneakers in mesh designed for everyday and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 19,
+    "brand": "STUDIO 09",
+    "name": "Oversized White Hoodies",
+    "category": "Hoodies",
+    "gender": "Unisex",
+    "color": "White",
+    "material": [
+      "Cotton"
+    ],
+    "style": [
+      "Oversized",
+      "Modern"
+    ],
+    "occasion": [
+      "College",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 3979,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "white",
+      "hoodies",
+      "oversized",
+      "college"
+    ],
+    "description": "Oversized white hoodies in cotton designed for college and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 20,
+    "brand": "MOTION",
+    "name": "Classic White Jeans",
+    "category": "Jeans",
+    "gender": "Women",
+    "color": "White",
+    "material": [
+      "Denim"
+    ],
+    "style": [
+      "Classic",
+      "Modern"
+    ],
+    "occasion": [
+      "Casual",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 4679,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "white",
+      "jeans",
+      "classic",
+      "casual"
+    ],
+    "description": "Classic white jeans in denim designed for casual and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 21,
+    "brand": "NOVA",
+    "name": "Relaxed Blue Trousers",
+    "category": "Trousers",
+    "gender": "Unisex",
+    "color": "Blue",
+    "material": [
+      "Cotton Blend"
+    ],
+    "style": [
+      "Relaxed",
+      "Modern"
+    ],
+    "occasion": [
+      "College",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 1959,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "blue",
+      "trousers",
+      "relaxed",
+      "college"
+    ],
+    "description": "Relaxed blue trousers in cotton blend designed for college and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 22,
+    "brand": "FORM",
+    "name": "Sporty Blue Sneakers",
+    "category": "Sneakers",
+    "gender": "Women",
+    "color": "Blue",
+    "material": [
+      "Mesh"
+    ],
+    "style": [
+      "Sporty",
+      "Modern"
+    ],
+    "occasion": [
+      "Everyday",
+      "Everyday"
+    ],
+    "sizes": [
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11"
+    ],
+    "price": 2659,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "blue",
+      "sneakers",
+      "sporty",
+      "everyday"
+    ],
+    "description": "Sporty blue sneakers in mesh designed for everyday and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 23,
+    "brand": "ATELIER",
+    "name": "Oversized Blue Hoodies",
+    "category": "Hoodies",
+    "gender": "Men",
+    "color": "Blue",
+    "material": [
+      "Cotton"
+    ],
+    "style": [
+      "Oversized",
+      "Modern"
+    ],
+    "occasion": [
+      "College",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 3359,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "blue",
+      "hoodies",
+      "oversized",
+      "college"
+    ],
+    "description": "Oversized blue hoodies in cotton designed for college and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 24,
+    "brand": "STUDIO 09",
+    "name": "Classic Blue Jeans",
+    "category": "Jeans",
+    "gender": "Unisex",
+    "color": "Blue",
+    "material": [
+      "Denim"
+    ],
+    "style": [
+      "Classic",
+      "Modern"
+    ],
+    "occasion": [
+      "Casual",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 4059,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "blue",
+      "jeans",
+      "classic",
+      "casual"
+    ],
+    "description": "Classic blue jeans in denim designed for casual and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 25,
+    "brand": "MOTION",
+    "name": "Formal Blue Blazers",
+    "category": "Blazers",
+    "gender": "Women",
+    "color": "Blue",
+    "material": [
+      "Wool Blend"
+    ],
+    "style": [
+      "Formal",
+      "Modern"
+    ],
+    "occasion": [
+      "Office",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 4759,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "blue",
+      "blazers",
+      "formal",
+      "office"
+    ],
+    "description": "Formal blue blazers in wool blend designed for office and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 26,
+    "brand": "NOVA",
+    "name": "Sporty Red Sneakers",
+    "category": "Sneakers",
+    "gender": "Unisex",
+    "color": "Red",
+    "material": [
+      "Mesh"
+    ],
+    "style": [
+      "Sporty",
+      "Modern"
+    ],
+    "occasion": [
+      "Everyday",
+      "Everyday"
+    ],
+    "sizes": [
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11"
+    ],
+    "price": 2039,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "red",
+      "sneakers",
+      "sporty",
+      "everyday"
+    ],
+    "description": "Sporty red sneakers in mesh designed for everyday and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 27,
+    "brand": "FORM",
+    "name": "Oversized Red Hoodies",
+    "category": "Hoodies",
+    "gender": "Women",
+    "color": "Red",
+    "material": [
+      "Cotton"
+    ],
+    "style": [
+      "Oversized",
+      "Modern"
+    ],
+    "occasion": [
+      "College",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 2739,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "red",
+      "hoodies",
+      "oversized",
+      "college"
+    ],
+    "description": "Oversized red hoodies in cotton designed for college and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 28,
+    "brand": "ATELIER",
+    "name": "Classic Red Jeans",
+    "category": "Jeans",
+    "gender": "Men",
+    "color": "Red",
+    "material": [
+      "Denim"
+    ],
+    "style": [
+      "Classic",
+      "Modern"
+    ],
+    "occasion": [
+      "Casual",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 3439,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "red",
+      "jeans",
+      "classic",
+      "casual"
+    ],
+    "description": "Classic red jeans in denim designed for casual and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 29,
+    "brand": "STUDIO 09",
+    "name": "Formal Red Blazers",
+    "category": "Blazers",
+    "gender": "Unisex",
+    "color": "Red",
+    "material": [
+      "Wool Blend"
+    ],
+    "style": [
+      "Formal",
+      "Modern"
+    ],
+    "occasion": [
+      "Office",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 4139,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "red",
+      "blazers",
+      "formal",
+      "office"
+    ],
+    "description": "Formal red blazers in wool blend designed for office and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 30,
+    "brand": "MOTION",
+    "name": "Modern Red Tops",
+    "category": "Tops",
+    "gender": "Women",
+    "color": "Red",
+    "material": [
+      "Cotton"
+    ],
+    "style": [
+      "Modern"
+    ],
+    "occasion": [
+      "Casual",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 4839,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "red",
+      "tops",
+      "modern",
+      "casual"
+    ],
+    "description": "Modern red tops in cotton designed for casual and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 31,
+    "brand": "NOVA",
+    "name": "Oversized Green Hoodies",
+    "category": "Hoodies",
+    "gender": "Unisex",
+    "color": "Green",
+    "material": [
+      "Cotton"
+    ],
+    "style": [
+      "Oversized",
+      "Modern"
+    ],
+    "occasion": [
+      "College",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 2119,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "green",
+      "hoodies",
+      "oversized",
+      "college"
+    ],
+    "description": "Oversized green hoodies in cotton designed for college and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 32,
+    "brand": "FORM",
+    "name": "Classic Green Jeans",
+    "category": "Jeans",
+    "gender": "Women",
+    "color": "Green",
+    "material": [
+      "Denim"
+    ],
+    "style": [
+      "Classic",
+      "Modern"
+    ],
+    "occasion": [
+      "Casual",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 2819,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "green",
+      "jeans",
+      "classic",
+      "casual"
+    ],
+    "description": "Classic green jeans in denim designed for casual and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 33,
+    "brand": "ATELIER",
+    "name": "Formal Green Blazers",
+    "category": "Blazers",
+    "gender": "Men",
+    "color": "Green",
+    "material": [
+      "Wool Blend"
+    ],
+    "style": [
+      "Formal",
+      "Modern"
+    ],
+    "occasion": [
+      "Office",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 3519,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "green",
+      "blazers",
+      "formal",
+      "office"
+    ],
+    "description": "Formal green blazers in wool blend designed for office and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 34,
+    "brand": "STUDIO 09",
+    "name": "Modern Green Tops",
+    "category": "Tops",
+    "gender": "Unisex",
+    "color": "Green",
+    "material": [
+      "Cotton"
+    ],
+    "style": [
+      "Modern"
+    ],
+    "occasion": [
+      "Casual",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 4219,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "green",
+      "tops",
+      "modern",
+      "casual"
+    ],
+    "description": "Modern green tops in cotton designed for casual and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 35,
+    "brand": "MOTION",
+    "name": "Elegant Green Skirts",
+    "category": "Skirts",
+    "gender": "Women",
+    "color": "Green",
+    "material": [
+      "Cotton"
+    ],
+    "style": [
+      "Elegant",
+      "Modern"
+    ],
+    "occasion": [
+      "Date",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 4919,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "green",
+      "skirts",
+      "elegant",
+      "date"
+    ],
+    "description": "Elegant green skirts in cotton designed for date and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 36,
+    "brand": "NOVA",
+    "name": "Classic Beige Jeans",
+    "category": "Jeans",
+    "gender": "Unisex",
+    "color": "Beige",
+    "material": [
+      "Denim"
+    ],
+    "style": [
+      "Classic",
+      "Modern"
+    ],
+    "occasion": [
+      "Casual",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 2199,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "beige",
+      "jeans",
+      "classic",
+      "casual"
+    ],
+    "description": "Classic beige jeans in denim designed for casual and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 37,
+    "brand": "FORM",
+    "name": "Formal Beige Blazers",
+    "category": "Blazers",
+    "gender": "Women",
+    "color": "Beige",
+    "material": [
+      "Wool Blend"
+    ],
+    "style": [
+      "Formal",
+      "Modern"
+    ],
+    "occasion": [
+      "Office",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 2899,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "beige",
+      "blazers",
+      "formal",
+      "office"
+    ],
+    "description": "Formal beige blazers in wool blend designed for office and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 38,
+    "brand": "ATELIER",
+    "name": "Modern Beige Tops",
+    "category": "Tops",
+    "gender": "Men",
+    "color": "Beige",
+    "material": [
+      "Cotton"
+    ],
+    "style": [
+      "Modern"
+    ],
+    "occasion": [
+      "Casual",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 3599,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "beige",
+      "tops",
+      "modern",
+      "casual"
+    ],
+    "description": "Modern beige tops in cotton designed for casual and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 39,
+    "brand": "STUDIO 09",
+    "name": "Elegant Beige Skirts",
+    "category": "Skirts",
+    "gender": "Unisex",
+    "color": "Beige",
+    "material": [
+      "Cotton"
+    ],
+    "style": [
+      "Elegant",
+      "Modern"
+    ],
+    "occasion": [
+      "Date",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 4299,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "beige",
+      "skirts",
+      "elegant",
+      "date"
+    ],
+    "description": "Elegant beige skirts in cotton designed for date and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 40,
+    "brand": "MOTION",
+    "name": "Modern Beige Jackets",
+    "category": "Jackets",
+    "gender": "Women",
+    "color": "Beige",
+    "material": [
+      "Polyester"
+    ],
+    "style": [
+      "Modern"
+    ],
+    "occasion": [
+      "Travel",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 4999,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "beige",
+      "jackets",
+      "modern",
+      "travel"
+    ],
+    "description": "Modern beige jackets in polyester designed for travel and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 41,
+    "brand": "NOVA",
+    "name": "Formal Grey Blazers",
+    "category": "Blazers",
+    "gender": "Unisex",
+    "color": "Grey",
+    "material": [
+      "Wool Blend"
+    ],
+    "style": [
+      "Formal",
+      "Modern"
+    ],
+    "occasion": [
+      "Office",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 2279,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "grey",
+      "blazers",
+      "formal",
+      "office"
+    ],
+    "description": "Formal grey blazers in wool blend designed for office and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 42,
+    "brand": "FORM",
+    "name": "Modern Grey Tops",
+    "category": "Tops",
+    "gender": "Women",
+    "color": "Grey",
+    "material": [
+      "Cotton"
+    ],
+    "style": [
+      "Modern"
+    ],
+    "occasion": [
+      "Casual",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 2979,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "grey",
+      "tops",
+      "modern",
+      "casual"
+    ],
+    "description": "Modern grey tops in cotton designed for casual and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 43,
+    "brand": "ATELIER",
+    "name": "Elegant Grey Skirts",
+    "category": "Skirts",
+    "gender": "Men",
+    "color": "Grey",
+    "material": [
+      "Cotton"
+    ],
+    "style": [
+      "Elegant",
+      "Modern"
+    ],
+    "occasion": [
+      "Date",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 3679,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "grey",
+      "skirts",
+      "elegant",
+      "date"
+    ],
+    "description": "Elegant grey skirts in cotton designed for date and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 44,
+    "brand": "STUDIO 09",
+    "name": "Modern Grey Jackets",
+    "category": "Jackets",
+    "gender": "Unisex",
+    "color": "Grey",
+    "material": [
+      "Polyester"
+    ],
+    "style": [
+      "Modern"
+    ],
+    "occasion": [
+      "Travel",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 4379,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "grey",
+      "jackets",
+      "modern",
+      "travel"
+    ],
+    "description": "Modern grey jackets in polyester designed for travel and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 45,
+    "brand": "MOTION",
+    "name": "Minimal Grey Shirts",
+    "category": "Shirts",
+    "gender": "Women",
+    "color": "Grey",
+    "material": [
+      "Cotton"
+    ],
+    "style": [
+      "Minimal",
+      "Modern"
+    ],
+    "occasion": [
+      "Casual",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 5079,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "grey",
+      "shirts",
+      "minimal",
+      "casual"
+    ],
+    "description": "Minimal grey shirts in cotton designed for casual and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 46,
+    "brand": "NOVA",
+    "name": "Modern Brown Tops",
+    "category": "Tops",
+    "gender": "Unisex",
+    "color": "Brown",
+    "material": [
+      "Cotton"
+    ],
+    "style": [
+      "Modern"
+    ],
+    "occasion": [
+      "Casual",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 2359,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "brown",
+      "tops",
+      "modern",
+      "casual"
+    ],
+    "description": "Modern brown tops in cotton designed for casual and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 47,
+    "brand": "FORM",
+    "name": "Elegant Brown Skirts",
+    "category": "Skirts",
+    "gender": "Women",
+    "color": "Brown",
+    "material": [
+      "Cotton"
+    ],
+    "style": [
+      "Elegant",
+      "Modern"
+    ],
+    "occasion": [
+      "Date",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 3059,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "brown",
+      "skirts",
+      "elegant",
+      "date"
+    ],
+    "description": "Elegant brown skirts in cotton designed for date and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 48,
+    "brand": "ATELIER",
+    "name": "Modern Brown Jackets",
+    "category": "Jackets",
+    "gender": "Men",
+    "color": "Brown",
+    "material": [
+      "Polyester"
+    ],
+    "style": [
+      "Modern"
+    ],
+    "occasion": [
+      "Travel",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 3759,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "brown",
+      "jackets",
+      "modern",
+      "travel"
+    ],
+    "description": "Modern brown jackets in polyester designed for travel and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 49,
+    "brand": "STUDIO 09",
+    "name": "Minimal Brown Shirts",
+    "category": "Shirts",
+    "gender": "Unisex",
+    "color": "Brown",
+    "material": [
+      "Cotton"
+    ],
+    "style": [
+      "Minimal",
+      "Modern"
+    ],
+    "occasion": [
+      "Casual",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 4459,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "brown",
+      "shirts",
+      "minimal",
+      "casual"
+    ],
+    "description": "Minimal brown shirts in cotton designed for casual and everyday styling.",
+    "image": ""
+  },
+  {
+    "id": 50,
+    "brand": "MOTION",
+    "name": "Elegant Brown Dresses",
+    "category": "Dresses",
+    "gender": "Women",
+    "color": "Brown",
+    "material": [
+      "Cotton"
+    ],
+    "style": [
+      "Elegant",
+      "Modern"
+    ],
+    "occasion": [
+      "Summer",
+      "Everyday"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price": 5159,
+    "currency": "INR",
+    "availability": "In Stock",
+    "tags": [
+      "brown",
+      "dresses",
+      "elegant",
+      "summer"
+    ],
+    "description": "Elegant brown dresses in cotton designed for summer and everyday styling.",
+    "image": ""
   }
 ]
