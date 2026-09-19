@@ -391,6 +391,20 @@ function interceptAIInteractions() {
   }, true);
 }
 
+function initializeAIStudioPreview() {
+  const img = document.getElementById("aiStudioModelImage");
+  const title = document.getElementById("aiStudioLookTitle");
+  if (!img) return;
+  const prompt = "high-end editorial fashion photograph, adult professional fashion model, full body, minimal monochrome black outfit, modern college street style, realistic fabric, luxury studio, natural proportions, soft directional lighting, neutral background, no text, no watermark";
+  img.src = AI_IMAGE_API + encodeURIComponent(prompt) + "?width=768&height=1024&model=flux&nologo=true&seed=2026";
+  img.onerror = () => {
+    img.style.display = "none";
+    const visual = img.closest(".ai-studio-visual");
+    if (visual) visual.classList.add("ai-preview-fallback");
+  };
+}
+document.addEventListener("DOMContentLoaded", initializeAIStudioPreview);
+
 function initializeAIV2Experience() {
   interceptAIInteractions();
   const searchInput = document.getElementById("searchInput");
