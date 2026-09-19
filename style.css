@@ -2265,3 +2265,15 @@ section {
   .ai-system-readout,.ai-capability-row { grid-template-columns:1fr; }
   .ai-system-readout div,.ai-capability-row div { border-right:0;border-bottom:1px solid rgba(255,255,255,.07); }
 }
+
+
+/* Fix AI results nested inside the legacy product-grid container. */
+#results:has(.ai-v3-results-grid) {
+  display: block;
+}
+#results:has(.ai-v3-results-grid) .ai-v3-results-grid {
+  width: 100%;
+}
+.ai-v3-results-heading {
+  width: 100%;
+}
