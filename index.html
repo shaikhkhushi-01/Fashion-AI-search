@@ -25,15 +25,15 @@
       </a>
 
       <nav class="main-nav" aria-label="Main navigation">
-        <button type="button" data-scroll="forYouSection">For You</button>
-        <button type="button" data-scroll="catalogue">Discover</button>
+        <button type="button" data-scroll="aiStudio">AI Studio</button>
+        <button type="button" data-scroll="catalogue">AI Search</button>
         <button type="button" data-scroll="stylist">AI Stylist</button>
       </nav>
 
       <div class="header-actions">
         <div id="backendStatus" class="status" title="Checking AI engine">
           <span class="status-dot"></span>
-          <span>AI ENGINE</span>
+          <span>AI ENGINE <b class="header-ai-live">LIVE</b></span>
         </div>
 
         <button id="wishlistButton" type="button" class="wishlist-button header-wishlist" aria-label="Open wishlist">
@@ -59,8 +59,7 @@
           </h1>
 
           <p class="hero-description">
-            Describe the look you have in mind. Fashion AI understands your intent,
-            preferences and context to discover relevant pieces for you.
+            Describe the look like you would describe it to a stylist. Fashion AI understands intent, style, context and budget — then retrieves and ranks the pieces that actually fit the request.
           </p>
 
           <div class="search-shell">
@@ -128,6 +127,64 @@
               <strong>Personal discovery</strong>
               <small>Learns your preferences</small>
             </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="aiStudio" class="ai-studio-section">
+      <div class="container">
+        <div class="ai-studio-shell">
+          <div class="ai-studio-header">
+            <div>
+              <span class="ai-studio-kicker"><i></i> FASHION AI RESEARCH STUDIO</span>
+              <h2>An AI that <em>sees the outfit</em> behind your words.</h2>
+              <p>Semantic understanding, fashion intent extraction, hybrid retrieval and generative model visualization — working together in one discovery loop.</p>
+            </div>
+            <div class="ai-system-readout">
+              <div><span>SEMANTIC MODEL</span><strong id="aiModelName">Xenova / MiniLM</strong></div>
+              <div><span>RETRIEVAL</span><strong>Hybrid + Intent</strong></div>
+              <div><span>GENERATION</span><strong>AI Model Preview</strong></div>
+            </div>
+          </div>
+
+          <div class="ai-studio-grid">
+            <div class="ai-studio-visual">
+              <div class="ai-visual-orb"></div>
+              <img id="aiStudioModelImage" alt="AI generated fashion model preview" loading="eager">
+              <div class="ai-visual-label"><span>✦</span> LIVE AI VISUALIZATION</div>
+              <div class="ai-visual-caption">
+                <span>MODEL PREVIEW</span>
+                <strong id="aiStudioLookTitle">Minimal monochrome city look</strong>
+              </div>
+            </div>
+
+            <div class="ai-studio-console">
+              <div class="ai-console-top">
+                <span>AI REASONING PIPELINE</span>
+                <b id="aiStudioLatency">READY</b>
+              </div>
+
+              <div class="ai-pipeline">
+                <div class="ai-pipeline-step active"><span>01</span><div><strong>Understand</strong><small>Natural-language intent</small></div><i>✓</i></div>
+                <div class="ai-pipeline-step active"><span>02</span><div><strong>Retrieve</strong><small>Semantic + catalogue signals</small></div><i>✓</i></div>
+                <div class="ai-pipeline-step active"><span>03</span><div><strong>Rank</strong><small>Constraints + style compatibility</small></div><i>✓</i></div>
+                <div class="ai-pipeline-step active"><span>04</span><div><strong>Visualize</strong><small>Generative model preview</small></div><i>✦</i></div>
+              </div>
+
+              <div class="ai-studio-prompt">
+                <span>TRY THE AI</span>
+                <p id="aiStudioPrompt">“Minimal black outfit for college under ₹3000”</p>
+                <button type="button" class="ai-studio-launch" onclick="document.getElementById('searchInput')?.focus(); document.getElementById('searchInput')?.scrollIntoView({behavior:'smooth',block:'center'});">Ask Fashion AI <span>↗</span></button>
+              </div>
+            </div>
+          </div>
+
+          <div class="ai-capability-row">
+            <div><span>01</span><strong>Semantic Search</strong><small>Meaning over keywords</small></div>
+            <div><span>02</span><strong>Intent Extraction</strong><small>Style, budget, occasion</small></div>
+            <div><span>03</span><strong>AI Ranking</strong><small>Explainable relevance</small></div>
+            <div><span>04</span><strong>Virtual Model</strong><small>Generated visual preview</small></div>
           </div>
         </div>
       </div>
