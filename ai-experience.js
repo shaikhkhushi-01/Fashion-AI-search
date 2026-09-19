@@ -88,18 +88,23 @@ function aiCard(product, query) {
 
   return `
     <article class="ai-v3-product-card">
-      <div class="ai-v3-product-media">
-        ${image
-          ? `<img src="${aiEscape(image)}" alt="${aiEscape(name)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.hidden=false">`
-          : ""}
-        <div class="ai-v3-product-fallback" ${image ? "hidden" : ""}>
-          <span>${aiEscape(category)}</span>
-          <strong>${aiEscape(color || "AI")}</strong>
-          <small>AI model preview available</small>
+      <div class="ai-v3-product-media ai-v3-dual-media">
+        <div class="ai-v3-source-visual">
+          ${image
+            ? `<img src="${aiEscape(image)}" alt="${aiEscape(name)}" loading="lazy">`
+            : `<div class="ai-v3-product-fallback"><span>${aiEscape(category)}</span><strong>${aiEscape(color || "AI")}</strong><small>Product image unavailable</small></div>`}
+          <span class="ai-v3-media-label">PRODUCT</span>
+        </div>
+        <div class="ai-v3-model-visual">
+          <div class="ai-v3-model-loading"><span>✦</span><small>AI MODEL</small></div>
+          <img src="${aiEscape(generated)}" alt="AI model wearing ${aiEscape(name)}" loading="lazy"
+               onload="this.parentElement.classList.add('loaded')"
+               onerror="this.parentElement.classList.add('failed')">
+          <span class="ai-v3-media-label">AI MODEL</span>
         </div>
         <span class="ai-v3-score"><span>✦</span> ${score}% AI match</span>
         <button type="button" class="ai-v3-try-button" onclick="openAIModelPreview(${JSON.stringify(generated)}, ${JSON.stringify(name)})">
-          <span>✦</span> See on AI model
+          <span>✦</span> Full model view
         </button>
       </div>
       <div class="ai-v3-product-body">
