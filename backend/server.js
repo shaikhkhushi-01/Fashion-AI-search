@@ -21,6 +21,8 @@ import {
   searchProducts
 } from "./services/aiSearch.js";
 
+import { discover } from "./services/aiDiscoveryV2.js";
+
 import {
   evaluateDataset
 } from "./services/evaluation.js";
