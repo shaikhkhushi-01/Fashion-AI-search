@@ -104,10 +104,46 @@ async function discover(products, query, options = {}) {
   if (cached) return cached;
 
   const queryTerms = expandQueryTerms(cleanQuery);
-  let candidates = products
+
+  // Explicit attributes are treated as retrieval constraints, not just soft
+  // ranking signals. This prevents semantic similarity from returning a
+  // visually/semantically related but wrong category or colour.
+  const hasExplicitConstraints =
+    Boolean(intent.category || intent.color || intent.material || intent.gender ||
+      intent.style.length || intent.occasion.length);
+
+  const strictCandidates = hasExplicitConstraints
+    ? products.filter(product => {
+        if (intent.category && !exactMatch(product.category, intent.category)) return false;
+        if (intent.color && !exactMatch(product.color, intent.color)) return false;
+        if (intent.material && !exactMatch(product.material, intent.material)) return false;
+        if (intent.gender && !exactMatch(product.gender, intent.gender) &&
+            !exactMatch(product.gender, "unisex")) return false;
+        if (intent.style.length && !anyMatch(product.style, intent.style)) return false;
+        if (intent.occasion.length && !anyMatch(product.occasion, intent.occasion)) return false;
+        return true;
+      })
+    : products;
+
+  // If the complete constraint intersection is empty, progressively relax
+  // style/occasion before falling back to the full catalogue.
+  let retrievalPool = strictCandidates;
+  if (!retrievalPool.length && hasExplicitConstraints) {
+    retrievalPool = products.filter(product => {
+      if (intent.category && !exactMatch(product.category, intent.category)) return false;
+      if (intent.color && !exactMatch(product.color, intent.color)) return false;
+      if (intent.material && !exactMatch(product.material, intent.material)) return false;
+      if (intent.gender && !exactMatch(product.gender, intent.gender) &&
+          !exactMatch(product.gender, "unisex")) return false;
+      return true;
+    });
+  }
+  if (!retrievalPool.length) retrievalPool = products;
+
+  let candidates = retrievalPool
     .map(product => ({ product, score: candidateScore(product, queryTerms, intent) }))
     .sort((a, b) => b.score - a.score)
-    .slice(0, Math.min(CANDIDATE_LIMIT, products.length))
+    .slice(0, Math.min(CANDIDATE_LIMIT, retrievalPool.length))
     .map(item => item.product);
 
   if (intent.budget != null) {
@@ -135,14 +171,19 @@ async function discover(products, query, options = {}) {
     const budget = budgetScore(product, intent.budget);
     const compatibility = compatibilityScore(product, intent);
     let score = semanticAvailable
-      ? semantic * 0.34 + keyword * 0.18 + constraints * 0.3 + budget * 0.1 + compatibility * 0.08
-      : keyword * 0.5 + constraints * 0.35 + budget * 0.1 + compatibility * 0.05;
+      ? semantic * 0.20 + keyword * 0.20 + constraints * 0.45 + budget * 0.10 + compatibility * 0.05
+      : keyword * 0.25 + constraints * 0.55 + budget * 0.15 + compatibility * 0.05;
 
-    if (intent.category && exactMatch(product.category, intent.category)) score += 0.08;
-    if (intent.color && exactMatch(product.color, intent.color)) score += 0.07;
-    if (intent.style.length && anyMatch(product.style, intent.style)) score += 0.05;
-    if (intent.occasion.length && anyMatch(product.occasion, intent.occasion)) score += 0.05;
-    if (intent.budget != null && Number(product.price) <= intent.budget) score += 0.05;
+    // Exact intent matches receive a strong, deterministic boost after
+    // semantic retrieval. This keeps "black shirt" from drifting into
+    // black trousers just because their descriptions are semantically close.
+    if (intent.category && exactMatch(product.category, intent.category)) score += 0.12;
+    if (intent.color && exactMatch(product.color, intent.color)) score += 0.10;
+    if (intent.material && exactMatch(product.material, intent.material)) score += 0.07;
+    if (intent.gender && (exactMatch(product.gender, intent.gender) || exactMatch(product.gender, "unisex"))) score += 0.05;
+    if (intent.style.length && anyMatch(product.style, intent.style)) score += 0.08;
+    if (intent.occasion.length && anyMatch(product.occasion, intent.occasion)) score += 0.08;
+    if (intent.budget != null && Number(product.price) <= intent.budget) score += 0.07;
 
     score = Math.max(0, Math.min(1, score));
     return {
