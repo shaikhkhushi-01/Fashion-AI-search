@@ -33,6 +33,17 @@ function aiProductImage(product) {
   return product?.image || product?.image_url || product?.imageUrl || product?.img || product?.thumbnail || "";
 }
 
+function aiProductPreviewUrl(product) {
+  const name = product?.name || "fashion product";
+  const category = product?.category || "fashion";
+  const color = product?.color || "";
+  const material = aiArray(product?.material).join(", ");
+  const style = aiArray(product?.style).slice(0, 3).join(", ");
+  const prompt = ["premium ecommerce product photography","single isolated fashion product, no person, no mannequin, no model","front three-quarter product view, complete item visible, centered composition","clean white studio background, soft realistic shadow, photorealistic fabric and texture","no text, no watermark, no logo, no extra garments",name,category,color && "color " + color,material && "material " + material,style && "style " + style].filter(Boolean).join(", ");
+  const seed = String(product?.id ?? name) + "-product";
+  return AI_IMAGE_API + encodeURIComponent(prompt) + "?width=768&height=900&model=flux&nologo=true&seed=" + encodeURIComponent(seed);
+}
+
 function aiScore(product) {
   const raw = Number(
     product?.aiMatch ??
@@ -83,6 +94,8 @@ function aiCard(product, query) {
   const score = aiScore(product);
   const reasons = aiArray(product?.reasons).slice(0, 3);
   const image = aiProductImage(product);
+  const productPreview = image || aiProductPreviewUrl(product);
+  const hasRealProductImage = Boolean(image);
   const styles = aiArray(product?.style || product?.styles).slice(0, 3);
   const generated = aiModelUrl(product, query);
 
@@ -90,9 +103,8 @@ function aiCard(product, query) {
     <article class="ai-v3-product-card">
       <div class="ai-v3-product-media ai-v3-dual-media">
         <div class="ai-v3-source-visual">
-          ${image
-            ? `<img src="${aiEscape(image)}" alt="${aiEscape(name)}" loading="lazy">`
-            : `<div class="ai-v3-product-fallback"><span>${aiEscape(category)}</span><strong>${aiEscape(color || "AI")}</strong><small>Product image unavailable</small></div>`}
+          <img class="ai-v3-source-image" src="${aiEscape(productPreview)}" alt="${aiEscape(name)}" loading="lazy">
+          <div class="ai-v3-source-status">${hasRealProductImage ? "CATALOGUE IMAGE" : "AI PRODUCT PREVIEW"}</div>
           <span class="ai-v3-media-label">PRODUCT</span>
         </div>
         <div class="ai-v3-model-visual">
