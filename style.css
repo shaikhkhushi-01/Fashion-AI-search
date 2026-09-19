@@ -2427,3 +2427,8 @@ section {
   .ai-v3-hero-copy { padding:25px; }
   .ai-v3-hero-visual { min-height:440px; }
 }
+
+.ai-v3-source-visual{position:relative;overflow:hidden;background:#f3f0eb}
+.ai-v3-source-image{display:block;width:100%;height:100%;min-height:280px;object-fit:contain;object-position:center;background:#f3f0eb}
+.ai-v3-source-status{position:absolute;left:12px;bottom:12px;z-index:3;padding:5px 7px;border-radius:5px;background:rgba(255,255,255,.88);color:#5d5852;font-size:6px;font-weight:800;letter-spacing:.08em}
+.ai-v3-source-visual .ai-v3-media-label{z-index:4}
