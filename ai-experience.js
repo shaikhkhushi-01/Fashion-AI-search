@@ -53,8 +53,8 @@ function aiModelPrompt(product, query = "") {
   const description = product?.description || "";
   return [
     "high-end editorial fashion e-commerce photograph",
-    "adult professional fashion model wearing the exact described garment",
-    "full body, front three-quarter pose, realistic fabric drape, natural proportions",
+    "adult professional fashion model wearing the described fashion piece",
+    "full body head-to-toe, feet visible, front three-quarter pose, complete outfit visible, realistic fabric drape, natural proportions",
     "clean luxury studio, soft directional lighting, neutral warm background",
     "no text, no watermark, no logos",
     name,
@@ -97,7 +97,7 @@ function aiCard(product, query) {
         </div>
         <div class="ai-v3-model-visual">
           <div class="ai-v3-model-loading"><span>✦</span><small>AI MODEL</small></div>
-          <img src="${aiEscape(generated)}" alt="AI model wearing ${aiEscape(name)}" loading="lazy"
+          <img class="ai-v3-model-image" data-ai-src="${aiEscape(generated)}" alt="AI model wearing ${aiEscape(name)}" loading="lazy"
                onload="this.parentElement.classList.add('loaded')"
                onerror="this.parentElement.classList.add('failed')">
           <span class="ai-v3-media-label">AI MODEL</span>
@@ -198,7 +198,7 @@ function renderAIInsight(data) {
           </div>
           <div class="ai-v3-hero-visual">
             <div class="ai-v3-visual-glow"></div>
-            <img src="${aiEscape(preview)}" alt="AI generated model wearing ${aiEscape(top.name || "the selected fashion item")}" loading="lazy">
+            <img class="ai-v3-hero-model-image" data-ai-src="${aiEscape(preview)}" alt="AI generated model wearing ${aiEscape(top.name || "the selected fashion item")}" loading="lazy">
             <span class="ai-v3-generated-label">AI GENERATED MODEL PREVIEW</span>
           </div>
         </div>
@@ -326,6 +326,10 @@ function openAIModelPreview(url, title) {
   image.src = url;
 }
 
+function handleAIModelImageError(image) { if (!image || image.dataset.retried === '1') { image?.parentElement?.classList.add('failed'); return; } image.dataset.retried = '1'; const current = image.dataset.aiSrc || image.src; if (!current) { image.parentElement.classList.add('failed'); return; } const retryUrl = current.replace(/([?&])seed=[^&]*/i, '$1seed=' + Math.floor(Math.random() * 999999)); setTimeout(() => { image.src = retryUrl; }, 700); }
+
+function setupAIModelImageLoading() { const images = document.querySelectorAll('img[data-ai-src]'); if (!images.length) return; const load = image => { if (image.dataset.loaded === '1') return; image.dataset.loaded = '1'; image.src = image.dataset.aiSrc; }; if (!('IntersectionObserver' in window)) { images.forEach(load); return; } const observer = new IntersectionObserver(entries => { entries.forEach(entry => { if (entry.isIntersecting) { load(entry.target); observer.unobserve(entry.target); } }); }, { rootMargin: '700px 0px' }); images.forEach(image => observer.observe(image)); }
+
 async function runAIV2Search(query) {
   const cleanQuery = String(query || "").trim();
   const input = document.getElementById("searchInput");
@@ -353,6 +357,7 @@ async function runAIV2Search(query) {
 
     renderAIInsight(data);
     renderAISearchResults(data);
+    setupAIModelImageLoading();
 
     const summary = document.getElementById("searchSummary");
     const count = document.getElementById("resultCount");
