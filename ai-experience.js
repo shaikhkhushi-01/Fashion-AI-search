@@ -86,14 +86,16 @@ function filterExplicitAIResults(results, query) {
   const foundColors = colors.filter(c => text.includes(c));
   const foundCategories = categories.filter(([term]) => text.includes(term)).map(([,v]) => v);
   if (!foundColors.length && !foundCategories.length) return results;
+  const budget = extractAIBudgetConstraint(query);
   const exact = results.filter(product => {
     const color = String(product?.color || "").toLowerCase();
     const category = String(product?.category || "").toLowerCase();
     const colorOk = !foundColors.length || foundColors.some(c => c === "cream" ? color === "beige" : c === "ivory" ? color === "white" : color.includes(c));
     const categoryOk = !foundCategories.length || foundCategories.some(c => category.includes(c));
-    return colorOk && categoryOk;
+    const budgetOk = budget == null || Number(product?.price) <= budget;
+    return colorOk && categoryOk && budgetOk;
   });
-  return exact.length ? exact : results;
+  return exact.length ? exact : (budget != null ? [] : results);
 }
 
 function aiScore(product) {
@@ -440,6 +442,16 @@ function setupAIModelImageLoading() {
   images.forEach(image => observer.observe(image));
 }
 
+function extractAIBudgetConstraint(query) {
+  const text = String(query || "").toLowerCase().replace(/,/g, "");
+  const match = text.match(/(?:under|below|less than|upto|up to|max(?:imum)?(?: budget)?|within)\s*(?:₹|rs\.?|inr\s*)?\s*(\d+(?:\.\d+)?)\s*(k|thousand)?\b|(?:₹|rs\.?|inr\s*)\s*(\d+(?:\.\d+)?)\s*(k|thousand)?\b/);
+  if (!match) return null;
+  const raw = Number(match[1] || match[3]);
+  if (!Number.isFinite(raw)) return null;
+  const multiplier = String(match[2] || match[4] || "").toLowerCase();
+  return raw * (multiplier === "k" || multiplier === "thousand" ? 1000 : 1);
+}
+
 async function localCatalogueSearch(query, limit = 12) {
   const products = await loadLocalCatalogue();
   const text = String(query || "").toLowerCase().trim();
@@ -455,6 +467,7 @@ async function localCatalogueSearch(query, limit = 12) {
   const foundCategoryTerm = Object.keys(categoryAliases).sort((a,b) => b.length - a.length).find(term => text.includes(term));
   const foundCategory = foundCategoryTerm ? categoryAliases[foundCategoryTerm] : "";
   const targetColor = foundColor === "cream" || foundColor === "ivory" ? "beige" : foundColor === "gray" ? "grey" : foundColor;
+  const budget = extractAIBudgetConstraint(query);
   const tokens = text.split(/\s+/).filter(Boolean);
 
   const scored = products.map(product => {
@@ -467,7 +480,8 @@ async function localCatalogueSearch(query, limit = 12) {
     ].join(" ").toLowerCase();
     const colorMatch = !targetColor || color === targetColor;
     const categoryMatch = !foundCategory || category.includes(foundCategory);
-    let score = (colorMatch ? 0.55 : 0) + (categoryMatch ? 0.4 : 0);
+    const budgetMatch = budget == null || Number(product.price) <= budget;
+    let score = (colorMatch ? 0.55 : 0) + (categoryMatch ? 0.4 : 0) + (budgetMatch ? 0.05 : 0);
     tokens.forEach(token => { if (haystack.includes(token)) score += token.length > 4 ? 0.02 : 0.01; });
     return {
       ...product,
@@ -484,9 +498,10 @@ async function localCatalogueSearch(query, limit = 12) {
 
   const strict = scored.filter(product =>
     (!targetColor || String(product.color || "").toLowerCase() === targetColor) &&
-    (!foundCategory || String(product.category || "").toLowerCase().includes(foundCategory))
+    (!foundCategory || String(product.category || "").toLowerCase().includes(foundCategory)) &&
+    (budget == null || Number(product.price) <= budget)
   );
-  return (strict.length ? strict : scored).sort((a,b) => b.score - a.score).slice(0, limit);
+  return strict.sort((a,b) => b.score - a.score).slice(0, limit);
 }
 
 async function runAIV2Search(query) {
