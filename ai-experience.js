@@ -39,7 +39,14 @@ function aiStudioFallbackSvg() {
 }
 
 function aiProductPreviewUrl(product) {
-  return aiProductFallbackSvg(product);
+  const name = product?.name || "fashion product";
+  const category = String(product?.category || "fashion").trim();
+  const color = String(product?.color || "").trim();
+  const material = aiArray(product?.material).join(", ");
+  const style = aiArray(product?.style).slice(0, 3).join(", ");
+  const prompt = ["premium ecommerce fashion photography","single real-looking garment product, no person, no mannequin","front three-quarter view, complete item visible, centered","clean warm studio background, realistic fabric texture, soft natural shadow","no text, no watermark, no extra garments",name,category,color && "exact color " + color,material && "material " + material,style && "style " + style].filter(Boolean).join(", ");
+  const seed = String(product?.id ?? name) + "-product-v2";
+  return AI_IMAGE_API + encodeURIComponent(prompt) + "?width=768&height=900&model=flux&nologo=true&seed=" + encodeURIComponent(seed);
 }
 
 function aiProductPhotoFallbackUrl(product) {
@@ -185,7 +192,7 @@ function aiCard(product, query) {
   const productPreview = image || remoteProductPreview;
   const hasRealProductImage = Boolean(image);
   const styles = aiArray(product?.style || product?.styles).slice(0, 3);
-  const generated = aiModelFallbackSvg(product);
+  const generated = aiModelUrl(product, query);
 
   return `
     <article class="ai-v3-product-card">
@@ -194,12 +201,12 @@ function aiCard(product, query) {
           <img class="ai-v3-source-image" src="${aiEscape(productPreview)}" alt="${aiEscape(name)}" loading="eager"
                onload="this.classList.add('visual-ready')"
                onerror="if(!this.dataset.photoFallback){this.dataset.photoFallback='1';this.src='${aiEscape(aiProductPhotoFallbackUrl(product))}';}else{this.onerror=null;this.src='${aiEscape(aiModelFallbackSvg(product))}'}">
-          <div class="ai-v3-source-status">${hasRealProductImage ? "CATALOGUE IMAGE" : "LOCAL PRODUCT VISUAL"}</div>
+          <div class="ai-v3-source-status">${hasRealProductImage ? "CATALOGUE IMAGE" : "AI PRODUCT PREVIEW"}</div>
           <span class="ai-v3-media-label">PRODUCT</span>
         </div>
         <div class="ai-v3-model-visual">
           <div class="ai-v3-model-loading"><span>✦</span><small>AI MODEL</small></div>
-          <img class="ai-v3-model-image" src="${aiEscape(generated)}" alt="Local fashion model visual for ${aiEscape(name)}" loading="lazy"
+          <img class="ai-v3-model-image" src="${aiEscape(aiModelFallbackSvg(product))}" data-ai-src="${aiEscape(generated)}" alt="AI model wearing ${aiEscape(name)}" loading="lazy"
                onload="this.parentElement.classList.add('loaded')"
                onerror="this.onerror=null;this.src='${aiEscape(aiModelFallbackSvg(product))}';this.parentElement.classList.add('loaded')">
           <span class="ai-v3-media-label">AI MODEL</span>
