@@ -40,15 +40,20 @@ function aiStudioFallbackSvg() {
 
 function aiProductPreviewUrl(product) {
   const name = product?.name || "fashion product";
-  const exactColor = String(product?.color || "").trim();
-  const exactCategory = String(product?.category || "fashion").trim();
-  const category = product?.category || "fashion";
-  const color = product?.color || "";
+  const category = String(product?.category || "fashion").trim();
+  const color = String(product?.color || "").trim();
   const material = aiArray(product?.material).join(", ");
   const style = aiArray(product?.style).slice(0, 3).join(", ");
-  const prompt = ["premium ecommerce product photography","single isolated fashion product, no person, no mannequin, no model","front three-quarter product view, complete item visible, centered composition","clean white studio background, soft realistic shadow, photorealistic fabric and texture","no text, no watermark, no logo, no extra garments",name,category,color && "color " + color,material && "material " + material,style && "style " + style].filter(Boolean).join(", ");
+  const prompt = ["premium ecommerce product photography","single isolated fashion product, no person, no mannequin, no model","front three-quarter product view, complete item visible, centered composition","clean white studio background, soft realistic shadow, photorealistic fabric and texture","no text, no watermark, no logo, no extra garments",name,category,color && "exact color " + color,material && "material " + material,style && "style " + style].filter(Boolean).join(", ");
   const seed = String(product?.id ?? name) + "-product";
   return AI_IMAGE_API + encodeURIComponent(prompt) + "?width=768&height=900&model=flux&nologo=true&seed=" + encodeURIComponent(seed);
+}
+
+function aiProductPhotoFallbackUrl(product) {
+  const color = String(product?.color || "fashion").trim().toLowerCase();
+  const category = String(product?.category || "product").trim().toLowerCase();
+  const seed = encodeURIComponent(String(product?.id ?? (color + "-" + category)));
+  return "https://loremflickr.com/768/900/" + encodeURIComponent(color + "," + category + ",fashion") + "?lock=" + seed;
 }
 
 function filterExplicitAIResults(results, query) {
@@ -157,7 +162,8 @@ function aiCard(product, query) {
       <div class="ai-v3-product-media ai-v3-dual-media">
         <div class="ai-v3-source-visual">
           <img class="ai-v3-source-image" src="${aiEscape(productPreview)}" alt="${aiEscape(name)}" loading="eager"
-               onload="this.classList.add('visual-ready')" onerror="this.onerror=null;this.src='${aiEscape(aiModelFallbackSvg(product))}'">
+               onload="this.classList.add('visual-ready')"
+               onerror="if(!this.dataset.photoFallback){this.dataset.photoFallback='1';this.src='${aiEscape(aiProductPhotoFallbackUrl(product))}';}else{this.onerror=null;this.src='${aiEscape(aiModelFallbackSvg(product))}'}">
           <div class="ai-v3-source-status">${hasRealProductImage ? "CATALOGUE IMAGE" : "AI GENERATED PRODUCT PHOTO"}</div>
           <span class="ai-v3-media-label">PRODUCT</span>
         </div>
