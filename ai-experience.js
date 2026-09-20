@@ -210,7 +210,7 @@ function aiCard(product, query) {
         <div class="ai-v3-source-visual">
           <img class="ai-v3-source-image" src="${aiEscape(productPreview)}" alt="${aiEscape(name)}" loading="eager"
                onload="this.classList.add('visual-ready')"
-               onerror="if(!this.dataset.photoFallback){this.dataset.photoFallback='1';this.src=aiStockFashionUrl(product,'product');}else{this.onerror=null;this.src=aiProductFallbackSvg(product)}">
+               onerror="if(!this.dataset.photoFallback){this.dataset.photoFallback='1';this.src='${aiEscape(aiStockFashionUrl(product,'product'))}';}else{this.onerror=null;this.src='${aiEscape(aiProductFallbackSvg(product))}'}">
           <div class="ai-v3-source-status">${hasRealProductImage ? "CATALOGUE IMAGE" : "AI PRODUCT PREVIEW"}</div>
           <span class="ai-v3-media-label">PRODUCT</span>
         </div>
