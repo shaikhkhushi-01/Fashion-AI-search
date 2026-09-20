@@ -374,6 +374,83 @@ function safeArray(
   return [];
 }
 
+function extractExplicitAttributes(query, catalogue = products) {
+  const text = normalizeText(query);
+  if (!text) return { colors: [], categories: [] };
+
+  const values = (field) => [...new Set(
+    catalogue
+      .map(item => normalizeText(item?.[field]))
+      .filter(Boolean)
+  )];
+
+  const colors = values("color");
+  const categories = values("category");
+
+  const colorAliases = new Map([
+    ["grey", "gray"],
+    ["gray", "grey"],
+    ["navy blue", "blue"],
+    ["off white", "white"],
+    ["ivory", "white"],
+    ["cream", "beige"],
+    ["khaki", "beige"]
+  ]);
+
+  const foundColors = colors.filter(color =>
+    text.split(/\\s+/).some(token =>
+      token === color ||
+      text.includes(color) ||
+      colorAliases.get(token) === color
+    )
+  );
+
+  const categoryAliases = new Map([
+    ["tee", "t-shirt"],
+    ["tshirt", "t-shirt"],
+    ["t-shirt", "shirt"],
+    ["pants", "trousers"],
+    ["pant", "trousers"],
+    ["shoe", "sneakers"],
+    ["shoes", "sneakers"]
+  ]);
+
+  const foundCategories = categories.filter(category =>
+    text.split(/\\s+/).some(token =>
+      token === category ||
+      text.includes(category) ||
+      categoryAliases.get(token) === category
+    )
+  );
+
+  return {
+    colors: [...new Set(foundColors)],
+    categories: [...new Set(foundCategories)]
+  };
+}
+
+function enforceExplicitSearchAttributes(query, candidates = products) {
+  const attributes = extractExplicitAttributes(query, candidates);
+  let scoped = candidates;
+
+  if (attributes.colors.length) {
+    scoped = scoped.filter(product =>
+      attributes.colors.includes(normalizeText(product?.color))
+    );
+  }
+
+  if (attributes.categories.length) {
+    scoped = scoped.filter(product =>
+      attributes.categories.includes(normalizeText(product?.category))
+    );
+  }
+
+  return {
+    ...attributes,
+    products: scoped
+  };
+}
+
 function normalizeLimit(
   value
 ) {
@@ -2009,12 +2086,23 @@ app.post(
           filters
         );
 
+      const scopedSearch =
+        enforceExplicitSearchAttributes(
+          query,
+          filteredProducts
+        );
+
+      const searchPool =
+        scopedSearch.products.length
+          ? scopedSearch.products
+          : filteredProducts;
+
       const results =
         await performSearch(
           query,
           {
             products:
-              filteredProducts,
+              searchPool,
             sort:
               "relevance",
             limit,
@@ -2022,6 +2110,9 @@ app.post(
               MINIMUM_SEARCH_SCORE
           }
         );
+
+      const exactAttributeMatch =
+        scopedSearch.products.length > 0;
 
       return res.json({
         success:
@@ -2046,7 +2137,12 @@ app.post(
           "node",
 
         ai_backend:
-          "transformers.js"
+          "transformers.js",
+        exactAttributeMatch,
+        explicitAttributes: {
+          colors: scopedSearch.colors,
+          categories: scopedSearch.categories
+        }
       });
     } catch (error) {
       console.error(
