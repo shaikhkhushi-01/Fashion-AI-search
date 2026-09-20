@@ -51,6 +51,31 @@ function aiProductPreviewUrl(product) {
   return AI_IMAGE_API + encodeURIComponent(prompt) + "?width=768&height=900&model=flux&nologo=true&seed=" + encodeURIComponent(seed);
 }
 
+function filterExplicitAIResults(results, query) {
+  const text = String(query || "").toLowerCase();
+  if (!text || !Array.isArray(results)) return results || [];
+  const colors = ["black","white","blue","red","green","beige","grey","gray","brown","cream","ivory"];
+  const categories = [
+    ["dresses","dress"],["dress","dress"],["shirts","shirt"],["shirt","shirt"],
+    ["t-shirts","shirt"],["t-shirt","shirt"],["tee","shirt"],["tees","shirt"],
+    ["jeans","jeans"],["jean","jeans"],["trousers","trouser"],["trouser","trouser"],
+    ["pants","trouser"],["hoodies","hoodie"],["hoodie","hoodie"],["jackets","jacket"],
+    ["jacket","jacket"],["blazers","blazer"],["blazer","blazer"],["skirts","skirt"],
+    ["skirt","skirt"],["tops","top"],["top","top"],["sneakers","sneaker"],["sneaker","sneaker"]
+  ];
+  const foundColors = colors.filter(c => text.includes(c));
+  const foundCategories = categories.filter(([term]) => text.includes(term)).map(([,v]) => v);
+  if (!foundColors.length && !foundCategories.length) return results;
+  const exact = results.filter(product => {
+    const color = String(product?.color || "").toLowerCase();
+    const category = String(product?.category || "").toLowerCase();
+    const colorOk = !foundColors.length || foundColors.some(c => c === "cream" ? color === "beige" : c === "ivory" ? color === "white" : color.includes(c));
+    const categoryOk = !foundCategories.length || foundCategories.some(c => category.includes(c));
+    return colorOk && categoryOk;
+  });
+  return exact.length ? exact : results;
+}
+
 function aiScore(product) {
   const raw = Number(
     product?.aiMatch ??
@@ -419,6 +444,8 @@ async function runAIV2Search(query) {
     const elapsed = Math.round(performance.now() - started);
     data.latencyMs = Number(data.latencyMs || elapsed);
 
+    const explicitResults = filterExplicitAIResults(data.results, cleanQuery);
+    data.results = explicitResults;
     renderAIInsight(data);
     renderAISearchResults(data);
     setupAIModelImageLoading();
