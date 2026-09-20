@@ -1,4 +1,6 @@
 const API_BASE_URL = "https://fashion-ai-search-lj6s.onrender.com";
+const LOCAL_CATALOGUE_URL = "./data/products.json?v=407";
+let localCatalogueLoadPromise = null;
 
 const state = {
   allProducts: [],
@@ -151,6 +153,22 @@ function getProductImage(product) {
   );
 }
 
+async function loadLocalCatalogue() {
+  if (!localCatalogueLoadPromise) {
+    localCatalogueLoadPromise = fetch(LOCAL_CATALOGUE_URL, { cache: "no-store" })
+      .then(response => {
+        if (!response.ok) throw new Error("Local catalogue request failed: " + response.status);
+        return response.json();
+      })
+      .then(data => {
+        const products = Array.isArray(data) ? data : (data.products || data.results || data.data || []);
+        if (!Array.isArray(products) || !products.length) throw new Error("Local catalogue is empty");
+        return products;
+      });
+  }
+  return localCatalogueLoadPromise;
+}
+
 function productFallbackSvg(product) {
   const category = getProductCategory(product).toLowerCase();
   const color = getProductColor(product);
@@ -295,32 +313,18 @@ function showNoResults() {
 async function loadProducts() {
   state.loading = true;
   showLoading();
-
   try {
-    const data = await apiRequest("/api/products");
-
-    const products =
-      data.products ||
-      data.results ||
-      data.data ||
-      [];
-
-    state.allProducts = Array.isArray(products)
-      ? products
-      : [];
-
-    state.searchResults = [...state.allProducts];
-
+    const products = await loadLocalCatalogue();
+    state.allProducts = products;
+    state.searchResults = [...products];
+    state.backendOnline = false;
+    updateBackendStatus(false);
     buildFilterOptions();
     applyAllFilters();
     renderForYou();
   } catch (error) {
-    if (state.allProducts.length > 0) {
-      state.searchResults = [...state.allProducts];
-      applyAllFilters();
-    } else {
-      showError("Fashion catalogue is temporarily unavailable. Please try again.");
-    }
+    console.error("Local catalogue load failed:", error);
+    showError("Fashion catalogue could not be loaded. Please refresh the page.");
   } finally {
     state.loading = false;
     updateCatalogueStats();
@@ -329,101 +333,80 @@ async function loadProducts() {
 
 async function searchFashion(query) {
   const cleanQuery = String(query || "").trim();
-
   if (!cleanQuery) {
     state.searchQuery = "";
     state.searchResults = [...state.allProducts];
     applyAllFilters();
     updateSearchSummary();
-
-    $("results")?.scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
-
+    $("results")?.scrollIntoView({ behavior: "smooth", block: "start" });
     return;
   }
 
   state.searchQuery = cleanQuery;
   showLoading();
-
   try {
-    const data = await apiRequest("/api/ai-search", {
-      method: "POST",
-      body: JSON.stringify({
-        query: cleanQuery
-      })
-    });
-
-    const results =
-      data.results ||
-      data.products ||
-      data.data ||
-      [];
-
-    state.searchResults = Array.isArray(results)
-      ? results
-      : [];
-
-    trackSearch(cleanQuery);
-    applyAllFilters();
-
-    $("results")?.scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
-  } catch {
+    if (!state.allProducts.length) {
+      state.allProducts = await loadLocalCatalogue();
+      buildFilterOptions();
+    }
     state.searchResults = localSearch(cleanQuery);
     trackSearch(cleanQuery);
     applyAllFilters();
-
-    $("results")?.scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
+    $("results")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (error) {
+    console.error("Local search failed:", error);
+    showError("Search could not complete. Please try again.");
   }
 }
 
 function localSearch(query) {
-  const words = String(query)
-    .toLowerCase()
-    .split(/\s+/)
-    .filter(word => word.length > 1);
+  const text = String(query || "").toLowerCase().trim();
+  const words = text.split(/\s+/).filter(word => word.length > 1);
+  const colors = ["black","white","blue","red","green","beige","grey","gray","brown","cream","ivory"];
+  const categoryAliases = {
+    dresses:"dress", dress:"dress", shirts:"shirt", shirt:"shirt", "t-shirts":"shirt", "t-shirt":"shirt",
+    tee:"shirt", tees:"shirt", jeans:"jeans", jean:"jeans", trousers:"trousers", trouser:"trousers",
+    pants:"trousers", hoodies:"hoodie", hoodie:"hoodie", jackets:"jacket", jacket:"jacket",
+    blazers:"blazer", blazer:"blazer", skirts:"skirt", skirt:"skirt", tops:"top", top:"top",
+    sneakers:"sneakers", sneaker:"sneakers"
+  };
+  const foundColor = colors.find(color => text.includes(color));
+  const foundCategoryTerm = Object.keys(categoryAliases).sort((a,b) => b.length - a.length).find(term => text.includes(term));
+  const foundCategory = foundCategoryTerm ? categoryAliases[foundCategoryTerm] : "";
+  const targetColor = foundColor === "cream" || foundColor === "ivory" ? "beige" : foundColor === "gray" ? "grey" : foundColor;
 
-  return state.allProducts
-    .map(product => {
-      const searchableText = [
-        getProductName(product),
-        getProductCategory(product),
-        getProductGender(product),
-        getProductColor(product),
-        getProductMaterial(product),
-        getProductDescription(product),
-        ...getProductStyles(product),
-        ...getProductOccasions(product)
-      ]
-        .join(" ")
-        .toLowerCase();
+  const scored = state.allProducts.map(product => {
+    const color = getProductColor(product).toLowerCase();
+    const category = getProductCategory(product).toLowerCase();
+    const searchableText = [
+      getProductName(product), getProductCategory(product), getProductGender(product),
+      getProductColor(product), getProductMaterial(product), getProductDescription(product),
+      ...getProductStyles(product), ...getProductOccasions(product)
+    ].join(" ").toLowerCase();
+    const exactColor = !targetColor || color === targetColor;
+    const exactCategory = !foundCategory || category.includes(foundCategory);
+    let score = (exactColor ? 55 : 0) + (exactCategory ? 40 : 0);
+    words.forEach(word => { if (searchableText.includes(word)) score += word.length > 4 ? 2 : 1; });
 
-      let score = 0;
+    return {
+      ...product,
+      _localScore: score,
+      _score: score,
+      score,
+      reasons: [
+        exactColor && foundColor ? "Exact colour match" : null,
+        exactCategory && foundCategory ? "Exact category match" : null,
+        "Real repository catalogue match"
+      ].filter(Boolean)
+    };
+  });
 
-      if (searchableText.includes(String(query).toLowerCase())) {
-        score += 10;
-      }
-
-      words.forEach(word => {
-        if (searchableText.includes(word)) {
-          score += word.length > 4 ? 3 : 2;
-        }
-      });
-
-      return {
-        ...product,
-        _localScore: score
-      };
-    })
-    .filter(product => product._localScore > 0)
-    .sort((a, b) => b._localScore - a._localScore);
+  const strict = scored.filter(product =>
+    (!targetColor || getProductColor(product).toLowerCase() === targetColor) &&
+    (!foundCategory || getProductCategory(product).toLowerCase().includes(foundCategory))
+  );
+  return (strict.length ? strict : scored).filter(product => product._localScore > 0)
+    .sort((a,b) => b._localScore - a._localScore).slice(0, 12);
 }
 
 function runSearch() {
@@ -1874,7 +1857,7 @@ async function initialize() {
   populateProfile();
   updateWishlistCount();
 
-  await checkBackend();
+  updateBackendStatus(false);
   await loadProducts();
 
   renderForYou();
