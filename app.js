@@ -359,6 +359,16 @@ async function searchFashion(query) {
   }
 }
 
+function extractBudgetConstraint(query) {
+  const text = String(query || "").toLowerCase().replace(/,/g, "");
+  const match = text.match(/(?:under|below|less than|upto|up to|max(?:imum)?(?: budget)?|within)\s*(?:₹|rs\.?|inr\s*)?\s*(\d+(?:\.\d+)?)\s*(k|thousand)?\b|(?:₹|rs\.?|inr\s*)\s*(\d+(?:\.\d+)?)\s*(k|thousand)?\b/);
+  if (!match) return null;
+  const raw = Number(match[1] || match[3]);
+  if (!Number.isFinite(raw)) return null;
+  const multiplier = String(match[2] || match[4] || "").toLowerCase();
+  return raw * (multiplier === "k" || multiplier === "thousand" ? 1000 : 1);
+}
+
 function localSearch(query) {
   const text = String(query || "").toLowerCase().trim();
   const words = text.split(/\s+/).filter(word => word.length > 1);
@@ -374,6 +384,7 @@ function localSearch(query) {
   const foundCategoryTerm = Object.keys(categoryAliases).sort((a,b) => b.length - a.length).find(term => text.includes(term));
   const foundCategory = foundCategoryTerm ? categoryAliases[foundCategoryTerm] : "";
   const targetColor = foundColor === "cream" || foundColor === "ivory" ? "beige" : foundColor === "gray" ? "grey" : foundColor;
+  const budget = extractBudgetConstraint(query);
 
   const scored = state.allProducts.map(product => {
     const color = getProductColor(product).toLowerCase();
@@ -385,7 +396,8 @@ function localSearch(query) {
     ].join(" ").toLowerCase();
     const exactColor = !targetColor || color === targetColor;
     const exactCategory = !foundCategory || category.includes(foundCategory);
-    let score = (exactColor ? 55 : 0) + (exactCategory ? 40 : 0);
+    const withinBudget = budget == null || getProductPrice(product) <= budget;
+    let score = (exactColor ? 55 : 0) + (exactCategory ? 40 : 0) + (withinBudget ? 5 : 0);
     words.forEach(word => { if (searchableText.includes(word)) score += word.length > 4 ? 2 : 1; });
 
     return {
@@ -403,9 +415,10 @@ function localSearch(query) {
 
   const strict = scored.filter(product =>
     (!targetColor || getProductColor(product).toLowerCase() === targetColor) &&
-    (!foundCategory || getProductCategory(product).toLowerCase().includes(foundCategory))
+    (!foundCategory || getProductCategory(product).toLowerCase().includes(foundCategory)) &&
+    (budget == null || getProductPrice(product) <= budget)
   );
-  return (strict.length ? strict : scored).filter(product => product._localScore > 0)
+  return strict.filter(product => product._localScore > 0)
     .sort((a,b) => b._localScore - a._localScore).slice(0, 12);
 }
 
