@@ -116,7 +116,8 @@ function aiCard(product, query) {
   const score = aiScore(product);
   const reasons = aiArray(product?.reasons).slice(0, 3);
   const image = aiProductImage(product);
-  const productPreview = image || aiProductPreviewUrl(product);
+  const productPreview = image || aiModelFallbackSvg(product);
+  const remoteProductPreview = image ? "" : aiProductPreviewUrl(product);
   const hasRealProductImage = Boolean(image);
   const styles = aiArray(product?.style || product?.styles).slice(0, 3);
   const generated = aiModelUrl(product, query);
@@ -125,15 +126,16 @@ function aiCard(product, query) {
     <article class="ai-v3-product-card">
       <div class="ai-v3-product-media ai-v3-dual-media">
         <div class="ai-v3-source-visual">
-          <img class="ai-v3-source-image" src="${aiEscape(productPreview)}" alt="${aiEscape(name)}" loading="lazy">
+          <img class="ai-v3-source-image" src="${aiEscape(productPreview)}" data-enhance-src="${aiEscape(remoteProductPreview)}" alt="${aiEscape(name)}" loading="lazy"
+               onload="this.classList.add('visual-ready')" onerror="this.onerror=null;this.src='${aiEscape(aiModelFallbackSvg(product))}'">
           <div class="ai-v3-source-status">${hasRealProductImage ? "CATALOGUE IMAGE" : "AI PRODUCT PREVIEW"}</div>
           <span class="ai-v3-media-label">PRODUCT</span>
         </div>
         <div class="ai-v3-model-visual">
           <div class="ai-v3-model-loading"><span>✦</span><small>AI MODEL</small></div>
-          <img class="ai-v3-model-image" data-ai-src="${aiEscape(generated)}" src="${aiModelFallbackSvg(product)}" alt="AI model wearing ${aiEscape(name)}" loading="lazy"
+          <img class="ai-v3-model-image" src="${aiEscape(aiModelFallbackSvg(product))}" data-ai-src="${aiEscape(generated)}" alt="AI model wearing ${aiEscape(name)}" loading="lazy"
                onload="this.parentElement.classList.add('loaded')"
-               onerror="this.parentElement.classList.add('failed')">
+               onerror="this.onerror=null;this.src='${aiEscape(aiModelFallbackSvg(product))}';this.parentElement.classList.add('loaded')">
           <span class="ai-v3-media-label">AI MODEL</span>
         </div>
         <span class="ai-v3-score"><span>✦</span> ${score}% AI match</span>
@@ -232,7 +234,8 @@ function renderAIInsight(data) {
           </div>
           <div class="ai-v3-hero-visual">
             <div class="ai-v3-visual-glow"></div>
-            <img class="ai-v3-hero-model-image" data-ai-src="${aiEscape(preview)}" alt="AI generated model wearing ${aiEscape(top.name || "the selected fashion item")}" loading="lazy">
+            <img class="ai-v3-hero-model-image" src="${aiEscape(aiModelFallbackSvg(top))}" data-ai-src="${aiEscape(preview)}" alt="AI generated model wearing ${aiEscape(top.name || "the selected fashion item")}" loading="lazy"
+                 onerror="this.onerror=null;this.src='${aiEscape(aiModelFallbackSvg(top))}'">
             <span class="ai-v3-generated-label">AI GENERATED MODEL PREVIEW</span>
           </div>
         </div>
@@ -362,7 +365,27 @@ function openAIModelPreview(url, title) {
 
 function handleAIModelImageError(image) { if (!image || image.dataset.retried === '1') { image?.parentElement?.classList.add('failed'); return; } image.dataset.retried = '1'; const current = image.dataset.aiSrc || image.src; if (!current) { image.parentElement.classList.add('failed'); return; } const retryUrl = current.replace(/([?&])seed=[^&]*/i, '$1seed=' + Math.floor(Math.random() * 999999)); setTimeout(() => { image.src = retryUrl; }, 700); }
 
-function setupAIModelImageLoading() { const images = document.querySelectorAll('img[data-ai-src]'); if (!images.length) return; const load = image => { if (image.dataset.loaded === '1') return; image.dataset.loaded = '1'; image.src = image.dataset.aiSrc; }; if (!('IntersectionObserver' in window)) { images.forEach(load); return; } const observer = new IntersectionObserver(entries => { entries.forEach(entry => { if (entry.isIntersecting) { load(entry.target); observer.unobserve(entry.target); } }); }, { rootMargin: '700px 0px' }); images.forEach(image => observer.observe(image)); }
+function setupAIModelImageLoading() {
+  const images = document.querySelectorAll('img[data-ai-src]');
+  if (!images.length) return;
+  const load = image => {
+    if (image.dataset.loaded === '1') return;
+    image.dataset.loaded = '1';
+    const remote = image.dataset.aiSrc;
+    if (!remote) return;
+    const probe = new Image();
+    probe.onload = () => { image.src = remote; image.parentElement?.classList.add('loaded'); };
+    probe.onerror = () => { image.parentElement?.classList.add('loaded'); };
+    probe.src = remote;
+  };
+  if (!('IntersectionObserver' in window)) { images.forEach(load); return; }
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) { load(entry.target); observer.unobserve(entry.target); }
+    });
+  }, { rootMargin: '700px 0px' });
+  images.forEach(image => observer.observe(image));
+}
 
 async function runAIV2Search(query) {
   const cleanQuery = String(query || "").trim();
@@ -458,3 +481,16 @@ function initializeAIV2Experience() {
 }
 
 document.addEventListener("DOMContentLoaded", initializeAIV2Experience);
+
+
+function setupProductVisualEnhancement() {
+  const images = document.querySelectorAll('img[data-enhance-src]');
+  images.forEach(image => {
+    const url = image.dataset.enhanceSrc;
+    if (!url) return;
+    const probe = new Image();
+    probe.onload = () => { image.src = url; };
+    probe.onerror = () => {};
+    probe.src = url;
+  });
+}
