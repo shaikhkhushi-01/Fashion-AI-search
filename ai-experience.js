@@ -33,6 +33,11 @@ function aiProductImage(product) {
   return product?.image || product?.image_url || product?.imageUrl || product?.img || product?.thumbnail || "";
 }
 
+function aiStudioFallbackSvg() {
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 768 1024"><rect width="768" height="1024" fill="#ebe7df"/><circle cx="384" cy="150" r="88" fill="#c99f82"/><path d="M294 145c12-118 171-124 181 0-42-38-135-39-181 0z" fill="#292725"/><path d="M310 286h148l52 76-38 55-42-48v275H338V369l-42 48-38-55z" fill="#171717" stroke="#111" stroke-width="8"/><path d="M340 644h40l-5 220h-54zM388 644h40l19 220h-54z" fill="#272727"/><text x="384" y="944" text-anchor="middle" font-family="Arial" font-size="24" font-weight="700" fill="#625d56">AI FASHION STUDIO</text></svg>';
+  return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+}
+
 function aiProductPreviewUrl(product) {
   const name = product?.name || "fashion product";
   const exactColor = String(product?.color || "").trim();
@@ -357,7 +362,9 @@ function openAIModelPreview(url, title) {
   };
 
   image.onerror = () => {
-    loader.innerHTML = "<strong>Preview is temporarily unavailable.</strong><span>Try Generate on model again.</span>";
+    loader.style.display = "none";
+    image.src = aiStudioFallbackSvg();
+    image.style.display = "block";
   };
 
   image.src = url;
@@ -464,12 +471,13 @@ function initializeAIStudioPreview() {
   const title = document.getElementById("aiStudioLookTitle");
   if (!img) return;
   const prompt = "high-end editorial fashion photograph, adult professional fashion model, full body, minimal monochrome black outfit, modern college street style, realistic fabric, luxury studio, natural proportions, soft directional lighting, neutral background, no text, no watermark";
-  img.src = AI_IMAGE_API + encodeURIComponent(prompt) + "?width=768&height=1024&model=flux&nologo=true&seed=2026";
-  img.onerror = () => {
-    img.style.display = "none";
-    const visual = img.closest(".ai-studio-visual");
-    if (visual) visual.classList.add("ai-preview-fallback");
-  };
+  const fallback = aiStudioFallbackSvg();
+  img.src = fallback;
+  const remote = AI_IMAGE_API + encodeURIComponent(prompt) + "?width=768&height=1024&model=flux&nologo=true&seed=2026";
+  const probe = new Image();
+  probe.onload = () => { img.src = remote; };
+  probe.onerror = () => {};
+  probe.src = remote;
 }
 document.addEventListener("DOMContentLoaded", initializeAIStudioPreview);
 
