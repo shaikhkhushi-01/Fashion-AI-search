@@ -151,41 +151,53 @@ function getProductImage(product) {
   );
 }
 
+function productFallbackSvg(product) {
+  const category = getProductCategory(product).toLowerCase();
+  const color = getProductColor(product);
+  const palette = { black:"#171717", white:"#f8f8f6", blue:"#3b6ea8", red:"#b83a3a", green:"#3e7658", beige:"#c8b79b", grey:"#858585", gray:"#858585", brown:"#795548" };
+  const fill = palette[color.toLowerCase()] || "#8b8175";
+  const isDress = category.includes("dress") || category.includes("skirt");
+  const isBottom = category.includes("jean") || category.includes("trouser") || category.includes("pant");
+  const isShoe = category.includes("sneaker") || category.includes("shoe");
+  const garment = isShoe
+    ? `<path d="M92 244c18-12 42-12 60 0l24 12c7 4 8 14 1 19H79c-8 0-12-10-5-15z" fill="${fill}"/><path d="M97 245l10-20h42l11 20" fill="none" stroke="#222" stroke-width="4"/>`
+    : isDress
+      ? `<path d="M112 72h40l9 46 31 112H72l31-112z" fill="${fill}" stroke="#222" stroke-width="4"/><path d="M117 72c0 10 30 10 30 0" fill="none" stroke="#222" stroke-width="4"/>`
+      : isBottom
+        ? `<path d="M104 76h56l8 62-8 101h-25l-8-74-8 74H94l8-101z" fill="${fill}" stroke="#222" stroke-width="4"/>`
+        : `<path d="M105 75h54l17 32-17 18-9-13v92H95v-92l-9 13-17-18z" fill="${fill}" stroke="#222" stroke-width="4"/>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 300"><rect width="256" height="300" rx="24" fill="#f1eee8"/><circle cx="128" cy="42" r="22" fill="#d6b89d"/><path d="M109 40c4-27 35-27 39 0-8-8-29-8-39 0z" fill="#302c29"/>${garment}<text x="128" y="278" text-anchor="middle" font-family="Arial" font-size="12" fill="#6f685f">${escapeHTML(category.toUpperCase())} · ${escapeHTML(color.toUpperCase())}</text></svg>`;
+  return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+}
+
 function productVisual(product) {
   const image = getProductImage(product);
-  const category = getProductCategory(product);
-  const color = getProductColor(product);
+  const fallback = productFallbackSvg(product);
 
   if (image) {
     return `
-      <img
-        class="product-image"
-        src="${escapeHTML(image)}"
-        alt="${escapeHTML(getProductName(product))}"
-        loading="lazy"
-        onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"
-      >
-      <div class="product-visual" style="display:none">
-        <div class="visual-grid"></div>
-        <div class="visual-content">
-          <span class="visual-label">${escapeHTML(category)}</span>
-          <strong>${escapeHTML(color)}</strong>
-          <small>${escapeHTML(getProductName(product))}</small>
-        </div>
-      </div>
+      <img class="product-image" src="${escapeHTML(image)}" alt="${escapeHTML(getProductName(product))}" loading="lazy"
+        onerror="this.onerror=null;this.src='${fallback}'">
     `;
   }
 
-  return `
-    <div class="product-visual">
-      <div class="visual-grid"></div>
-      <div class="visual-content">
-        <span class="visual-label">${escapeHTML(category)}</span>
-        <strong>${escapeHTML(color)}</strong>
-        <small>${escapeHTML(getProductName(product))}</small>
+  const generated = typeof aiProductPreviewUrl === "function" ? aiProductPreviewUrl(product) : "";
+
+  return generated
+    ? `
+      <div class="product-ai-visual">
+        <img class="product-image product-ai-image" data-ai-src="${escapeHTML(generated)}" src="${fallback}"
+          alt="AI preview of ${escapeHTML(getProductName(product))}" loading="lazy"
+          onerror="this.onerror=null;this.src='${fallback}';this.classList.add('ai-image-fallback')">
+        <span class="product-visual-label">AI PRODUCT PREVIEW</span>
       </div>
-    </div>
-  `;
+    `
+    : `
+      <div class="product-ai-visual">
+        <img class="product-image" src="${fallback}" alt="${escapeHTML(getProductName(product))}">
+        <span class="product-visual-label">PRODUCT VISUAL</span>
+      </div>
+    `;
 }
 
 async function apiRequest(endpoint, options = {}) {
@@ -774,6 +786,16 @@ function createProductCard(product) {
         <span class="product-category-badge">
           ${escapeHTML(category)}
         </span>
+      </div>
+
+      <div class="product-model-preview">
+        <div class="product-model-media">
+          <div class="product-model-loading"><span>✦</span><small>AI MODEL</small></div>
+          ${typeof aiModelUrl === "function"
+            ? `<img class="product-model-image" data-ai-src="${escapeHTML(aiModelUrl(product, state.searchQuery || ""))}" alt="AI model wearing ${escapeHTML(name)}" loading="lazy" onerror="handleAIModelImageError(this)">`
+            : `<img class="product-model-image" src="${productFallbackSvg(product)}" alt="Model visualization for ${escapeHTML(name)}">`}
+        </div>
+        <span class="product-model-label">AI MODEL VISUAL</span>
       </div>
 
       <div class="product-content">
