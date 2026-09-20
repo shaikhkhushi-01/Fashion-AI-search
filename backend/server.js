@@ -2037,7 +2037,7 @@ app.get(
 
 function deterministicSearchFallback(query, candidateProducts, limit) {
   const text = normalizeText(query);
-  const tokens = text.split(/\\s+/).filter(Boolean);
+  const tokens = text.split(/\s+/).filter(Boolean);
   const scored = candidateProducts.map(product => {
     const haystack = normalizeText([
       product?.name, product?.brand, product?.category, product?.color,
