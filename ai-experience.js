@@ -415,6 +415,7 @@ async function runAIV2Search(query) {
     renderAIInsight(data);
     renderAISearchResults(data);
     setupAIModelImageLoading();
+    setupProductVisualEnhancement();
 
     const summary = document.getElementById("searchSummary");
     const count = document.getElementById("resultCount");
