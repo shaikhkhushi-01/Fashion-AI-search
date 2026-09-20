@@ -872,6 +872,10 @@ function renderProducts(products = state.visibleProducts) {
   results.innerHTML = products
     .map(createProductCard)
     .join("");
+
+  if (typeof setupAIModelImageLoading === "function") {
+    setupAIModelImageLoading();
+  }
 }
 
 function selectProduct(id) {
