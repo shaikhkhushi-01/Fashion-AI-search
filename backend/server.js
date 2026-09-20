@@ -378,79 +378,79 @@ function extractExplicitAttributes(query, catalogue = products) {
   const text = normalizeText(query);
   if (!text) return { colors: [], categories: [] };
 
-  const values = (field) => [...new Set(
-    catalogue
-      .map(item => normalizeText(item?.[field]))
-      .filter(Boolean)
+  const canonical = value => {
+    const v = normalizeText(value);
+    const aliases = {
+      grey: "gray",
+      "off white": "white",
+      ivory: "white",
+      cream: "beige",
+      khaki: "beige",
+      tee: "shirt",
+      tshirt: "shirt",
+      "t-shirt": "shirt",
+      tops: "top",
+      pants: "trousers",
+      pant: "trousers",
+      jeans: "jeans",
+      shoe: "sneakers",
+      shoes: "sneakers",
+      sneaker: "sneakers"
+    };
+    if (aliases[v]) return aliases[v];
+    if (v.endsWith("ies")) return v.slice(0, -3) + "y";
+    if (v.endsWith("es") && v.length > 4) return v.slice(0, -2);
+    if (v.endsWith("s") && v.length > 3) return v.slice(0, -1);
+    return v;
+  };
+
+  const tokens = text.split(/\s+/).filter(Boolean);
+  const values = field => [...new Set(
+    catalogue.map(item => normalizeText(item?.[field])).filter(Boolean)
   )];
 
-  const colors = values("color");
-  const categories = values("category");
+  const colorAliases = {
+    grey: "gray",
+    "navy blue": "blue",
+    "off white": "white",
+    ivory: "white",
+    cream: "beige",
+    khaki: "beige"
+  };
 
-  const colorAliases = new Map([
-    ["grey", "gray"],
-    ["gray", "grey"],
-    ["navy blue", "blue"],
-    ["off white", "white"],
-    ["ivory", "white"],
-    ["cream", "beige"],
-    ["khaki", "beige"]
-  ]);
+  const foundColors = values("color").filter(color => {
+    const c = canonical(color);
+    return tokens.some(token => {
+      const t = canonical(token);
+      return t === c || colorAliases[token] === color || text.includes(color);
+    });
+  });
 
-  const foundColors = colors.filter(color =>
-    text.split(/\\s+/).some(token =>
-      token === color ||
-      text.includes(color) ||
-      colorAliases.get(token) === color
-    )
-  );
+  const categoryAliases = {
+    tee: "shirt",
+    tshirt: "shirt",
+    "t-shirt": "shirt",
+    tops: "top",
+    pants: "trousers",
+    pant: "trousers",
+    shoe: "sneakers",
+    shoes: "sneakers",
+    sneaker: "sneakers"
+  };
 
-  const categoryAliases = new Map([
-    ["tee", "t-shirt"],
-    ["tshirt", "t-shirt"],
-    ["t-shirt", "shirt"],
-    ["pants", "trousers"],
-    ["pant", "trousers"],
-    ["shoe", "sneakers"],
-    ["shoes", "sneakers"]
-  ]);
-
-  const foundCategories = categories.filter(category =>
-    text.split(/\\s+/).some(token =>
-      token === category ||
-      text.includes(category) ||
-      categoryAliases.get(token) === category
-    )
-  );
+  const foundCategories = values("category").filter(category => {
+    const c = canonical(category);
+    return tokens.some(token => {
+      const t = canonical(token);
+      return t === c || categoryAliases[token] === c || text.includes(category);
+    });
+  });
 
   return {
     colors: [...new Set(foundColors)],
     categories: [...new Set(foundCategories)]
   };
 }
-
-function enforceExplicitSearchAttributes(query, candidates = products) {
-  const attributes = extractExplicitAttributes(query, candidates);
-  let scoped = candidates;
-
-  if (attributes.colors.length) {
-    scoped = scoped.filter(product =>
-      attributes.colors.includes(normalizeText(product?.color))
-    );
-  }
-
-  if (attributes.categories.length) {
-    scoped = scoped.filter(product =>
-      attributes.categories.includes(normalizeText(product?.category))
-    );
-  }
-
-  return {
-    ...attributes,
-    products: scoped
-  };
-}
-
 function normalizeLimit(
   value
 ) {
