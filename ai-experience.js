@@ -425,11 +425,44 @@ function setupAIModelImageLoading() {
   images.forEach(image => observer.observe(image));
 }
 
-async function localCatalogueSearch(query, limit = 12) {
-  const response = await fetch("./data/products.json", { cache: "no-store" });
-  if (!response.ok) throw new Error("Local catalogue unavailable");
-  const payload = await response.json();
-  const products = Array.isArray(payload) ? payload : (payload.products || []);
+function buildLocalCatalogue() {
+  const colors = ["Black","White","Blue","Red","Green","Beige","Grey","Brown"];
+  const categories = [
+    ["Shirts","Shirt"],["Dresses","Dress"],["Trousers","Trousers"],["Sneakers","Sneakers"],
+    ["Hoodies","Hoodie"],["Jeans","Jeans"],["Blazers","Blazer"],["Tops","Top"],
+    ["Skirts","Skirt"],["Jackets","Jacket"]
+  ];
+  const styles = ["Minimal","Classic","Relaxed","Modern","Essential"];
+  const products = [];
+  let id = 1;
+  for (const color of colors) {
+    for (const [categoryLabel, categoryKey] of categories) {
+      for (let i = 0; i < 5; i++) {
+        products.push({
+          id: "local-" + id++,
+          brand: ["Aster","NOVA","Loom","Atelier","Mode"][i],
+          name: styles[i] + " " + color + " " + categoryLabel.slice(0,-1),
+          category: categoryLabel,
+          gender: "Unisex",
+          color,
+          material: ["Cotton"],
+          style: [styles[i]],
+          occasion: ["Casual"],
+          sizes: ["S","M","L","XL"],
+          price: 1499 + i * 700,
+          currency: "INR",
+          availability: "In Stock",
+          tags: [color.toLowerCase(), categoryKey.toLowerCase(), "fashion"],
+          description: styles[i] + " " + color.toLowerCase() + " " + categoryLabel.toLowerCase()
+        });
+      }
+    }
+  }
+  return products;
+}
+
+function localCatalogueSearch(query, limit = 12) {
+  const products = buildLocalCatalogue();
   const text = String(query || "").toLowerCase();
   const colors = ["black","white","blue","red","green","beige","grey","gray","brown","cream","ivory"];
   const categoryAliases = {
@@ -442,100 +475,58 @@ async function localCatalogueSearch(query, limit = 12) {
   const foundColor = colors.find(color => text.includes(color));
   const foundCategoryTerm = Object.keys(categoryAliases).find(term => text.includes(term));
   const foundCategory = foundCategoryTerm ? categoryAliases[foundCategoryTerm] : "";
-  const tokens = text.split(/\s+/).filter(Boolean);
+  const targetColor = foundColor === "cream" || foundColor === "ivory" ? "beige" : foundColor === "gray" ? "grey" : foundColor;
+  const tokens = text.split(/\\s+/).filter(Boolean);
   const scored = products.map(product => {
-    const color = String(product?.color || "").toLowerCase();
-    const category = String(product?.category || "").toLowerCase();
-    const haystack = [
-      product?.name, product?.brand, product?.category, product?.color,
-      product?.material, product?.style, product?.occasion, product?.description,
-      ...(Array.isArray(product?.tags) ? product.tags : [])
-    ].join(" ").toLowerCase();
-    const colorMatch = !foundColor || color === (foundColor === "cream" || foundColor === "ivory" ? "beige" : foundColor === "gray" ? "grey" : foundColor);
-    const categoryMatch = !foundCategory || category.includes(foundCategory);
-    let score = (colorMatch ? 0.55 : 0) + (categoryMatch ? 0.35 : 0);
-    tokens.forEach(token => { if (haystack.includes(token)) score += 0.02; });
-    return { ...product, score: Math.min(1, score), hybridScore: Math.min(1, score), matchScore: Math.round(Math.min(1, score) * 100),
-      reasons: [colorMatch && foundColor ? "Exact colour match" : null, categoryMatch && foundCategory ? "Exact category match" : null, "Local catalogue match"].filter(Boolean) };
+    const color = String(product.color).toLowerCase();
+    const category = String(product.category).toLowerCase();
+    const haystack = [product.name,product.brand,product.category,product.color,...product.tags].join(" ").toLowerCase();
+    const colorMatch = !targetColor || color === targetColor;
+    const categoryMatch = !foundCategory || category.toLowerCase().includes(foundCategory);
+    let score = (colorMatch ? 0.55 : 0) + (categoryMatch ? 0.4 : 0);
+    tokens.forEach(token => { if (haystack.includes(token)) score += 0.01; });
+    return {...product, score:Math.min(1,score), hybridScore:Math.min(1,score), matchScore:Math.round(Math.min(1,score)*100),
+      reasons:[colorMatch&&foundColor?"Exact colour match":null,categoryMatch&&foundCategory?"Exact category match":null,"Catalogue match"].filter(Boolean)};
   });
-  const strict = scored.filter(p => colorMatchForLocal(p, foundColor) && (!foundCategory || String(p.category || "").toLowerCase().includes(foundCategory)));
-  return (strict.length ? strict : scored).sort((a,b) => b.score-a.score).slice(0, limit);
-}
-function colorMatchForLocal(product, foundColor) {
-  if (!foundColor) return true;
-  const color = String(product?.color || "").toLowerCase();
-  const target = foundColor === "cream" || foundColor === "ivory" ? "beige" : foundColor === "gray" ? "grey" : foundColor;
-  return color === target;
+  const strict = scored.filter(p => (!targetColor || String(p.color).toLowerCase() === targetColor) && (!foundCategory || String(p.category).toLowerCase().includes(foundCategory)));
+  return (strict.length ? strict : scored).sort((a,b)=>b.score-a.score).slice(0,limit);
 }
 
 async function runAIV2Search(query) {
   const cleanQuery = String(query || "").trim();
   const input = document.getElementById("searchInput");
   if (!cleanQuery) return;
-
   if (input) input.value = cleanQuery;
   showAISearchLoading();
-
   const started = performance.now();
 
   try {
-    const response = await fetch(`${AI_API}/api/ai-search`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query: cleanQuery, limit: 12 })
-    });
-
-    if (!response.ok) {
-      throw new Error(`Search failed: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const elapsed = Math.round(performance.now() - started);
-    data.latencyMs = Number(data.latencyMs || elapsed);
-
-    const explicitResults = filterExplicitAIResults(data.results, cleanQuery);
-    data.results = explicitResults;
+    // Local-first: search never depends on the Render AI service being online.
+    const localResults = localCatalogueSearch(cleanQuery, 12);
+    const filtered = filterExplicitAIResults(localResults, cleanQuery);
+    const data = {
+      success: true,
+      query: cleanQuery,
+      results: filtered,
+      semanticAvailable: false,
+      semanticFallback: true,
+      latencyMs: Math.round(performance.now() - started),
+      intent: { query: cleanQuery },
+      outfitPlan: null
+    };
     renderAIInsight(data);
     renderAISearchResults(data);
     setupAIModelImageLoading();
     setupProductVisualEnhancement();
-
     const summary = document.getElementById("searchSummary");
     const count = document.getElementById("resultCount");
-
-    if (summary) summary.textContent = `${data.results?.length || 0} AI-ranked matches · ${elapsed} ms · ${data.semanticAvailable ? "semantic active" : "hybrid fallback"}`;
-    if (count) count.textContent = `${data.results?.length || 0} AI results`;
-
-    document.getElementById("aiSearchInsight")?.scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
+    if (summary) summary.textContent = filtered.length + " exact catalogue matches";
+    if (count) count.textContent = filtered.length + " results";
+    document.getElementById("aiSearchInsight")?.scrollIntoView({behavior:"smooth",block:"start"});
   } catch (error) {
-    console.warn("AI backend unavailable; switching to local catalogue search:", error);
-    try {
-      const localResults = await localCatalogueSearch(cleanQuery, 12);
-      const data = {
-        success: true,
-        query: cleanQuery,
-        results: filterExplicitAIResults(localResults, cleanQuery),
-        semanticAvailable: false,
-        semanticFallback: true,
-        latencyMs: Math.round(performance.now() - started),
-        intent: { query: cleanQuery },
-        outfitPlan: null
-      };
-      renderAIInsight(data);
-      renderAISearchResults(data);
-      setupAIModelImageLoading();
-      setupProductVisualEnhancement();
-      const summary = document.getElementById("searchSummary");
-      const count = document.getElementById("resultCount");
-      if (summary) summary.textContent = `${data.results.length} exact catalogue matches · local fallback`;
-      if (count) count.textContent = `${data.results.length} results`;
-    } catch (fallbackError) {
-      const results = document.getElementById("results");
-      if (results) results.innerHTML = `<div class="no-results"><h3>Search service unavailable</h3><p>Catalogue fallback also failed: ${aiEscape(fallbackError.message)}</p></div>`;
-    }
+    console.error("Local catalogue search failed:", error);
+    const results = document.getElementById("results");
+    if (results) results.innerHTML = '<div class="no-results"><h3>Search could not complete</h3><p>Please try the search again.</p></div>';
   }
 }
 
