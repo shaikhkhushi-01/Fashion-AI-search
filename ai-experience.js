@@ -146,8 +146,8 @@ function aiCard(product, query) {
   const score = aiScore(product);
   const reasons = aiArray(product?.reasons).slice(0, 3);
   const image = aiProductImage(product);
-  const productPreview = image || aiModelFallbackSvg(product);
   const remoteProductPreview = image ? "" : aiProductPreviewUrl(product);
+  const productPreview = image || remoteProductPreview;
   const hasRealProductImage = Boolean(image);
   const styles = aiArray(product?.style || product?.styles).slice(0, 3);
   const generated = aiModelUrl(product, query);
@@ -156,9 +156,9 @@ function aiCard(product, query) {
     <article class="ai-v3-product-card">
       <div class="ai-v3-product-media ai-v3-dual-media">
         <div class="ai-v3-source-visual">
-          <img class="ai-v3-source-image" src="${aiEscape(productPreview)}" data-enhance-src="${aiEscape(remoteProductPreview)}" alt="${aiEscape(name)}" loading="lazy"
+          <img class="ai-v3-source-image" src="${aiEscape(productPreview)}" alt="${aiEscape(name)}" loading="eager"
                onload="this.classList.add('visual-ready')" onerror="this.onerror=null;this.src='${aiEscape(aiModelFallbackSvg(product))}'">
-          <div class="ai-v3-source-status">${hasRealProductImage ? "CATALOGUE IMAGE" : "AI PRODUCT PREVIEW"}</div>
+          <div class="ai-v3-source-status">${hasRealProductImage ? "CATALOGUE IMAGE" : "AI GENERATED PRODUCT PHOTO"}</div>
           <span class="ai-v3-media-label">PRODUCT</span>
         </div>
         <div class="ai-v3-model-visual">
