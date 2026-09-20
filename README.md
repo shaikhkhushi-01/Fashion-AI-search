@@ -117,8 +117,8 @@ The repository includes image retrieval, visual client and multimodal fusion com
 
 The current research benchmark uses:
 
-- Dataset size: 1,000 products
-- Evaluation queries: 250
+- Dataset size: 407 products (current repository catalogue)
+- Evaluation queries: 250 (benchmark artifact; current catalogue and benchmark are versioned separately)
 - Evaluation cutoff: K = 5
 - Validation queries: 200
 - Held-out test queries: 50
@@ -133,7 +133,7 @@ The dataset is a controlled synthetic benchmark intended for system evaluation a
 
 ## Dataset
 
-The current dataset contains 1,000 deterministically generated fashion products across multiple categories, genders, colors, materials, styles and occasions.
+The current repository dataset contains 407 deterministically generated fashion products across multiple categories, genders, colors, materials, styles and occasions.
 
 The evaluation benchmark contains 250 natural-language fashion queries with relevance annotations.
 
@@ -156,7 +156,7 @@ The evaluation compares the following retrieval systems:
 
 ## Main Evaluation Results
 
-The latest evaluation on the 1,000-product and 250-query benchmark produced the following results:
+The latest recorded evaluation on the benchmark artifact produced the following results:
 
 | System | Precision@5 | Recall@5 | F1@5 | MRR | NDCG@5 | MAP |
 |---|---:|---:|---:|---:|---:|---:|
