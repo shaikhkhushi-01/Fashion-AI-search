@@ -123,7 +123,21 @@ function filterCatalogue(
     maxPrice = ""
   } = options;
 
-  return products.filter(product => {
+  const queryText = normalize(query);
+  const colors = [...new Set(products.map(p => normalize(p.color)).filter(Boolean))];
+  const categories = [...new Set(products.map(p => normalize(p.category)).filter(Boolean))];
+  const exactColors = colors.filter(value => queryText.split(/\\s+/).includes(value) || queryText.includes(value));
+  const exactCategories = categories.filter(value => queryText.split(/\\s+/).includes(value) || queryText.includes(value));
+
+  const scopedProducts =
+    exactColors.length || exactCategories.length
+      ? products.filter(product =>
+          (!exactColors.length || exactColors.includes(normalize(product.color))) &&
+          (!exactCategories.length || exactCategories.includes(normalize(product.category)))
+        )
+      : products;
+
+  return scopedProducts.filter(product => {
     if (!matchesSearch(product, query)) {
       return false;
     }
