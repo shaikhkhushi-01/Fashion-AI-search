@@ -2035,6 +2035,42 @@ app.get(
   }
 );
 
+function deterministicSearchFallback(query, candidateProducts, limit) {
+  const text = normalizeText(query);
+  const tokens = text.split(/\\s+/).filter(Boolean);
+  const scored = candidateProducts.map(product => {
+    const haystack = normalizeText([
+      product?.name, product?.brand, product?.category, product?.color,
+      product?.material, product?.style, product?.occasion, product?.description,
+      ...safeArray(product?.tags)
+    ].flat().join(" "));
+    let score = 0;
+    const exactCategory = extractExplicitAttributes(query, candidateProducts).categories.some(
+      category => normalizeText(product?.category) === normalizeText(category)
+    );
+    const exactColor = extractExplicitAttributes(query, candidateProducts).colors.some(
+      color => normalizeText(product?.color) === normalizeText(color)
+    );
+    if (exactCategory) score += 0.5;
+    if (exactColor) score += 0.35;
+    for (const token of tokens) {
+      if (haystack.includes(token)) score += 0.05;
+    }
+    return {
+      ...product,
+      score: Number(Math.min(1, score).toFixed(6)),
+      hybridScore: Number(Math.min(1, score).toFixed(6)),
+      matchScore: Math.round(Math.min(1, score) * 100),
+      reasons: [
+        ...(exactCategory ? [`Matches ${product.category}`] : []),
+        ...(exactColor ? [`${product.color} colour match`] : []),
+        "Available from the local catalogue"
+      ].slice(0, 3)
+    };
+  });
+  return scored.sort((a,b) => b.score - a.score).slice(0, limit);
+}
+
 app.post(
   "/api/ai-search",
   async (req, res) => {
@@ -2097,19 +2133,31 @@ app.post(
           ? scopedSearch.products
           : filteredProducts;
 
-      const results =
-        await performSearch(
+      let results;
+      let semanticFallback = false;
+
+      try {
+        results = await performSearch(
           query,
           {
-            products:
-              searchPool,
-            sort:
-              "relevance",
+            products: searchPool,
+            sort: "relevance",
             limit,
-            minScore:
-              MINIMUM_SEARCH_SCORE
+            minScore: MINIMUM_SEARCH_SCORE
           }
         );
+      } catch (searchError) {
+        console.error(
+          "AI retrieval failed; using deterministic catalogue fallback:",
+          searchError
+        );
+        results = deterministicSearchFallback(
+          query,
+          searchPool,
+          limit
+        );
+        semanticFallback = true;
+      }
 
       const exactAttributeMatch =
         scopedSearch.products.length > 0;
@@ -2138,6 +2186,7 @@ app.post(
 
         ai_backend:
           "transformers.js",
+        semanticFallback,
         exactAttributeMatch,
         explicitAttributes: {
           colors: scopedSearch.colors,
