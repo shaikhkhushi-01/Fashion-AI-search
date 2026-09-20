@@ -35,6 +35,8 @@ function aiProductImage(product) {
 
 function aiProductPreviewUrl(product) {
   const name = product?.name || "fashion product";
+  const exactColor = String(product?.color || "").trim();
+  const exactCategory = String(product?.category || "fashion").trim();
   const category = product?.category || "fashion";
   const color = product?.color || "";
   const material = aiArray(product?.material).join(", ");
@@ -70,7 +72,8 @@ function aiModelPrompt(product, query = "") {
     "no text, no watermark, no logos",
     name,
     category,
-    color && "color " + color,
+    "exact garment category " + category,
+    color && "exact garment color " + color,
     material && "material " + material,
     style && "style " + style,
     description,
