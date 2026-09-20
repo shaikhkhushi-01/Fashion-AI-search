@@ -38,6 +38,16 @@ function aiStudioFallbackSvg() {
   return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
 }
 
+function aiStockFashionUrl(product, mode = "product") {
+  const color = String(product?.color || "").toLowerCase();
+  const category = String(product?.category || "fashion").toLowerCase();
+  const keywords = mode === "model"
+    ? ["fashion model", color, category, "studio"].filter(Boolean).join(",")
+    : ["fashion", color, category, "clothing", "studio"].filter(Boolean).join(",");
+  const lock = Math.max(1, Number(product?.id || 1));
+  return "https://loremflickr.com/768/900/" + encodeURIComponent(keywords) + "?lock=" + lock;
+}
+
 function aiProductPreviewUrl(product) {
   const name = product?.name || "fashion product";
   const category = String(product?.category || "fashion").trim();
@@ -200,13 +210,13 @@ function aiCard(product, query) {
         <div class="ai-v3-source-visual">
           <img class="ai-v3-source-image" src="${aiEscape(productPreview)}" alt="${aiEscape(name)}" loading="eager"
                onload="this.classList.add('visual-ready')"
-               onerror="if(!this.dataset.photoFallback){this.dataset.photoFallback='1';this.src='${aiEscape(aiProductPhotoFallbackUrl(product))}';}else{this.onerror=null;this.src='${aiEscape(aiModelFallbackSvg(product))}'}">
+               onerror="if(!this.dataset.photoFallback){this.dataset.photoFallback='1';this.src=aiStockFashionUrl(product,'product');}else{this.onerror=null;this.src=aiProductFallbackSvg(product)}">
           <div class="ai-v3-source-status">${hasRealProductImage ? "CATALOGUE IMAGE" : "AI PRODUCT PREVIEW"}</div>
           <span class="ai-v3-media-label">PRODUCT</span>
         </div>
         <div class="ai-v3-model-visual">
           <div class="ai-v3-model-loading"><span>✦</span><small>AI MODEL</small></div>
-          <img class="ai-v3-model-image" src="${aiEscape(aiModelFallbackSvg(product))}" data-ai-src="${aiEscape(generated)}" alt="AI model wearing ${aiEscape(name)}" loading="lazy"
+          <img class="ai-v3-model-image" src="${aiEscape(aiModelFallbackSvg(product))}" data-ai-src="${aiEscape(generated)}" data-stock-fallback="${aiEscape(aiStockFashionUrl(product,'model'))}" alt="Fashion model wearing ${aiEscape(name)}" loading="lazy"
                onload="this.parentElement.classList.add('loaded')"
                onerror="this.onerror=null;this.src='${aiEscape(aiModelFallbackSvg(product))}';this.parentElement.classList.add('loaded')">
           <span class="ai-v3-media-label">AI MODEL</span>
@@ -450,7 +460,7 @@ function setupAIModelImageLoading() {
     if (!remote) return;
     const probe = new Image();
     probe.onload = () => { image.src = remote; image.parentElement?.classList.add('loaded'); };
-    probe.onerror = () => { image.parentElement?.classList.add('loaded'); };
+    probe.onerror = () => { const fallback = image.dataset.stockFallback; if (fallback) image.src = fallback; image.parentElement?.classList.add('loaded'); };
     probe.src = remote;
   };
   if (!('IntersectionObserver' in window)) { images.forEach(load); return; }
