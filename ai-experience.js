@@ -39,18 +39,31 @@ function aiStudioFallbackSvg() {
 }
 
 function aiProductPreviewUrl(product) {
-  const name = product?.name || "fashion product";
-  const category = String(product?.category || "fashion").trim();
-  const color = String(product?.color || "").trim();
-  const material = aiArray(product?.material).join(", ");
-  const style = aiArray(product?.style).slice(0, 3).join(", ");
-  const prompt = ["premium ecommerce product photography","single isolated fashion product, no person, no mannequin, no model","front three-quarter product view, complete item visible, centered composition","clean white studio background, soft realistic shadow, photorealistic fabric and texture","no text, no watermark, no logo, no extra garments",name,category,color && "exact color " + color,material && "material " + material,style && "style " + style].filter(Boolean).join(", ");
-  const seed = String(product?.id ?? name) + "-product";
-  return AI_IMAGE_API + encodeURIComponent(prompt) + "?width=768&height=900&model=flux&nologo=true&seed=" + encodeURIComponent(seed);
+  return aiProductFallbackSvg(product);
 }
 
 function aiProductPhotoFallbackUrl(product) {
-  return aiProductPreviewUrl(product);
+  return aiProductFallbackSvg(product);
+}
+
+function aiProductFallbackSvg(product) {
+  const category = String(product?.category || "fashion").toLowerCase();
+  const color = String(product?.color || "beige").toLowerCase();
+  const palette = { black:"#181818", white:"#f3f1eb", blue:"#4b78ad", red:"#b84a4a", green:"#52785e", beige:"#cbb99d", grey:"#858585", gray:"#858585", brown:"#765447" };
+  const fill = palette[color] || "#9b8f80";
+  const isDress = category.includes("dress");
+  const isSkirt = category.includes("skirt");
+  const isBottom = category.includes("jean") || category.includes("trouser") || category.includes("pant");
+  const isShoe = category.includes("sneaker") || category.includes("shoe");
+  let garment = "";
+  if (isShoe) garment = '<path d="M180 690c55-45 150-46 215 5l92 38c27 11 30 44 2 58H120c-30 0-38-38-10-55z" fill="' + fill + '" stroke="#292622" stroke-width="8"/>';
+  else if (isDress) garment = '<path d="M315 255h138l28 180 128 370H159l128-370z" fill="' + fill + '" stroke="#292622" stroke-width="8"/>';
+  else if (isSkirt) garment = '<path d="M300 310h168l28 105 85 310H187l85-310z" fill="' + fill + '" stroke="#292622" stroke-width="8"/>';
+  else if (isBottom) garment = '<path d="M300 295h168l20 180-20 270h-76l-18-205-18 205h-76l20-270z" fill="' + fill + '" stroke="#292622" stroke-width="8"/>';
+  else garment = '<path d="M300 300h168l78 110-62 62-45-58v265H329V414l-45 58-62-62z" fill="' + fill + '" stroke="#292622" stroke-width="8"/>';
+  const label = aiEscape(String(product?.name || category).toUpperCase().slice(0, 34));
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 768 900"><defs><linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#f8f5ef"/><stop offset="1" stop-color="#e8e1d7"/></linearGradient></defs><rect width="768" height="900" fill="url(#bg)"/><ellipse cx="384" cy="790" rx="260" ry="30" fill="#000" opacity=".09"/>' + garment + '<rect x="72" y="70" width="624" height="760" rx="28" fill="none" stroke="#d5cec3" stroke-width="2"/><text x="384" y="855" text-anchor="middle" font-family="Arial" font-size="18" font-weight="700" fill="#625c55">' + label + '</text></svg>';
+  return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
 }
 
 let localCataloguePromise = null;
@@ -172,7 +185,7 @@ function aiCard(product, query) {
   const productPreview = image || remoteProductPreview;
   const hasRealProductImage = Boolean(image);
   const styles = aiArray(product?.style || product?.styles).slice(0, 3);
-  const generated = aiModelUrl(product, query);
+  const generated = aiModelFallbackSvg(product);
 
   return `
     <article class="ai-v3-product-card">
@@ -181,12 +194,12 @@ function aiCard(product, query) {
           <img class="ai-v3-source-image" src="${aiEscape(productPreview)}" alt="${aiEscape(name)}" loading="eager"
                onload="this.classList.add('visual-ready')"
                onerror="if(!this.dataset.photoFallback){this.dataset.photoFallback='1';this.src='${aiEscape(aiProductPhotoFallbackUrl(product))}';}else{this.onerror=null;this.src='${aiEscape(aiModelFallbackSvg(product))}'}">
-          <div class="ai-v3-source-status">${hasRealProductImage ? "CATALOGUE IMAGE" : "AI GENERATED PRODUCT PHOTO"}</div>
+          <div class="ai-v3-source-status">${hasRealProductImage ? "CATALOGUE IMAGE" : "LOCAL PRODUCT VISUAL"}</div>
           <span class="ai-v3-media-label">PRODUCT</span>
         </div>
         <div class="ai-v3-model-visual">
           <div class="ai-v3-model-loading"><span>✦</span><small>AI MODEL</small></div>
-          <img class="ai-v3-model-image" src="${aiEscape(aiModelFallbackSvg(product))}" data-ai-src="${aiEscape(generated)}" alt="AI model wearing ${aiEscape(name)}" loading="lazy"
+          <img class="ai-v3-model-image" src="${aiEscape(generated)}" alt="Local fashion model visual for ${aiEscape(name)}" loading="lazy"
                onload="this.parentElement.classList.add('loaded')"
                onerror="this.onerror=null;this.src='${aiEscape(aiModelFallbackSvg(product))}';this.parentElement.classList.add('loaded')">
           <span class="ai-v3-media-label">AI MODEL</span>
