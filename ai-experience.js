@@ -50,10 +50,25 @@ function aiProductPreviewUrl(product) {
 }
 
 function aiProductPhotoFallbackUrl(product) {
-  const color = String(product?.color || "fashion").trim().toLowerCase();
-  const category = String(product?.category || "product").trim().toLowerCase();
-  const seed = encodeURIComponent(String(product?.id ?? (color + "-" + category)));
-  return "https://loremflickr.com/768/900/" + encodeURIComponent(color + "," + category + ",fashion") + "?lock=" + seed;
+  return aiProductPreviewUrl(product);
+}
+
+let localCataloguePromise = null;
+
+async function loadLocalCatalogue() {
+  if (!localCataloguePromise) {
+    localCataloguePromise = fetch("./data/products.json?v=407", { cache: "no-store" })
+      .then(response => {
+        if (!response.ok) throw new Error("Local catalogue unavailable: " + response.status);
+        return response.json();
+      })
+      .then(data => {
+        const products = Array.isArray(data) ? data : (data.products || data.results || data.data || []);
+        if (!Array.isArray(products) || !products.length) throw new Error("Local catalogue is empty");
+        return products;
+      });
+  }
+  return localCataloguePromise;
 }
 
 function filterExplicitAIResults(results, query) {
@@ -425,45 +440,9 @@ function setupAIModelImageLoading() {
   images.forEach(image => observer.observe(image));
 }
 
-function buildLocalCatalogue() {
-  const colors = ["Black","White","Blue","Red","Green","Beige","Grey","Brown"];
-  const categories = [
-    ["Shirts","Shirt"],["Dresses","Dress"],["Trousers","Trousers"],["Sneakers","Sneakers"],
-    ["Hoodies","Hoodie"],["Jeans","Jeans"],["Blazers","Blazer"],["Tops","Top"],
-    ["Skirts","Skirt"],["Jackets","Jacket"]
-  ];
-  const styles = ["Minimal","Classic","Relaxed","Modern","Essential"];
-  const products = [];
-  let id = 1;
-  for (const color of colors) {
-    for (const [categoryLabel, categoryKey] of categories) {
-      for (let i = 0; i < 5; i++) {
-        products.push({
-          id: "local-" + id++,
-          brand: ["Aster","NOVA","Loom","Atelier","Mode"][i],
-          name: styles[i] + " " + color + " " + categoryLabel.slice(0,-1),
-          category: categoryLabel,
-          gender: "Unisex",
-          color,
-          material: ["Cotton"],
-          style: [styles[i]],
-          occasion: ["Casual"],
-          sizes: ["S","M","L","XL"],
-          price: 1499 + i * 700,
-          currency: "INR",
-          availability: "In Stock",
-          tags: [color.toLowerCase(), categoryKey.toLowerCase(), "fashion"],
-          description: styles[i] + " " + color.toLowerCase() + " " + categoryLabel.toLowerCase()
-        });
-      }
-    }
-  }
-  return products;
-}
-
-function localCatalogueSearch(query, limit = 12) {
-  const products = buildLocalCatalogue();
-  const text = String(query || "").toLowerCase();
+async function localCatalogueSearch(query, limit = 12) {
+  const products = await loadLocalCatalogue();
+  const text = String(query || "").toLowerCase().trim();
   const colors = ["black","white","blue","red","green","beige","grey","gray","brown","cream","ivory"];
   const categoryAliases = {
     dresses:"dress", dress:"dress", shirts:"shirt", shirt:"shirt", "t-shirts":"shirt", "t-shirt":"shirt",
@@ -473,23 +452,41 @@ function localCatalogueSearch(query, limit = 12) {
     sneakers:"sneakers", sneaker:"sneakers"
   };
   const foundColor = colors.find(color => text.includes(color));
-  const foundCategoryTerm = Object.keys(categoryAliases).find(term => text.includes(term));
+  const foundCategoryTerm = Object.keys(categoryAliases).sort((a,b) => b.length - a.length).find(term => text.includes(term));
   const foundCategory = foundCategoryTerm ? categoryAliases[foundCategoryTerm] : "";
   const targetColor = foundColor === "cream" || foundColor === "ivory" ? "beige" : foundColor === "gray" ? "grey" : foundColor;
-  const tokens = text.split(/\\s+/).filter(Boolean);
+  const tokens = text.split(/\s+/).filter(Boolean);
+
   const scored = products.map(product => {
-    const color = String(product.color).toLowerCase();
-    const category = String(product.category).toLowerCase();
-    const haystack = [product.name,product.brand,product.category,product.color,...product.tags].join(" ").toLowerCase();
+    const color = String(product.color || "").toLowerCase();
+    const category = String(product.category || "").toLowerCase();
+    const haystack = [
+      product.name, product.brand, product.category, product.color,
+      ...aiArray(product.tags), ...aiArray(product.style), ...aiArray(product.occasion),
+      product.description
+    ].join(" ").toLowerCase();
     const colorMatch = !targetColor || color === targetColor;
-    const categoryMatch = !foundCategory || category.toLowerCase().includes(foundCategory);
+    const categoryMatch = !foundCategory || category.includes(foundCategory);
     let score = (colorMatch ? 0.55 : 0) + (categoryMatch ? 0.4 : 0);
-    tokens.forEach(token => { if (haystack.includes(token)) score += 0.01; });
-    return {...product, score:Math.min(1,score), hybridScore:Math.min(1,score), matchScore:Math.round(Math.min(1,score)*100),
-      reasons:[colorMatch&&foundColor?"Exact colour match":null,categoryMatch&&foundCategory?"Exact category match":null,"Catalogue match"].filter(Boolean)};
+    tokens.forEach(token => { if (haystack.includes(token)) score += token.length > 4 ? 0.02 : 0.01; });
+    return {
+      ...product,
+      score: Math.min(1, score),
+      hybridScore: Math.min(1, score),
+      matchScore: Math.round(Math.min(1, score) * 100),
+      reasons: [
+        colorMatch && foundColor ? "Exact colour match" : null,
+        categoryMatch && foundCategory ? "Exact category match" : null,
+        "Real repository catalogue match"
+      ].filter(Boolean)
+    };
   });
-  const strict = scored.filter(p => (!targetColor || String(p.color).toLowerCase() === targetColor) && (!foundCategory || String(p.category).toLowerCase().includes(foundCategory)));
-  return (strict.length ? strict : scored).sort((a,b)=>b.score-a.score).slice(0,limit);
+
+  const strict = scored.filter(product =>
+    (!targetColor || String(product.color || "").toLowerCase() === targetColor) &&
+    (!foundCategory || String(product.category || "").toLowerCase().includes(foundCategory))
+  );
+  return (strict.length ? strict : scored).sort((a,b) => b.score - a.score).slice(0, limit);
 }
 
 async function runAIV2Search(query) {
@@ -502,7 +499,7 @@ async function runAIV2Search(query) {
 
   try {
     // Local-first: search never depends on the Render AI service being online.
-    const localResults = localCatalogueSearch(cleanQuery, 12);
+    const localResults = await localCatalogueSearch(cleanQuery, 12);
     const filtered = filterExplicitAIResults(localResults, cleanQuery);
     const data = {
       success: true,
@@ -510,6 +507,7 @@ async function runAIV2Search(query) {
       results: filtered,
       semanticAvailable: false,
       semanticFallback: true,
+      source: "repository-catalogue",
       latencyMs: Math.round(performance.now() - started),
       intent: { query: cleanQuery },
       outfitPlan: null
