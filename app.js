@@ -169,31 +169,45 @@ async function loadLocalCatalogue() {
   return localCatalogueLoadPromise;
 }
 
-function bundledFashionImage(product) {
-  const category = getProductCategory(product).toLowerCase();
-  const id = Math.abs(Number(getProductId(product)) || 0);
-  const variants = {
-    shirts: ["shirt.jpg"],
-    tops: ["shirt.jpg"],
-    hoodies: ["shirt.jpg"],
-    jackets: ["jacket.jpg"],
-    blazers: ["jacket.jpg"],
-    dresses: ["dress.jpg"],
-    skirts: ["dress.jpg"],
-    trousers: ["jeans.jpg"],
-    jeans: ["jeans.jpg"],
-    sneakers: ["sneakers.jpg"]
+function fashionSvgData(product, model = false) {
+  const category = String(getProductCategory(product) || "shirt").toLowerCase();
+  const colorName = String(getProductColor(product) || "black").toLowerCase();
+  const colors = {
+    black:"#17171b", white:"#f4f1eb", blue:"#2563eb", red:"#c62828",
+    green:"#2f6b45", beige:"#c8ad86", grey:"#777b82", gray:"#777b82",
+    brown:"#754c32"
   };
-  const list = variants[category] || ["shirt.jpg"];
-  return "./assets/fashion/" + list[id % list.length];
+  const fill = colors[colorName] || "#777b82";
+  const bg = "#f5f1e9";
+  const safe = (v) => String(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  let garment = "";
+  if (["dress","dresses"].includes(category)) {
+    garment = `<path d="M190 215 L230 250 L205 315 L150 610 Q250 670 350 610 L295 315 L270 250 L310 215 L282 175 L250 205 L218 175 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/><path d="M225 250 Q250 270 275 250" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="5"/>`;
+  } else if (["skirt","skirts"].includes(category)) {
+    garment = `<path d="M215 225 L285 225 L320 570 Q250 615 180 570 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/><path d="M190 280 H310" stroke="#fff" stroke-opacity=".25" stroke-width="5"/>`;
+  } else if (["trousers","trouser","pants","jeans"].includes(category)) {
+    garment = `<path d="M185 210 H315 L325 370 L300 625 H252 L235 420 L218 625 H170 L175 370 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/><path d="M250 225 V420" stroke="#fff" stroke-opacity=".25" stroke-width="5"/>`;
+  } else if (["jacket","jackets","blazer","blazers"].includes(category)) {
+    garment = `<path d="M205 180 L235 210 L250 300 L265 210 L295 180 L350 245 L315 300 L300 610 H200 L185 300 L150 245 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/><path d="M235 210 L250 300 L265 210" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="5"/>`;
+  } else if (["hoodie","hoodies"].includes(category)) {
+    garment = `<path d="M205 215 Q250 165 295 215 L350 255 L315 330 L295 305 V610 H205 V305 L185 330 L150 255 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/><path d="M220 215 Q250 250 280 215" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="5"/><path d="M225 425 H275" stroke="#fff" stroke-opacity=".25" stroke-width="10"/>`;
+  } else if (["sneaker","sneakers"].includes(category)) {
+    garment = `<path d="M150 430 Q205 410 250 465 L315 520 Q345 545 350 585 H145 Q125 555 150 430 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/><path d="M175 535 H320" stroke="#fff" stroke-opacity=".65" stroke-width="10"/><path d="M205 455 L245 515" stroke="#fff" stroke-opacity=".45" stroke-width="6"/>`;
+  } else {
+    garment = `<path d="M205 185 L235 215 L250 285 L265 215 L295 185 L350 245 L315 300 L300 610 H200 L185 300 L150 245 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/><path d="M220 220 Q250 245 280 220" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="5"/>`;
+  }
+  const person = model ? `<circle cx="250" cy="105" r="48" fill="#d8a27c" stroke="#24242a" stroke-width="5"/><path d="M205 105 Q250 45 295 105" fill="#24242a"/>` : "";
+  const shadow = model ? "" : '<ellipse cx="250" cy="650" rx="135" ry="20" fill="#000" opacity=".08"/>';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 720"><rect width="500" height="720" rx="28" fill="${bg}"/><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".8"/><stop offset="1" stop-color="#ddd6ca" stop-opacity=".25"/></linearGradient></defs><rect x="18" y="18" width="464" height="684" rx="22" fill="url(#g)"/>${person}${garment}${shadow}<text x="250" y="680" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" fill="#555">${safe(colorName)} ${safe(category)}</text></svg>`;
+  return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+}
+
+function bundledFashionImage(product) {
+  return fashionSvgData(product, false);
 }
 
 function productVisual(product) {
-  const image = bundledFashionImage(product);
-  return `
-    <img class="product-image" src="${escapeHTML(image)}" alt="${escapeHTML(getProductName(product))}" loading="lazy"
-      onerror="this.onerror=null;this.src='./assets/fashion/shirt.jpg'">
-  `;
+  return `<img class="product-image" src="${escapeHTML(bundledFashionImage(product))}" alt="${escapeHTML(getProductName(product))}" loading="lazy">`;
 }
 
 function getRelevanceScore(product) {
@@ -309,8 +323,8 @@ function createProductCard(product) {
 
       <div class="product-model-preview">
         <div class="product-model-media">
-          <img class="product-model-image" src="./assets/fashion/model.jpg" alt="Fashion model wearing ${escapeHTML(name)}" loading="lazy"
-            onerror="this.onerror=null;this.src='./assets/fashion/shirt.jpg'">
+          <img class="product-model-image" src="${escapeHTML(fashionSvgData(product, true))}" alt="Fashion model wearing ${escapeHTML(name)}" loading="lazy"
+           >
         </div>
         <span class="product-model-label">MODEL PHOTO</span>
       </div>
