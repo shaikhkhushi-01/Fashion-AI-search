@@ -328,59 +328,6 @@ function showAISearchLoading() {
   }
 }
 
-function openAIModelPreview(url, title) {
-  let modal = document.getElementById("aiModelPreviewModal");
-
-  if (!modal) {
-    modal = document.createElement("div");
-    modal.id = "aiModelPreviewModal";
-    modal.className = "ai-v3-modal";
-    modal.innerHTML = `
-      <div class="ai-v3-modal-backdrop" data-close-ai-preview></div>
-      <div class="ai-v3-modal-card" role="dialog" aria-modal="true">
-        <button type="button" class="ai-v3-modal-close" aria-label="Close" data-close-ai-preview>×</button>
-        <div class="ai-v3-modal-image-wrap">
-          <div class="ai-v3-modal-loader"><div class="loading-spinner"></div><span>Generating fashion model preview…</span></div>
-          <img id="aiModelPreviewImage" alt="" />
-        </div>
-        <div class="ai-v3-modal-copy">
-          <span class="ai-v3-kicker">AI VISUALIZATION</span>
-          <h3 id="aiModelPreviewTitle"></h3>
-          <p>AI-generated editorial preview based on the selected product description. This is a visualization, not a photograph of the actual garment.</p>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-    modal.addEventListener("click", event => {
-      if (event.target.closest("[data-close-ai-preview]")) modal.classList.remove("open");
-    });
-  }
-
-  const image = document.getElementById("aiModelPreviewImage");
-  const heading = document.getElementById("aiModelPreviewTitle");
-  const loader = modal.querySelector(".ai-v3-modal-loader");
-
-  heading.textContent = title || "AI model preview";
-  image.style.display = "none";
-  loader.style.display = "grid";
-  modal.classList.add("open");
-
-  image.onload = () => {
-    loader.style.display = "none";
-    image.style.display = "block";
-  };
-
-  image.onerror = () => {
-    loader.style.display = "none";
-    image.src = aiStudioFallbackSvg();
-    image.style.display = "block";
-  };
-
-  image.src = url;
-}
-
-function handleAIModelImageError(image) { if (!image || image.dataset.retried === '1') { image?.parentElement?.classList.add('failed'); return; } image.dataset.retried = '1'; const current = image.dataset.aiSrc || image.src; if (!current) { image.parentElement.classList.add('failed'); return; } const retryUrl = current.replace(/([?&])seed=[^&]*/i, '$1seed=' + Math.floor(Math.random() * 999999)); setTimeout(() => { image.src = retryUrl; }, 700); }
-
 function extractAIBudgetConstraint(query) {
   const text = String(query || "").toLowerCase().replace(/,/g, "");
   const match = text.match(/(?:under|below|less than|upto|up to|max(?:imum)?(?: budget)?|within)\s*(?:₹|rs\.?|inr\s*)?\s*(\d+(?:\.\d+)?)\s*(k|thousand)?\b|(?:₹|rs\.?|inr\s*)\s*(\d+(?:\.\d+)?)\s*(k|thousand)?\b/);
@@ -505,16 +452,9 @@ function interceptAIInteractions() {
 
 function initializeAIStudioPreview() {
   const img = document.getElementById("aiStudioModelImage");
-  const title = document.getElementById("aiStudioLookTitle");
   if (!img) return;
-  const prompt = "high-end editorial fashion photograph, adult professional fashion model, full body, minimal monochrome black outfit, modern college street style, realistic fabric, luxury studio, natural proportions, soft directional lighting, neutral background, no text, no watermark";
-  const fallback = aiStudioFallbackSvg();
-  img.src = fallback;
-  const remote = AI_IMAGE_API + encodeURIComponent(prompt) + "?width=768&height=1024&model=flux&nologo=true&seed=2026";
-  const probe = new Image();
-  probe.onload = () => { img.src = remote; };
-  probe.onerror = () => {};
-  probe.src = remote;
+  img.src = "./assets/fashion/model.jpg";
+  img.onerror = () => { img.style.display = "none"; };
 }
 document.addEventListener("DOMContentLoaded", initializeAIStudioPreview);
 
