@@ -27,26 +27,25 @@ function aiArray(value) {
   return [];
 }
 
-function aiProductImage(product) {
-  const category = String(product?.category || "").toLowerCase();
-  const map = {
-    shirts: "shirt.jpg",
-    tops: "shirt.jpg",
-    hoodies: "shirt.jpg",
-    jackets: "jacket.jpg",
-    blazers: "shirt.jpg",
-    dresses: "dress.jpg",
-    skirts: "dress.jpg",
-    trousers: "jeans.jpg",
-    jeans: "jeans.jpg",
-    sneakers: "sneakers.jpg"
-  };
-  return "./assets/fashion/" + (map[category] || "shirt.jpg");
+function aiFashionSvgData(product, model = false) {
+  const category = String(product?.category || "shirt").toLowerCase();
+  const colorName = String(product?.color || "black").toLowerCase();
+  const colors = {black:"#17171b",white:"#f4f1eb",blue:"#2563eb",red:"#c62828",green:"#2f6b45",beige:"#c8ad86",grey:"#777b82",gray:"#777b82",brown:"#754c32"};
+  const fill = colors[colorName] || "#777b82";
+  let garment = "";
+  if (["dress","dresses"].includes(category)) garment=`<path d="M190 215 L230 250 L205 315 L150 610 Q250 670 350 610 L295 315 L270 250 L310 215 L282 175 L250 205 L218 175 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/>`;
+  else if (["skirt","skirts"].includes(category)) garment=`<path d="M215 225 L285 225 L320 570 Q250 615 180 570 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/>`;
+  else if (["trousers","trouser","pants","jeans"].includes(category)) garment=`<path d="M185 210 H315 L325 370 L300 625 H252 L235 420 L218 625 H170 L175 370 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/>`;
+  else if (["jacket","jackets","blazer","blazers"].includes(category)) garment=`<path d="M205 180 L235 210 L250 300 L265 210 L295 180 L350 245 L315 300 L300 610 H200 L185 300 L150 245 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/>`;
+  else if (["hoodie","hoodies"].includes(category)) garment=`<path d="M205 215 Q250 165 295 215 L350 255 L315 330 L295 305 V610 H205 V305 L185 330 L150 255 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/>`;
+  else if (["sneaker","sneakers"].includes(category)) garment=`<path d="M150 430 Q205 410 250 465 L315 520 Q345 545 350 585 H145 Q125 555 150 430 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/>`;
+  else garment=`<path d="M205 185 L235 215 L250 285 L265 215 L295 185 L350 245 L315 300 L300 610 H200 L185 300 L150 245 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/>`;
+  const person = model ? '<circle cx="250" cy="105" r="48" fill="#d8a27c" stroke="#24242a" stroke-width="5"/><path d="M205 105 Q250 45 295 105" fill="#24242a"/>' : "";
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 720"><rect width="500" height="720" rx="28" fill="#f5f1e9"/><rect x="18" y="18" width="464" height="684" rx="22" fill="#fff" opacity=".65"/>${person}${garment}<text x="250" y="680" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" fill="#555">${colorName} ${category}</text></svg>`;
+  return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
 }
-
-function aiModelImage() {
-  return "./assets/fashion/model.jpg";
-}
+function aiProductImage(product) { return aiFashionSvgData(product, false); }
+function aiModelImage(product) { return aiFashionSvgData(product, true); }
 
 let localCataloguePromise = null;
 
@@ -138,7 +137,7 @@ function aiCard(product, query) {
   const reasons = aiArray(product?.reasons).slice(0, 3);
   const productPreview = aiProductImage(product);
   const styles = aiArray(product?.style || product?.styles).slice(0, 3);
-  const modelPreview = aiModelImage();
+  const modelPreview = aiModelImage(product);
 
   return `
     <article class="ai-v3-product-card">
@@ -387,7 +386,14 @@ async function localCatalogueSearch(query, limit = 12) {
     (!foundCategory || String(product.category || "").toLowerCase().includes(foundCategory)) &&
     (budget == null || Number(product.price) <= budget)
   );
-  return strict.sort((a,b) => b.score - a.score).slice(0, limit);
+  if (strict.length) return strict.sort((a,b) => b.score - a.score).slice(0, limit);
+  const constraintMatches = scored.filter(product =>
+    (!targetColor || String(product.color || "").toLowerCase() === targetColor) &&
+    (!foundCategory || String(product.category || "").toLowerCase().includes(foundCategory))
+  );
+  return (constraintMatches.length ? constraintMatches : scored)
+    .sort((a,b) => b.score - a.score)
+    .slice(0, limit);
 }
 
 async function runAIV2Search(query) {
@@ -415,7 +421,6 @@ async function runAIV2Search(query) {
     };
     renderAIInsight(data);
     renderAISearchResults(data);
-    setupAIModelImageLoading();
     setupProductVisualEnhancement();
     const summary = document.getElementById("searchSummary");
     const count = document.getElementById("resultCount");
