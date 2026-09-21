@@ -1,4 +1,3 @@
-const AI_API = "https://fashion-ai-search-lj6s.onrender.com";
 let aiExperienceResults = [];
 
 function aiEscape(value) {
@@ -129,32 +128,6 @@ function aiModelPrompt(product, query = "") {
   ].filter(Boolean).join(", ");
 }
 
-function aiModelUrl(product, query = "") {
-  const prompt = aiModelPrompt(product, query);
-  const seed = String(product?.id ?? 1);
-  return AI_IMAGE_API + encodeURIComponent(prompt) +
-    "?width=768&height=1024&model=flux&nologo=true&seed=" + encodeURIComponent(seed);
-}
-
-function aiModelFallbackSvg(product) {
-  const category = String(product?.category || "fashion").toLowerCase();
-  const color = String(product?.color || "Beige").toLowerCase();
-  const palette = { black:"#171717", white:"#f5f5f2", blue:"#4778ad", red:"#b83d3d", green:"#47755b", beige:"#c7b395", grey:"#888", gray:"#888", brown:"#765447" };
-  const fill = palette[color] || "#8b8175";
-  const dress = category.includes("dress") || category.includes("skirt");
-  const bottom = category.includes("jean") || category.includes("trouser") || category.includes("pant");
-  const shoe = category.includes("sneaker") || category.includes("shoe");
-  const garment = shoe
-    ? `<path d="M78 770c35-25 92-24 128 0l55 22c18 7 20 28 1 37H65c-21 0-24-28-5-36z" fill="${fill}" stroke="#272522" stroke-width="7"/>`
-    : dress
-      ? `<path d="M332 275h104l25 145 105 315H202l105-315z" fill="${fill}" stroke="#272522" stroke-width="7"/>`
-      : bottom
-        ? `<path d="M306 302h156l18 180-18 295h-72l-20-220-20 220h-72l18-295z" fill="${fill}" stroke="#272522" stroke-width="7"/>`
-        : `<path d="M315 300h138l57 92-51 52-34-46v243H343V398l-34 46-51-52z" fill="${fill}" stroke="#272522" stroke-width="7"/>`;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 768 1024"><rect width="768" height="1024" fill="#eeeae3"/><circle cx="384" cy="160" r="92" fill="#c99f82"/><path d="M292 153c15-125 172-125 184 0-42-38-137-40-184 0z" fill="#292725"/>${garment}<rect x="80" y="900" width="608" height="2" fill="#cfc9bf"/><text x="384" y="945" text-anchor="middle" font-family="Arial" font-size="24" font-weight="700" fill="#69635c">AI MODEL VISUAL</text><text x="384" y="978" text-anchor="middle" font-family="Arial" font-size="18" fill="#858078">${aiEscape(category.toUpperCase())} · ${aiEscape(color.toUpperCase())}</text></svg>`;
-  return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
-}
-
 function aiCard(product, query) {
   const id = String(product?.id ?? "");
   const name = product?.name || product?.title || "Fashion item";
@@ -231,7 +204,7 @@ function renderAIInsight(data) {
   ].filter(Boolean);
 
   const top = data.results?.[0];
-  const preview = top ? aiModelUrl(top, data.query || intent.query || "") : "";
+  const preview = top ? aiModelImage() : "";
   const outfit = data.outfitPlan;
   const outfitItems = outfit?.items || [];
   const latency = Number(data.latencyMs);
@@ -276,9 +249,8 @@ function renderAIInsight(data) {
           </div>
           <div class="ai-v3-hero-visual">
             <div class="ai-v3-visual-glow"></div>
-            <img class="ai-v3-hero-model-image" src="${aiEscape(aiModelFallbackSvg(top))}" data-ai-src="${aiEscape(preview)}" alt="AI generated model wearing ${aiEscape(top.name || "the selected fashion item")}" loading="lazy"
-                 onerror="this.onerror=null;this.src='${aiEscape(aiModelFallbackSvg(top))}'">
-            <span class="ai-v3-generated-label">AI GENERATED MODEL PREVIEW</span>
+            <img class="ai-v3-hero-model-image" src="${aiEscape(preview)}" alt="Fashion model view for ${aiEscape(top.name || "the selected fashion item")}" loading="eager">
+            <span class="ai-v3-generated-label">LOCAL MODEL PHOTO</span>
           </div>
         </div>
       ` : ""}
