@@ -1,5 +1,4 @@
 const AI_API = "https://fashion-ai-search-lj6s.onrender.com";
-const AI_IMAGE_API = "https://image.pollinations.ai/prompt/";
 let aiExperienceResults = [];
 
 function aiEscape(value) {
@@ -30,57 +29,24 @@ function aiArray(value) {
 }
 
 function aiProductImage(product) {
-  return product?.image || product?.image_url || product?.imageUrl || product?.img || product?.thumbnail || "";
+  const category = String(product?.category || "").toLowerCase();
+  const map = {
+    shirts: "shirt.jpg",
+    tops: "shirt.jpg",
+    hoodies: "shirt.jpg",
+    jackets: "jacket.jpg",
+    blazers: "shirt.jpg",
+    dresses: "dress.jpg",
+    skirts: "dress.jpg",
+    trousers: "jeans.jpg",
+    jeans: "jeans.jpg",
+    sneakers: "sneakers.jpg"
+  };
+  return "./assets/fashion/" + (map[category] || "shirt.jpg");
 }
 
-function aiStudioFallbackSvg() {
-  const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 768 1024"><rect width="768" height="1024" fill="#ebe7df"/><circle cx="384" cy="150" r="88" fill="#c99f82"/><path d="M294 145c12-118 171-124 181 0-42-38-135-39-181 0z" fill="#292725"/><path d="M310 286h148l52 76-38 55-42-48v275H338V369l-42 48-38-55z" fill="#171717" stroke="#111" stroke-width="8"/><path d="M340 644h40l-5 220h-54zM388 644h40l19 220h-54z" fill="#272727"/><text x="384" y="944" text-anchor="middle" font-family="Arial" font-size="24" font-weight="700" fill="#625d56">AI FASHION STUDIO</text></svg>';
-  return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
-}
-
-function aiStockFashionUrl(product, mode = "product") {
-  const color = String(product?.color || "").toLowerCase();
-  const category = String(product?.category || "fashion").toLowerCase();
-  const keywords = mode === "model"
-    ? ["fashion model", color, category, "studio"].filter(Boolean).join(",")
-    : ["fashion", color, category, "clothing", "studio"].filter(Boolean).join(",");
-  const lock = Math.max(1, Number(product?.id || 1));
-  return "https://loremflickr.com/768/900/" + encodeURIComponent(keywords) + "?lock=" + lock;
-}
-
-function aiProductPreviewUrl(product) {
-  const name = product?.name || "fashion product";
-  const category = String(product?.category || "fashion").trim();
-  const color = String(product?.color || "").trim();
-  const material = aiArray(product?.material).join(", ");
-  const style = aiArray(product?.style).slice(0, 3).join(", ");
-  const prompt = ["premium ecommerce fashion photography","single real-looking garment product, no person, no mannequin","front three-quarter view, complete item visible, centered","clean warm studio background, realistic fabric texture, soft natural shadow","no text, no watermark, no extra garments",name,category,color && "exact color " + color,material && "material " + material,style && "style " + style].filter(Boolean).join(", ");
-  const seed = String(product?.id ?? name) + "-product-v2";
-  return AI_IMAGE_API + encodeURIComponent(prompt) + "?width=768&height=900&model=flux&nologo=true&seed=" + encodeURIComponent(seed);
-}
-
-function aiProductPhotoFallbackUrl(product) {
-  return aiProductFallbackSvg(product);
-}
-
-function aiProductFallbackSvg(product) {
-  const category = String(product?.category || "fashion").toLowerCase();
-  const color = String(product?.color || "beige").toLowerCase();
-  const palette = { black:"#181818", white:"#f3f1eb", blue:"#4b78ad", red:"#b84a4a", green:"#52785e", beige:"#cbb99d", grey:"#858585", gray:"#858585", brown:"#765447" };
-  const fill = palette[color] || "#9b8f80";
-  const isDress = category.includes("dress");
-  const isSkirt = category.includes("skirt");
-  const isBottom = category.includes("jean") || category.includes("trouser") || category.includes("pant");
-  const isShoe = category.includes("sneaker") || category.includes("shoe");
-  let garment = "";
-  if (isShoe) garment = '<path d="M180 690c55-45 150-46 215 5l92 38c27 11 30 44 2 58H120c-30 0-38-38-10-55z" fill="' + fill + '" stroke="#292622" stroke-width="8"/>';
-  else if (isDress) garment = '<path d="M315 255h138l28 180 128 370H159l128-370z" fill="' + fill + '" stroke="#292622" stroke-width="8"/>';
-  else if (isSkirt) garment = '<path d="M300 310h168l28 105 85 310H187l85-310z" fill="' + fill + '" stroke="#292622" stroke-width="8"/>';
-  else if (isBottom) garment = '<path d="M300 295h168l20 180-20 270h-76l-18-205-18 205h-76l20-270z" fill="' + fill + '" stroke="#292622" stroke-width="8"/>';
-  else garment = '<path d="M300 300h168l78 110-62 62-45-58v265H329V414l-45 58-62-62z" fill="' + fill + '" stroke="#292622" stroke-width="8"/>';
-  const label = aiEscape(String(product?.name || category).toUpperCase().slice(0, 34));
-  const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 768 900"><defs><linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#f8f5ef"/><stop offset="1" stop-color="#e8e1d7"/></linearGradient></defs><rect width="768" height="900" fill="url(#bg)"/><ellipse cx="384" cy="790" rx="260" ry="30" fill="#000" opacity=".09"/>' + garment + '<rect x="72" y="70" width="624" height="760" rx="28" fill="none" stroke="#d5cec3" stroke-width="2"/><text x="384" y="855" text-anchor="middle" font-family="Arial" font-size="18" font-weight="700" fill="#625c55">' + label + '</text></svg>';
-  return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+function aiModelImage() {
+  return "./assets/fashion/model.jpg";
 }
 
 let localCataloguePromise = null;
@@ -197,12 +163,9 @@ function aiCard(product, query) {
   const price = aiPrice(product?.price);
   const score = aiScore(product);
   const reasons = aiArray(product?.reasons).slice(0, 3);
-  const image = aiProductImage(product);
-  const remoteProductPreview = image ? "" : aiProductPhotoFallbackUrl(product);
-  const productPreview = image || remoteProductPreview;
-  const hasRealProductImage = Boolean(image);
+  const productPreview = aiProductImage(product);
   const styles = aiArray(product?.style || product?.styles).slice(0, 3);
-  const generated = aiModelUrl(product, query);
+  const modelPreview = aiModelImage();
 
   return `
     <article class="ai-v3-product-card">
@@ -210,21 +173,17 @@ function aiCard(product, query) {
         <div class="ai-v3-source-visual">
           <img class="ai-v3-source-image" src="${aiEscape(productPreview)}" alt="${aiEscape(name)}" loading="eager"
                onload="this.classList.add('visual-ready')"
-               onerror="if(!this.dataset.photoFallback){this.dataset.photoFallback='1';this.src='${aiEscape(aiStockFashionUrl(product,'product'))}';}else{this.onerror=null;this.src='${aiEscape(aiProductFallbackSvg(product))}'}">
-          <div class="ai-v3-source-status">${hasRealProductImage ? "CATALOGUE IMAGE" : "AI PRODUCT PREVIEW"}</div>
+               onerror="this.onerror=null;this.src='./assets/fashion/shirt.jpg';">
+          <div class="ai-v3-source-status">LOCAL PRODUCT PHOTO</div>
           <span class="ai-v3-media-label">PRODUCT</span>
         </div>
         <div class="ai-v3-model-visual">
-          <div class="ai-v3-model-loading"><span>✦</span><small>AI MODEL</small></div>
-          <img class="ai-v3-model-image" src="${aiEscape(aiModelFallbackSvg(product))}" data-ai-src="${aiEscape(generated)}" data-stock-fallback="${aiEscape(aiStockFashionUrl(product,'model'))}" alt="Fashion model wearing ${aiEscape(name)}" loading="lazy"
+          <img class="ai-v3-model-image" src="${aiEscape(modelPreview)}" alt="Fashion model view for ${aiEscape(name)}" loading="eager"
                onload="this.parentElement.classList.add('loaded')"
-               onerror="this.onerror=null;this.src='${aiEscape(aiModelFallbackSvg(product))}';this.parentElement.classList.add('loaded')">
-          <span class="ai-v3-media-label">AI MODEL</span>
+               onerror="this.onerror=null;this.src='./assets/fashion/shirt.jpg';this.parentElement.classList.add('loaded')">
+          <span class="ai-v3-media-label">MODEL VIEW</span>
         </div>
         <span class="ai-v3-score"><span>✦</span> ${score}% AI match</span>
-        <button type="button" class="ai-v3-try-button" onclick="openAIModelPreview(${JSON.stringify(generated)}, ${JSON.stringify(name)})">
-          <span>✦</span> Full model view
-        </button>
       </div>
       <div class="ai-v3-product-body">
         <div class="ai-v3-meta">${aiEscape(category)} ${color ? "· " + aiEscape(color) : ""}</div>
@@ -449,28 +408,6 @@ function openAIModelPreview(url, title) {
 }
 
 function handleAIModelImageError(image) { if (!image || image.dataset.retried === '1') { image?.parentElement?.classList.add('failed'); return; } image.dataset.retried = '1'; const current = image.dataset.aiSrc || image.src; if (!current) { image.parentElement.classList.add('failed'); return; } const retryUrl = current.replace(/([?&])seed=[^&]*/i, '$1seed=' + Math.floor(Math.random() * 999999)); setTimeout(() => { image.src = retryUrl; }, 700); }
-
-function setupAIModelImageLoading() {
-  const images = document.querySelectorAll('img[data-ai-src]');
-  if (!images.length) return;
-  const load = image => {
-    if (image.dataset.loaded === '1') return;
-    image.dataset.loaded = '1';
-    const remote = image.dataset.aiSrc;
-    if (!remote) return;
-    const probe = new Image();
-    probe.onload = () => { image.src = remote; image.parentElement?.classList.add('loaded'); };
-    probe.onerror = () => { const fallback = image.dataset.stockFallback; if (fallback) image.src = fallback; image.parentElement?.classList.add('loaded'); };
-    probe.src = remote;
-  };
-  if (!('IntersectionObserver' in window)) { images.forEach(load); return; }
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) { load(entry.target); observer.unobserve(entry.target); }
-    });
-  }, { rootMargin: '700px 0px' });
-  images.forEach(image => observer.observe(image));
-}
 
 function extractAIBudgetConstraint(query) {
   const text = String(query || "").toLowerCase().replace(/,/g, "");
