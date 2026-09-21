@@ -1630,7 +1630,7 @@ async function initialize() {
   renderWishlist();
 }
 
-window.runSearch = runSearch;
+window.runSearch = searchFashion;
 window.searchFashion = searchFashion;
 window.loadProducts = loadProducts;
 window.clearAllFilters = clearAllFilters;
