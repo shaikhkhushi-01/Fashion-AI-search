@@ -169,6 +169,225 @@ async function loadLocalCatalogue() {
   return localCatalogueLoadPromise;
 }
 
+function normalizeSearchText(value) {
+  return String(value || "").toLowerCase().trim();
+}
+
+function getCategoryAliases() {
+  return {
+    shirt: ["shirt", "shirts", "tshirt", "t-shirts", "t-shirt", "top", "tops"],
+    dress: ["dress", "dresses"],
+    jeans: ["jean", "jeans"],
+    trousers: ["trouser", "trousers", "pant", "pants"],
+    sneaker: ["sneaker", "sneakers", "shoe", "shoes"],
+    jacket: ["jacket", "jackets", "blazer", "blazers"],
+    hoodie: ["hoodie", "hoodies"],
+    skirt: ["skirt", "skirts"]
+  };
+}
+
+function parseLocalQuery(query) {
+  const text = normalizeSearchText(query);
+  const colors = ["black","white","cream","blue","grey","gray","red","green","beige","brown"];
+  const aliases = getCategoryAliases();
+  let color = colors.find(c => new RegExp("\\b" + c + "\\b", "i").test(text)) || "";
+  if (color === "gray") color = "grey";
+  let category = "";
+  for (const [canonical, words] of Object.entries(aliases)) {
+    if (words.some(word => new RegExp("\\b" + word.replace(/[-]/g, "\\-") + "\\b", "i").test(text))) {
+      category = canonical;
+      break;
+    }
+  }
+  return { text, color, category };
+}
+
+function extractLocalBudget(query) {
+  const text = normalizeSearchText(query).replace(/,/g, "");
+  const match = text.match(/(?:under|below|less than|upto|up to|max(?:imum)?|within)\s*(?:₹|rs\.?|inr\s*)?(\d+(?:\.\d+)?)\s*(k|thousand)?/i)
+    || text.match(/(?:₹|rs\.?|inr)\s*(\d+(?:\.\d+)?)\s*(k|thousand)?/i);
+  if (!match) return null;
+  const value = Number(match[1]);
+  return Number.isFinite(value) ? value * (match[2] ? 1000 : 1) : null;
+}
+
+function productMatchesText(product, parsed) {
+  const haystack = [
+    getProductName(product), getProductCategory(product), getProductColor(product),
+    getProductGender(product), getProductMaterial(product), getProductDescription(product),
+    getProductStyles(product).join(" "), getProductOccasions(product).join(" "),
+    normalizeArray(product?.tags).join(" ")
+  ].join(" ").toLowerCase();
+  const stop = new Set(["show","find","give","me","need","want","for","with","under","below","less","than","upto","up","to","max","maximum","within","the","and","a","an"]);
+  return parsed.text.split(/\s+/).some(word => word.length > 2 && !stop.has(word) && haystack.includes(word));
+}
+
+function scoreLocalProduct(product, parsed) {
+  let score = 0;
+  const category = getProductCategory(product).toLowerCase();
+  const color = getProductColor(product).toLowerCase();
+  if (parsed.category && (getCategoryAliases()[parsed.category] || []).some(a => category === a)) score += 100;
+  if (parsed.color && color === parsed.color) score += 100;
+  if (productMatchesText(product, parsed)) score += 10;
+  return score;
+}
+
+function matchesFilter(product) {
+  if (state.selectedCategory && getProductCategory(product).toLowerCase() !== state.selectedCategory.toLowerCase()) return false;
+  if (state.selectedGender && getProductGender(product).toLowerCase() !== state.selectedGender.toLowerCase()) return false;
+  if (state.selectedColor && getProductColor(product).toLowerCase() !== state.selectedColor.toLowerCase()) return false;
+  if (state.selectedStyle && !getProductStyles(product).some(v => v.toLowerCase() === state.selectedStyle.toLowerCase())) return false;
+  if (state.selectedOccasion && !getProductOccasions(product).some(v => v.toLowerCase() === state.selectedOccasion.toLowerCase())) return false;
+  if (state.selectedMaterial && getProductMaterial(product).toLowerCase() !== state.selectedMaterial.toLowerCase()) return false;
+  const price = getProductPrice(product);
+  if (Number.isFinite(state.minPrice) && price < state.minPrice) return false;
+  if (Number.isFinite(state.maxPrice) && price > state.maxPrice) return false;
+  return true;
+}
+
+function readFilters() {
+  state.selectedCategory = $("categoryFilter")?.value || "";
+  state.selectedGender = $("genderFilter")?.value || "";
+  state.selectedColor = $("colorFilter")?.value || "";
+  state.selectedStyle = $("styleFilter")?.value || "";
+  state.selectedOccasion = $("occasionFilter")?.value || "";
+  state.selectedMaterial = $("materialFilter")?.value || "";
+  state.minPrice = Number($("minPriceFilter")?.value || 0);
+  const max = $("maxPriceFilter")?.value;
+  state.maxPrice = max === "" || max == null ? Infinity : Number(max);
+  state.sortBy = $("sortFilter")?.value || "relevance";
+}
+
+function applyPersonalization(products) {
+  const profile = state.userProfile || {};
+  const cats = normalizeArray(profile.favoriteCategories).map(v => v.toLowerCase());
+  const colors = normalizeArray(profile.favoriteColors).map(v => v.toLowerCase());
+  const styles = normalizeArray(profile.favoriteStyles).map(v => v.toLowerCase());
+  const occasions = normalizeArray(profile.favoriteOccasions).map(v => v.toLowerCase());
+  const gender = String(profile.gender || "").toLowerCase();
+  const budget = Number(profile.budget || 0);
+  return products.map(product => {
+    let score = 0;
+    if (gender && getProductGender(product).toLowerCase() === gender) score += 4;
+    if (cats.includes(getProductCategory(product).toLowerCase())) score += 5;
+    if (colors.includes(getProductColor(product).toLowerCase())) score += 5;
+    if (styles.some(v => getProductStyles(product).some(s => s.toLowerCase() === v))) score += 3;
+    if (occasions.some(v => getProductOccasions(product).some(o => o.toLowerCase() === v))) score += 2;
+    if (budget > 0 && getProductPrice(product) <= budget) score += 2;
+    return { product, score };
+  }).sort((a,b) => b.score - a.score).map(x => x.product);
+}
+
+function showNoResults() {
+  const results = $("results");
+  if (!results) return;
+  results.innerHTML = '<div class="no-results"><h3>No exact catalogue match</h3><p>Try another colour, category, or a wider budget.</p></div>';
+  updateSearchSummary();
+  updateCatalogueStats();
+}
+
+function updateBackendStatus(online) {
+  state.backendOnline = Boolean(online);
+}
+
+async function apiRequest(path, options = {}) {
+  const response = await fetch(API_BASE_URL + path, {
+    ...options,
+    headers: { "Content-Type": "application/json", ...(options.headers || {}) }
+  });
+  if (!response.ok) throw new Error("Request failed: " + response.status);
+  return response.json();
+}
+
+function populateFilterOptions() {
+  const configs = [
+    ["categoryFilter", state.allProducts.map(getProductCategory)],
+    ["genderFilter", state.allProducts.map(getProductGender)],
+    ["colorFilter", state.allProducts.map(getProductColor)],
+    ["styleFilter", state.allProducts.flatMap(getProductStyles)],
+    ["occasionFilter", state.allProducts.flatMap(getProductOccasions)],
+    ["materialFilter", state.allProducts.map(getProductMaterial)]
+  ];
+  configs.forEach(([id, values]) => {
+    const select = $(id);
+    if (!select) return;
+    const current = select.value;
+    const unique = [...new Set(values.filter(Boolean).map(String))].sort((a,b) => a.localeCompare(b));
+    select.innerHTML = '<option value="">All</option>' + unique.map(v => '<option value="' + escapeHTML(v) + '">' + escapeHTML(v) + '</option>').join("");
+    select.value = unique.includes(current) ? current : "";
+  });
+}
+
+async function loadProducts() {
+  state.loading = true;
+  try {
+    const products = await loadLocalCatalogue();
+    state.allProducts = products;
+    state.searchResults = [...products];
+    state.visibleProducts = [...products];
+    populateFilterOptions();
+    applyAllFilters();
+    renderForYou();
+    return products;
+  } catch (error) {
+    console.error("Catalogue load failed:", error);
+    state.allProducts = [];
+    state.searchResults = [];
+    state.visibleProducts = [];
+    const results = $("results");
+    if (results) results.innerHTML = '<div class="no-results"><h3>Catalogue is unavailable</h3><p>Please refresh once; the site is designed to work without the AI server.</p></div>';
+    const forYou = $("forYouResults");
+    if (forYou) forYou.innerHTML = '<div class="empty-state"><h3>For You is loading</h3><p>Product catalogue could not be loaded.</p></div>';
+    updateSearchSummary();
+    updateCatalogueStats();
+    return [];
+  } finally {
+    state.loading = false;
+  }
+}
+
+async function searchFashion(query) {
+  const clean = String(query || "").trim();
+  if (!clean) {
+    state.searchQuery = "";
+    state.searchResults = [...state.allProducts];
+    applyAllFilters();
+    return state.visibleProducts;
+  }
+  const parsed = parseLocalQuery(clean);
+  const budget = extractLocalBudget(clean);
+  const exact = state.allProducts.filter(product => {
+    if (parsed.color && getProductColor(product).toLowerCase() !== parsed.color) return false;
+    if (parsed.category) {
+      const aliases = getCategoryAliases()[parsed.category] || [];
+      if (!aliases.some(a => getProductCategory(product).toLowerCase() === a)) return false;
+    }
+    if (budget != null && getProductPrice(product) > budget) return false;
+    return true;
+  });
+  const results = exact.length ? exact : state.allProducts
+    .filter(product => budget == null || getProductPrice(product) <= budget)
+    .map(product => ({ product, score: scoreLocalProduct(product, parsed) }))
+    .filter(x => x.score > 0)
+    .sort((a,b) => b.score - a.score)
+    .map(x => x.product);
+  state.searchQuery = clean;
+  state.searchResults = results.slice(0, 12);
+  state.visibleProducts = state.searchResults;
+  renderProducts(state.visibleProducts);
+  updateSearchSummary();
+  updateCatalogueStats();
+  trackSearch(clean);
+  return state.visibleProducts;
+}
+
+function setupSearch() {
+  const input = $("searchInput");
+  const button = $("searchButton");
+  if (button) button.addEventListener("click", () => searchFashion(input?.value || ""));
+  if (input) input.addEventListener("keydown", event => { if (event.key === "Enter") searchFashion(input.value); });
+}
+
 function fashionSvgData(product, model = false) {
   const category = String(getProductCategory(product) || "shirt").toLowerCase();
   const colorName = String(getProductColor(product) || "black").toLowerCase();
