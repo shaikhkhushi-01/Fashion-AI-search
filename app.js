@@ -409,8 +409,32 @@ function fashionSvgData(product, model = false) {
   const safe = (v) => String(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
   let garment = "";
   if (["dress","dresses"].includes(category)) {
-    garment = `<path d="M190 215 L230 250 L205 315 L150 610 Q250 670 350 610 L295 315 L270 250 L310 215 L282 175 L250 205 L218 175 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/><path d="M225 250 Q250 270 275 250" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="5"/>`;
+    const styles = aiArray(product?.style).concat(aiArray(product?.tags)).map(v => String(v).toLowerCase());
+    const has = (...names) => names.some(n => styles.some(s => s === n || s.includes(n)));
+    const key = String(product?.id || product?.name || "").split("").reduce((n,ch) => (n * 31 + ch.charCodeAt(0)) >>> 0, 7);
+    const shape = has("bodycon","fitted","slim") ? "bodycon" : has("wrap") ? "wrap" : has("shirt") ? "shirt" : has("slip","satin") ? "slip" : has("tiered","boho","oversized") ? "tiered" : has("relaxed","summer") ? "maxi" : has("classic") ? "classic" : has("modern") ? "slip" : ["aline","wrap","maxi","tiered","bodycon","slip","shirt"][key % 7];
+    const pattern = ["solid","stripes","dots","floral","diagonal","colorblock","micro"][key % 7];
+    const patternSvg = {
+      solid: "",
+      stripes: '<path d="M170 360 H330 M160 420 H340 M155 480 H345 M150 540 H350" stroke="#fff" stroke-opacity=".24" stroke-width="9"/>',
+      dots: '<g fill="#fff" fill-opacity=".28"><circle cx="205" cy="360" r="7"/><circle cx="250" cy="400" r="7"/><circle cx="295" cy="360" r="7"/><circle cx="220" cy="450" r="7"/><circle cx="280" cy="500" r="7"/><circle cx="205" cy="550" r="7"/><circle cx="300" cy="560" r="7"/></g>',
+      floral: '<g fill="#fff" fill-opacity=".28"><circle cx="205" cy="360" r="10"/><circle cx="195" cy="360" r="4"/><circle cx="215" cy="360" r="4"/><circle cx="205" cy="350" r="4"/><circle cx="205" cy="370" r="4"/><circle cx="285" cy="450" r="10"/><circle cx="275" cy="450" r="4"/><circle cx="295" cy="450" r="4"/><circle cx="285" cy="440" r="4"/><circle cx="285" cy="460" r="4"/></g>',
+      diagonal: '<path d="M145 370 L210 305 M150 450 L270 330 M180 535 L330 385 M245 610 L350 505" stroke="#fff" stroke-opacity=".25" stroke-width="12"/>',
+      colorblock: '<path d="M150 430 Q250 470 350 430 V610 H150 Z" fill="#fff" fill-opacity=".16"/><path d="M190 315 Q250 340 310 315" stroke="#fff" stroke-opacity=".3" stroke-width="14"/>',
+      micro: '<path d="M185 350 H315 M180 390 H320 M175 430 H325 M170 470 H330 M165 510 H335 M160 550 H340" stroke="#24242a" stroke-opacity=".16" stroke-width="4"/>'
+    }[pattern];
+    const shapes = {
+      bodycon: `<path d="M215 210 L235 245 L265 245 L285 210 L310 270 L292 325 L285 610 H215 L208 325 L190 270 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/>`,
+      wrap: `<path d="M205 205 L235 245 L250 275 L265 245 L295 205 L320 270 L290 335 L345 610 Q250 655 155 610 L210 335 L180 270 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/><path d="M205 270 L295 335" stroke="#fff" stroke-opacity=".4" stroke-width="7"/>`,
+      shirt: `<path d="M205 200 L235 225 L250 285 L265 225 L295 200 L350 265 L315 315 L300 610 H200 L185 315 L150 265 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/><path d="M225 210 L250 250 L275 210" fill="none" stroke="#f5f1e9" stroke-width="7"/>`,
+      slip: `<path d="M215 190 L230 235 L270 235 L285 190 L305 255 L290 300 L315 610 Q250 635 185 610 L210 300 L195 255 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/><path d="M215 190 L230 235 M285 190 L270 235" stroke="#24242a" stroke-width="5"/>`,
+      tiered: `<path d="M205 205 L235 245 L265 245 L295 205 L315 275 L295 330 L340 610 Q250 665 160 610 L205 330 L185 275 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/><path d="M195 385 Q250 410 305 385 M180 475 Q250 505 320 475 M165 555 Q250 590 335 555" fill="none" stroke="#fff" stroke-opacity=".32" stroke-width="7"/>`,
+      maxi: `<path d="M205 205 L235 245 L265 245 L295 205 L315 275 L295 330 L365 625 Q250 675 135 625 L205 330 L185 275 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/>`,
+      classic: `<path d="M205 200 L235 230 L250 280 L265 230 L295 200 L345 265 L310 315 L300 610 H200 L190 315 L155 265 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/><path d="M225 210 L250 250 L275 210" fill="none" stroke="#f5f1e9" stroke-width="6"/>`
+    };
+    garment = (shapes[shape] || shapes.maxi) + patternSvg;
   } else if (["skirt","skirts"].includes(category)) {
+
     garment = `<path d="M215 225 L285 225 L320 570 Q250 615 180 570 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/><path d="M190 280 H310" stroke="#fff" stroke-opacity=".25" stroke-width="5"/>`;
   } else if (["trousers","trouser","pants","jeans"].includes(category)) {
     garment = `<path d="M185 210 H315 L325 370 L300 625 H252 L235 420 L218 625 H170 L175 370 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/><path d="M250 225 V420" stroke="#fff" stroke-opacity=".25" stroke-width="5"/>`;
