@@ -532,3 +532,12 @@ The current benchmark is a controlled 407-product research artifact with 250 eva
 Future experiments can extend the work with human relevance labels, a larger multi-brand catalogue, vision-language retrieval, image/text cross-modal evaluation, preference-labelled learning-to-rank, and statistically tested online evaluation.
 
 **Research dossier:** [research.html](./research.html)
+## Research Lab
+
+The repository now includes dedicated research tooling:
+
+- **Human relevance annotation:** annotation.html — 50-query annotation protocol with 0–3 relevance labels, browser-local storage and JSON export. Human-labelled evaluation remains explicitly pending until independent human annotations are collected.
+- **Multimodal retrieval:** multimodal.html — real browser-side CLIP inference for text→image and image→image retrieval. The current 407-item catalogue uses deterministic local illustrations, so this is an experimental multimodal pipeline rather than evidence from a real product-photo dataset.
+- **AGMR research prototype:** research-method.js — an Attribute-Gated Multimodal Ranker formulation combining lexical, semantic, attribute, budget, visual, style and occasion features. It is presented as a project hypothesis/prototype, not as a proven novel research result.
+- **Research honesty:** the project does not claim that human-labelled validation, large-scale real-world data, or a novel model have already been demonstrated. Those claims require new evidence.
+
