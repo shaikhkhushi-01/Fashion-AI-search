@@ -1,0 +1,12 @@
+{
+  "schema": "fashion-ai-human-relevance-v1",
+  "status": "awaiting_human_annotation",
+  "label_scale": {
+    "0": "irrelevant",
+    "1": "partially_relevant",
+    "2": "highly_relevant",
+    "3": "exact_match"
+  },
+  "annotator_count": 0,
+  "rows": []
+}\n
