@@ -51,7 +51,7 @@ let localCataloguePromise = null;
 
 async function loadLocalCatalogue() {
   if (!localCataloguePromise) {
-    localCataloguePromise = fetch("./data/products.json?v=407", { cache: "no-store" })
+    localCataloguePromise = fetch("./data/products.json?v=408", { cache: "no-store" })
       .then(response => {
         if (!response.ok) throw new Error("Local catalogue unavailable: " + response.status);
         return response.json();
@@ -203,7 +203,7 @@ function renderAIInsight(data) {
   ].filter(Boolean);
 
   const top = data.results?.[0];
-  const preview = top ? aiModelImage() : "";
+  const preview = top ? aiModelImage(top) : "";
   const outfit = data.outfitPlan;
   const outfitItems = outfit?.items || [];
   const latency = Number(data.latencyMs);
@@ -348,12 +348,14 @@ async function localCatalogueSearch(query, limit = 12) {
     blazers:"blazer", blazer:"blazer", skirts:"skirt", skirt:"skirt", tops:"top", top:"top",
     sneakers:"sneakers", sneaker:"sneakers"
   };
-  const foundColor = colors.find(color => text.includes(color));
-  const foundCategoryTerm = Object.keys(categoryAliases).sort((a,b) => b.length - a.length).find(term => text.includes(term));
+  const foundColor = colors.find(color => new RegExp("\\b" + color + "\\b","i").test(text));
+  const foundCategoryTerm = Object.keys(categoryAliases).sort((a,b) => b.length - a.length)
+    .find(term => new RegExp("\\b" + term.replace(/[-]/g,"\\-") + "\\b","i").test(text));
   const foundCategory = foundCategoryTerm ? categoryAliases[foundCategoryTerm] : "";
   const targetColor = foundColor === "cream" || foundColor === "ivory" ? "beige" : foundColor === "gray" ? "grey" : foundColor;
   const budget = extractAIBudgetConstraint(query);
-  const tokens = text.split(/\s+/).filter(Boolean);
+  const stop = new Set(["show","find","give","me","some","the","a","an","for","with","and","or","please","want","need","fashion","clothes","clothing","item","items"]);
+  const tokens = text.split(/\\s+/).filter(token => token.length > 2 && !stop.has(token));
 
   const scored = products.map(product => {
     const color = String(product.color || "").toLowerCase();
@@ -363,35 +365,42 @@ async function localCatalogueSearch(query, limit = 12) {
       ...aiArray(product.tags), ...aiArray(product.style), ...aiArray(product.occasion),
       product.description
     ].join(" ").toLowerCase();
+    const tokenHits = tokens.reduce((sum, token) => sum + (haystack.includes(token) ? 1 : 0), 0);
     const colorMatch = !targetColor || color === targetColor;
     const categoryMatch = !foundCategory || category.includes(foundCategory);
     const budgetMatch = budget == null || Number(product.price) <= budget;
-    let score = (colorMatch ? 0.55 : 0) + (categoryMatch ? 0.4 : 0) + (budgetMatch ? 0.05 : 0);
-    tokens.forEach(token => { if (haystack.includes(token)) score += token.length > 4 ? 0.02 : 0.01; });
+    const score = (colorMatch ? 0.55 : 0) + (categoryMatch ? 0.4 : 0) + (budgetMatch ? 0.05 : 0) + tokenHits * 0.03;
     return {
       ...product,
       score: Math.min(1, score),
       hybridScore: Math.min(1, score),
       matchScore: Math.round(Math.min(1, score) * 100),
+      tokenHits,
       reasons: [
         colorMatch && foundColor ? "Exact colour match" : null,
         categoryMatch && foundCategory ? "Exact category match" : null,
-        "Real repository catalogue match"
+        budget != null && budgetMatch ? "Within budget" : null,
+        tokenHits ? "Catalogue text match" : null
       ].filter(Boolean)
     };
   });
 
+  const constrained = foundColor || foundCategory || budget != null;
   const strict = scored.filter(product =>
     (!targetColor || String(product.color || "").toLowerCase() === targetColor) &&
     (!foundCategory || String(product.category || "").toLowerCase().includes(foundCategory)) &&
     (budget == null || Number(product.price) <= budget)
   );
-  if (strict.length) return strict.sort((a,b) => b.score - a.score).slice(0, limit);
-  const constraintMatches = scored.filter(product =>
-    (!targetColor || String(product.color || "").toLowerCase() === targetColor) &&
-    (!foundCategory || String(product.category || "").toLowerCase().includes(foundCategory))
-  );
-  return (constraintMatches.length ? constraintMatches : scored)
+
+  if (constrained) {
+    // Explicit constraints are never silently relaxed.
+    return strict.sort((a,b) => b.score - a.score).slice(0, limit);
+  }
+
+  // A free-form query must actually match catalogue text; arbitrary words
+  // should not produce unrelated products just because they are in the catalogue.
+  return scored
+    .filter(product => product.tokenHits > 0)
     .sort((a,b) => b.score - a.score)
     .slice(0, limit);
 }
