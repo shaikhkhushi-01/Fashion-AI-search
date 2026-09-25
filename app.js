@@ -398,6 +398,14 @@ function fashionSvgData(product, model = false) {
   };
   const fill = colors[colorName] || "#777b82";
   const bg = "#f5f1e9";
+  const descriptor = [product?.name, product?.description, product?.style, product?.styles, product?.tags, product?.fit]
+    .flat().filter(Boolean).join(" ").toLowerCase();
+  const variant = /oversized|oversize|boxy|loose/.test(descriptor) ? "oversized"
+    : /relaxed/.test(descriptor) ? "relaxed"
+    : /slim|fitted|tailored/.test(descriptor) ? "slim"
+    : /cropped|crop/.test(descriptor) ? "cropped"
+    : /polo/.test(descriptor) ? "polo"
+    : /button|oxford/.test(descriptor) ? "buttondown" : "regular";
   const safe = (v) => String(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
   let garment = "";
   if (["dress","dresses"].includes(category)) {
@@ -413,7 +421,16 @@ function fashionSvgData(product, model = false) {
   } else if (["sneaker","sneakers"].includes(category)) {
     garment = `<path d="M150 430 Q205 410 250 465 L315 520 Q345 545 350 585 H145 Q125 555 150 430 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/><path d="M175 535 H320" stroke="#fff" stroke-opacity=".65" stroke-width="10"/><path d="M205 455 L245 515" stroke="#fff" stroke-opacity=".45" stroke-width="6"/>`;
   } else {
-    garment = `<path d="M205 185 L235 215 L250 285 L265 215 L295 185 L350 245 L315 300 L300 610 H200 L185 300 L150 245 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/><path d="M220 220 Q250 245 280 220" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="5"/>`;
+    const shirt = {
+      regular: '<path d="M205 185 L235 215 L250 285 L265 215 L295 185 L350 245 L315 300 L300 610 H200 L185 300 L150 245 Z" fill="' + fill + '" stroke="#24242a" stroke-width="6"/><path d="M220 220 Q250 245 280 220" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="5"/>',
+      relaxed: '<path d="M198 185 L232 212 L250 285 L268 212 L302 185 L365 248 L325 315 L315 625 H185 L175 315 L135 248 Z" fill="' + fill + '" stroke="#24242a" stroke-width="6"/><path d="M218 220 Q250 250 282 220" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="5"/>',
+      oversized: '<path d="M190 175 L230 208 L250 285 L270 208 L310 175 L385 250 L335 335 L330 635 H170 L165 335 L115 250 Z" fill="' + fill + '" stroke="#24242a" stroke-width="6"/><path d="M215 215 Q250 250 285 215" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="5"/>',
+      slim: '<path d="M220 190 L238 215 L250 285 L262 215 L280 190 L325 245 L295 295 L285 610 H215 L205 295 L175 245 Z" fill="' + fill + '" stroke="#24242a" stroke-width="6"/><path d="M228 220 Q250 238 272 220" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="5"/>',
+      cropped: '<path d="M210 190 L238 215 L250 280 L262 215 L290 190 L345 245 L312 295 L300 455 H200 L188 295 L155 245 Z" fill="' + fill + '" stroke="#24242a" stroke-width="6"/><path d="M225 220 Q250 242 275 220" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="5"/>',
+      polo: '<path d="M205 185 L235 215 L250 285 L265 215 L295 185 L350 245 L315 300 L300 610 H200 L185 300 L150 245 Z" fill="' + fill + '" stroke="#24242a" stroke-width="6"/><path d="M230 205 L250 250 L270 205 L262 285 L250 300 L238 285 Z" fill="#f5f1e9" stroke="#24242a" stroke-width="4"/>',
+      buttondown: '<path d="M205 185 L235 215 L250 285 L265 215 L295 185 L350 245 L315 300 L300 610 H200 L185 300 L150 245 Z" fill="' + fill + '" stroke="#24242a" stroke-width="6"/><path d="M250 210 V610" stroke="#fff" stroke-opacity=".45" stroke-width="4"/><circle cx="250" cy="300" r="4" fill="#fff"/><circle cx="250" cy="355" r="4" fill="#fff"/><circle cx="250" cy="410" r="4" fill="#fff"/>'
+    };
+    garment = shirt[variant] || shirt.regular;
   }
   const person = model ? `<circle cx="250" cy="105" r="48" fill="#d8a27c" stroke="#24242a" stroke-width="5"/><path d="M205 105 Q250 45 295 105" fill="#24242a"/>` : "";
   const shadow = model ? "" : '<ellipse cx="250" cy="650" rx="135" ry="20" fill="#000" opacity=".08"/>';
