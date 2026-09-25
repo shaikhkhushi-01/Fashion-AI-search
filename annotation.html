@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fashion AI — Human Evaluation</title>
+<style>
+:root{--bg:#f5f3ef;--ink:#181818;--muted:#716c64;--line:#e3ded6;--card:#fff;--dark:#171717}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.6 Arial,sans-serif}.wrap{width:min(1120px,calc(100% - 36px));margin:auto}
+header{position:sticky;top:0;background:#f5f3efeF;border-bottom:1px solid var(--line);backdrop-filter:blur(12px);z-index:3}.nav{height:68px;display:flex;justify-content:space-between;align-items:center}.nav a{color:inherit;text-decoration:none;font-weight:700}.nav small{display:block;color:var(--muted);font-size:9px;letter-spacing:.15em}
+main{padding:54px 0}.eyebrow{font-size:10px;letter-spacing:.18em;color:#8c867d;font-weight:800;text-transform:uppercase}h1{font:600 clamp(42px,7vw,76px)/.95 Georgia,serif;letter-spacing:-.04em;margin:10px 0 18px}.lead{color:var(--muted);max-width:760px}.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:26px 0}.bar button,.bar select{border:1px solid var(--line);background:#fff;border-radius:999px;padding:10px 14px;cursor:pointer}.bar button.primary{background:var(--dark);color:#fff}.progress{margin-left:auto;color:var(--muted);font-size:12px}
+.task{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:24px;margin-top:18px}.query{font:600 25px Georgia,serif;margin-bottom:20px}.candidates{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.candidate{border:1px solid var(--line);border-radius:16px;padding:12px;background:#fff}.candidate img{width:100%;aspect-ratio:1/1;object-fit:contain;background:#f7f5f1;border-radius:11px}.candidate strong{display:block;font-size:12px;margin-top:8px}.candidate small{display:block;color:var(--muted);font-size:10px}.labels{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:10px}.labels button{border:1px solid var(--line);background:#faf9f6;border-radius:9px;padding:7px;font-size:10px;cursor:pointer}.candidate[data-label="0"] .labels button:nth-child(1),.candidate[data-label="1"] .labels button:nth-child(2),.candidate[data-label="2"] .labels button:nth-child(3),.candidate[data-label="3"] .labels button:nth-child(4){background:#171717;color:#fff}
+.note{margin-top:16px;color:var(--muted);font-size:11px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:22px}.stat{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px}.stat b{font-size:24px;display:block}.danger{color:#9a3f34}
+@media(max-width:850px){.candidates{grid-template-columns:repeat(2,1fr)}.labels{grid-template-columns:repeat(2,1fr)}.progress{width:100%;margin-left:0}.stats{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="wrap nav"><a href="./research.html">FASHION AI<small>Research</small></a><a href="./index.html">← Product</a></div></header>
+<main class="wrap">
+<p class="eyebrow">Human Relevance Lab</p>
+<h1>Turn retrieval into<br>human evidence.</h1>
+<p class="lead">This annotation studio creates a reproducible relevance dataset instead of inventing labels. A human annotator scores candidate products for each query. Labels stay in this browser until exported.</p>
+<div class="bar">
+<button id="prev">← Previous</button><button id="next" class="primary">Save & Next →</button>
+<button id="export">Export JSON</button><button id="reset">Reset</button>
+<span id="progress" class="progress"></span>
+</div>
+<div id="task"></div>
+<div class="stats"><div class="stat"><b id="labelCount">0</b>labelled pairs</div><div class="stat"><b id="queryCount">0</b>queries completed</div><div class="stat"><b>0</b><span class="danger">fabricated labels</span></div></div>
+<p class="note">Protocol: 0 = irrelevant, 1 = partially relevant, 2 = highly relevant, 3 = exact match. For a publishable evaluation, use at least two independent annotators, measure agreement (e.g. Cohen's κ), adjudicate disagreements, then freeze a held-out test split.</p>
+</main>
+<script type="module">
+const tasks = await fetch("./data/human_eval_tasks.json").then(r=>r.json());
+const catalogue = await fetch("./data/products.json?v=408").then(r=>r.json());
+const state = JSON.parse(localStorage.getItem("fashionAIHumanEval") || "{}");
+state.labels = state.labels || {};
+state.index = Number(state.index || 0);
+const norm=s=>String(s||"").toLowerCase();
+const text=p=>[p.name,p.category,p.color,p.gender,p.material,p.style,p.occasion,(p.tags||[]).join(" "),p.description].join(" ").toLowerCase();
+function score(p,q){const words=norm(q).split(/\s+/).filter(w=>w.length>2);let s=0;const h=text(p);for(const w of words)if(h.includes(w))s++;if(norm(p.color) && norm(q).includes(norm(p.color)))s+=3;if(norm(p.category) && norm(q).includes(norm(p.category).replace(/s$/,"")))s+=3;return s}
+function svg(p){const c=norm(p.color);const palette={black:"#1d1d1d",white:"#f7f7f5",cream:"#e8ddc7",blue:"#58749b",grey:"#96918a",red:"#a64d4a",green:"#657b65",beige:"#cbb894",brown:"#80624d"};const fill=palette[c]||"#999";return "data:image/svg+xml;charset=UTF-8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320"><rect width="320" height="320" fill="#f5f3ef"/><circle cx="160" cy="72" r="30" fill="#ead8ca"/><path d="M110 120h100l24 82-42 8v70h-64v-70l-42-8z" fill="'+fill+'"/><path d="M110 120l-45 42 20 28 30-25M210 120l45 42-20 28-30-25" fill="'+fill+'"/></svg>')}
+function candidates(q){return catalogue.map((p,i)=>({p,i,s:score(p,q)})).sort((a,b)=>b.s-a.s||a.i-b.i).slice(0,5)}
+function render(){const q=tasks[state.index];const cs=candidates(q);document.getElementById("progress").textContent="Query "+(state.index+1)+" / "+tasks.length;document.getElementById("task").innerHTML='<div class="task"><div class="query">“'+q+'”</div><div class="candidates">'+cs.map((x,j)=>{const key=state.index+":"+x.p.id;const label=state.labels[key];return '<div class="candidate" data-label="'+(label??"")+'"><img src="'+svg(x.p)+'" alt=""><strong>'+x.p.name+'</strong><small>'+x.p.color+" · "+x.p.category+" · ₹"+x.p.price+'</small><div class="labels">'+[0,1,2,3].map(v=>'<button data-key="'+key+'" data-label="'+v+'">'+["Irrelevant","Partial","High","Exact"][v]+"</button>").join("")+'</div></div>'}).join("")+'</div></div>';document.querySelectorAll(".labels button").forEach(b=>b.onclick=()=>{state.labels[b.dataset.key]=Number(b.dataset.label);localStorage.setItem("fashionAIHumanEval",JSON.stringify(state));render();updateStats()});}
+function updateStats(){const vals=Object.values(state.labels);document.getElementById("labelCount").textContent=vals.length;document.getElementById("queryCount").textContent=new Set(Object.keys(state.labels).map(k=>k.split(":")[0])).size}
+document.getElementById("next").onclick=()=>{if(state.index<tasks.length-1)state.index++;localStorage.setItem("fashionAIHumanEval",JSON.stringify(state));render()};document.getElementById("prev").onclick=()=>{if(state.index>0)state.index--;localStorage.setItem("fashionAIHumanEval",JSON.stringify(state));render()};
+document.getElementById("reset").onclick=()=>{if(confirm("Reset all local labels?")){localStorage.removeItem("fashionAIHumanEval");location.reload()}}
+document.getElementById("export").onclick=()=>{const rows=Object.entries(state.labels).map(([key,label])=>{const [task,candidate]=key.split(":");return {query_id:Number(task),product_id:candidate,label,annotator_id:"local-human",timestamp:new Date().toISOString()}});const blob=new Blob([JSON.stringify({schema:"fashion-ai-human-relevance-v1",annotator_count:1,rows},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="human_eval_labels.json";a.click();URL.revokeObjectURL(a.href)};
+render();updateStats();
+</script>
+</body></html>
