@@ -1,5 +1,5 @@
 const API_BASE_URL = "https://fashion-ai-search-lj6s.onrender.com";
-const LOCAL_CATALOGUE_URL = "./data/products.json?v=407";
+const LOCAL_CATALOGUE_URL = "./data/products.json?v=408";
 let localCatalogueLoadPromise = null;
 
 const state = {
@@ -961,15 +961,31 @@ function renderForYou() {
   const container = $("forYouResults");
   if (!container || !state.allProducts.length) return;
 
-  const personalized = applyPersonalization([
-    ...state.allProducts
-  ]);
+  const personalized = applyPersonalization([...state.allProducts]);
 
-  const products = personalized.length
-    ? personalized.slice(0, 4)
-    : state.allProducts.slice(0, 4);
+  // Keep "For You" useful but visually diverse: do not let one learned colour
+  // (for example Blue) occupy every recommendation slot.
+  const products = [];
+  const usedCategories = new Set();
+  const usedColors = new Set();
+
+  for (const product of personalized) {
+    const category = getProductCategory(product).toLowerCase();
+    const color = getProductColor(product).toLowerCase();
+    if (products.length < 4 && !usedCategories.has(category) && !usedColors.has(color)) {
+      products.push(product);
+      usedCategories.add(category);
+      usedColors.add(color);
+    }
+  }
+
+  for (const product of personalized) {
+    if (products.length >= 4) break;
+    if (!products.includes(product)) products.push(product);
+  }
 
   container.innerHTML = products
+    .slice(0, 4)
     .map(createProductCard)
     .join("");
 }
