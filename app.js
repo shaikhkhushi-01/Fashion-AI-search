@@ -962,24 +962,27 @@ function renderForYou() {
   if (!container || !state.allProducts.length) return;
 
   const personalized = applyPersonalization([...state.allProducts]);
+  const candidatePool = [...personalized, ...state.allProducts]
+    .filter((product, index, list) => list.findIndex(item => getProductId(item) === getProductId(product)) === index);
 
-  // Keep "For You" useful but visually diverse: do not let one learned colour
-  // (for example Blue) occupy every recommendation slot.
+  // Keep "For You" useful but visually diverse: a learned preference can rank
+  // a single colour highly, but it must not fill every recommendation slot.
   const products = [];
   const usedCategories = new Set();
   const usedColors = new Set();
 
-  for (const product of personalized) {
+  for (const product of candidatePool) {
     const category = getProductCategory(product).toLowerCase();
     const color = getProductColor(product).toLowerCase();
-    if (products.length < 4 && !usedCategories.has(category) && !usedColors.has(color)) {
+    if (!usedCategories.has(category) && !usedColors.has(color)) {
       products.push(product);
       usedCategories.add(category);
       usedColors.add(color);
     }
+    if (products.length >= 4) break;
   }
 
-  for (const product of personalized) {
+  for (const product of candidatePool) {
     if (products.length >= 4) break;
     if (!products.includes(product)) products.push(product);
   }
