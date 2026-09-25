@@ -506,3 +506,29 @@ https://shaikhkhushi-01.github.io/Fashion-AI-search/
 ## Backend API
 
 https://fashion-ai-search-lj6s.onrender.com
+
+## Research Portfolio
+
+### Why this project is research-oriented
+
+This project is structured as an experimental AI retrieval system rather than only a frontend demo. Its research artifact separates the problem into:
+
+1. **Question** — whether multiple retrieval signals can improve natural-language fashion discovery.
+2. **Methods** — semantic, lexical, attribute-aware, constraint-aware and hybrid retrieval.
+3. **Baselines** — keyword, category, price, popularity, lexical, attribute and semantic systems.
+4. **Evaluation** — Precision@5, Recall@5, F1@5, MRR, NDCG@5 and MAP.
+5. **Ablation** — controlled comparison of retrieval-signal combinations and 28 weight configurations.
+6. **Statistics** — paired comparisons with bootstrap confidence intervals.
+7. **Error analysis** — complete misses, late relevant results, partial recall and recovery/regression cases.
+8. **Robustness** — edge-case query suite.
+9. **Reproducibility** — deterministic dataset generation, dataset hashing, experiment fingerprints and runnable test scripts.
+
+### Research honesty
+
+The current benchmark is a controlled 407-product research artifact with 250 evaluation queries. It is useful for reproducible engineering experiments, but it is **not** evidence of broad real-world generalization. The latest recorded results show that hybrid retrieval improves NDCG@5 over semantic retrieval while remaining below strong lexical/category baselines on aggregate metrics. This limitation is intentionally documented.
+
+### Research roadmap
+
+Future experiments can extend the work with human relevance labels, a larger multi-brand catalogue, vision-language retrieval, image/text cross-modal evaluation, preference-labelled learning-to-rank, and statistically tested online evaluation.
+
+**Research dossier:** [research.html](./research.html)
