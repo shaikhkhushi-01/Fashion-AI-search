@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Research documentation for Fashion AI Discovery — hybrid fashion retrieval, ranking, evaluation and reproducibility.">
+  <meta name="theme-color" content="#f5f3ef">
+  <title>Fashion AI — Research</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#f5f3ef;--surface:#fff;--ink:#181818;--muted:#716c64;--line:#e4dfd7;--dark:#171717}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:"DM Sans",Arial,sans-serif;line-height:1.65}
+    a{color:inherit}.wrap{width:min(1160px,calc(100% - 40px));margin:auto}
+    header{position:sticky;top:0;z-index:5;background:rgba(245,243,239,.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+    .nav{min-height:72px;display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{text-decoration:none;font-weight:800}.brand small{display:block;color:var(--muted);font-size:9px;letter-spacing:.16em;text-transform:uppercase}
+    .nav a{font-size:12px;text-decoration:none;color:#625e57}.nav a:hover{color:#111}
+    .hero{padding:92px 0 70px;border-bottom:1px solid var(--line);background:radial-gradient(circle at 84% 20%,rgba(197,177,146,.22),transparent 30%)}
+    .eyebrow{margin:0 0 14px;color:#8a857d;font-size:10px;font-weight:800;letter-spacing:.2em;text-transform:uppercase}
+    h1,h2{font-family:"Playfair Display",Georgia,serif;font-weight:600;letter-spacing:-.045em}h1{font-size:clamp(52px,8vw,96px);line-height:.94;margin:0;max-width:900px}h1 em{color:#8b867e}.lead{max-width:760px;color:var(--muted);font-size:16px;margin:28px 0 0}
+    .pillrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:28px}.pill{padding:8px 11px;border:1px solid #d8d2c9;border-radius:999px;background:#fff;font-size:10px;color:#5f5a53}
+    main{padding:70px 0}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:28px 0 58px}.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:24px}.card h3{margin:0 0 8px;font-size:15px}.card p{margin:0;color:var(--muted);font-size:12px}.number{font-size:10px;color:#9a948b;letter-spacing:.16em;font-weight:800}
+    section{scroll-margin-top:95px;margin-bottom:76px}h2{font-size:clamp(34px,5vw,54px);margin:0 0 14px}section>p{max-width:780px;color:var(--muted);font-size:13px}
+    .pipeline{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin-top:28px}.step{padding:16px 10px;border:1px solid var(--line);border-radius:14px;background:#fff;font-size:10px;text-align:center}.step b{display:block;margin-bottom:5px;font-size:11px}
+    .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:18px;background:#fff;margin-top:24px}.table-wrap table{width:100%;border-collapse:collapse;min-width:700px;font-size:11px}.table-wrap th,.table-wrap td{text-align:left;padding:12px 14px;border-bottom:1px solid #eee9e1}.table-wrap th{font-size:10px;text-transform:uppercase;letter-spacing:.08em;background:#faf9f6}.table-wrap tr:last-child td{border-bottom:0}
+    .callout{padding:22px 24px;border-radius:18px;background:var(--dark);color:#fff;margin-top:22px}.callout p{margin:0;color:#c8c3bb;font-size:12px}.callout strong{display:block;margin-bottom:6px}
+    .twocol{display:grid;grid-template-columns:1fr 1fr;gap:18px}.list{margin:0;padding-left:18px;color:var(--muted);font-size:12px}.list li{margin:8px 0}
+    footer{padding:40px 0 70px;border-top:1px solid var(--line);color:#77716a;font-size:11px}
+    @media(max-width:800px){.grid,.twocol{grid-template-columns:1fr}.pipeline{grid-template-columns:repeat(2,1fr)}.hero{padding-top:65px}}
+  </style>
+</head>
+<body>
+<header><div class="wrap nav"><a class="brand" href="./index.html">FASHION AI<small>Intelligent Discovery</small></a><a href="./index.html">← Back to product</a></div></header>
+
+<div class="hero"><div class="wrap">
+  <p class="eyebrow">Research & Engineering Dossier</p>
+  <h1>From fashion search<br><em>to a measurable AI system.</em></h1>
+  <p class="lead">Fashion AI Discovery is a research-oriented retrieval system built to study how semantic understanding, lexical relevance, explicit attributes, constraints and ranking signals interact in natural-language fashion search.</p>
+  <div class="pillrow"><span class="pill">Hybrid Retrieval</span><span class="pill">Learning-to-Rank</span><span class="pill">Explainability</span><span class="pill">Robustness</span><span class="pill">Reproducibility</span></div>
+</div></div>
+
+<main class="wrap">
+<section id="question">
+  <p class="eyebrow">01 / Research question</p><h2>Does combining retrieval signals improve fashion discovery?</h2>
+  <p>The project tests whether a hybrid pipeline can retrieve and rank relevant fashion products more effectively than individual retrieval strategies. The important engineering principle is measurement: the system documents both improvements and cases where simpler baselines remain stronger.</p>
+  <div class="callout"><strong>Research hypothesis</strong><p>Combining semantic similarity with lexical relevance, explicit attribute matching, budget constraints and ranking features should provide complementary retrieval signals for natural-language fashion queries.</p></div>
+</section>
+
+<section id="architecture">
+  <p class="eyebrow">02 / Architecture</p><h2>A layered retrieval pipeline.</h2>
+  <p>Query understanding extracts structured intent. Candidate generation then combines semantic and lexical evidence, applies hard constraints, fuses candidates and reranks them. Personalization and explanations are exposed as downstream signals rather than hidden magic.</p>
+  <div class="pipeline">
+    <div class="step"><b>01</b>Query<br>Understanding</div><div class="step"><b>02</b>Semantic<br>Retrieval</div><div class="step"><b>03</b>Lexical<br>Retrieval</div><div class="step"><b>04</b>Attributes &<br>Constraints</div><div class="step"><b>05</b>Candidate<br>Fusion</div><div class="step"><b>06</b>Learning<br>to Rank</div><div class="step"><b>07</b>Personalized<br>Ranking</div><div class="step"><b>08</b>Explainability &<br>Evaluation</div>
+  </div>
+</section>
+
+<section id="evaluation">
+  <p class="eyebrow">03 / Evaluation</p><h2>Results are benchmarked, not assumed.</h2>
+  <p>The repository contains a deterministic benchmark artifact with 250 evaluation queries, a 200-query validation split and a 50-query held-out test split. Evaluation uses Precision@5, Recall@5, F1@5, MRR, NDCG@5 and MAP, alongside bootstrap confidence intervals.</p>
+  <div class="table-wrap"><table><thead><tr><th>System</th><th>Precision@5</th><th>MRR</th><th>NDCG@5</th><th>MAP</th></tr></thead><tbody>
+    <tr><td>Keyword</td><td>0.9128</td><td>0.9531</td><td>0.9137</td><td>0.7314</td></tr>
+    <tr><td>Category</td><td>0.9504</td><td>0.9672</td><td>0.9548</td><td>0.7518</td></tr>
+    <tr><td>Lexical</td><td>0.9104</td><td>1.0000</td><td>0.9728</td><td>0.7416</td></tr>
+    <tr><td>Semantic</td><td>0.7064</td><td>0.8723</td><td>0.7947</td><td>0.5569</td></tr>
+    <tr><td>Hybrid</td><td>0.7384</td><td>0.8540</td><td>0.8710</td><td>0.5508</td></tr>
+  </tbody></table></div>
+  <div class="callout"><strong>Interpretation</strong><p>On the current curated benchmark, hybrid retrieval improves NDCG@5 over semantic retrieval, but lexical and category baselines remain stronger on aggregate metrics. The project treats this as a research finding and limitation rather than claiming universal superiority.</p></div>
+</section>
+
+<section id="ablation">
+  <p class="eyebrow">04 / Ablation & statistics</p><h2>What actually contributes?</h2>
+  <p>Twenty-eight weight configurations were evaluated using a validation/test split. The repository also contains paired comparisons and 2,000 bootstrap iterations for confidence intervals.</p>
+  <div class="twocol">
+    <div class="card"><span class="number">ABLATION</span><h3>Signal contribution</h3><p>Semantic-only, semantic+attributes, lexical-only, lexical+attributes and full-hybrid configurations are compared to expose whether added complexity produces measurable gains.</p></div>
+    <div class="card"><span class="number">GENERALIZATION</span><h3>Held-out evaluation</h3><p>Validation tuning is not promoted automatically. A tuned configuration is retained only when the held-out test evidence supports generalization.</p></div>
+  </div>
+</section>
+
+<section id="robustness">
+  <p class="eyebrow">05 / Robustness & error analysis</p><h2>Failure is part of the artifact.</h2>
+  <div class="twocol">
+    <div class="card"><h3>Robustness suite</h3><ul class="list"><li>Empty and whitespace queries</li><li>Case and spacing variations</li><li>Budget constraints</li><li>Very short and repeated-character queries</li><li>Special characters and unrelated queries</li></ul></div>
+    <div class="card"><h3>Error taxonomy</h3><ul class="list"><li>Complete miss</li><li>Late relevant result</li><li>Partial recall</li><li>Attribute mismatch</li><li>Baseline recovery/regression analysis</li></ul></div>
+  </div>
+</section>
+
+<section id="reproducibility">
+  <p class="eyebrow">06 / Reproducibility</p><h2>A project another engineer can inspect.</h2>
+  <p>Research utilities in <code>backend/services/</code> cover dataset quality, deterministic splits, evaluation, ablation, statistics, error analysis, robustness, research reporting and project manifests. Test scripts are exposed through <code>backend/package.json</code>.</p>
+  <div class="grid">
+    <div class="card"><span class="number">DATA</span><h3>Versioned benchmark</h3><p>407-product catalogue with deterministic benchmark generation and dataset hashing.</p></div>
+    <div class="card"><span class="number">METHOD</span><h3>Explicit protocol</h3><p>Fixed metrics, K=5 cutoff, validation/test separation and documented baselines.</p></div>
+    <div class="card"><span class="number">CODE</span><h3>Runnable experiments</h3><p>Evaluation, ablation, robustness and reproducibility scripts are included in the repository.</p></div>
+  </div>
+</section>
+
+<section id="limitations">
+  <p class="eyebrow">07 / Limitations & next research</p><h2>What should be investigated next?</h2>
+  <ul class="list">
+    <li>The current catalogue and relevance benchmark are controlled research artifacts, not a representative production-scale fashion dataset.</li>
+    <li>The benchmark is not human-labelled at large scale; broader external evaluation is needed before making real-world generalization claims.</li>
+    <li>Visual previews are deterministic local fashion illustrations, not product-specific photographs or a trained image-generation model.</li>
+    <li>Future work: human relevance annotation, larger multi-brand catalogues, CLIP-style vision-language retrieval, cross-modal query experiments, learning-to-rank with real preference labels, and significance-tested online evaluation.</li>
+  </ul>
+</section>
+
+<section>
+  <p class="eyebrow">08 / Portfolio signal</p><h2>Engineering + research discipline.</h2>
+  <p>The goal of this project is not to make a UI that merely looks intelligent. It is to make the intelligence inspectable: define a question, implement competing methods, measure them, analyze failures, document limitations and keep the experiment reproducible.</p>
+</section>
+</main>
+
+<footer><div class="wrap">Fashion AI Discovery · Research dossier · See <a href="./README.md">README</a> and the <a href="https://github.com/shaikhkhushi-01/Fashion-AI-search">repository</a> for source and experiments.</div></footer>
+</body>
+</html>
