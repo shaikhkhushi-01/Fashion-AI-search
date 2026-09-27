@@ -541,3 +541,11 @@ The repository now includes dedicated research tooling:
 - **AGMR research prototype:** research-method.js — an Attribute-Gated Multimodal Ranker formulation combining lexical, semantic, attribute, budget, visual, style and occasion features. It is presented as a project hypothesis/prototype, not as a proven novel research result.
 - **Research honesty:** the project does not claim that human-labelled validation, large-scale real-world data, or a novel model have already been demonstrated. Those claims require new evidence.
 
+
+
+## Research Lab / Honest Status
+
+- Human relevance: `annotation.html` provides a 50-query annotation protocol with 0–3 relevance labels. `research-human-eval.js` provides Precision@5, NDCG@5, MRR and Cohen's kappa utilities. The committed label file remains empty until human annotators actually label the candidates.
+- AGMR: `research-method.js` is a trainable Attribute-Gated Multimodal Ranker prototype. It now accepts the four-level human relevance scale by normalizing 0–3 labels to 0–1 during training. This is a project hypothesis/prototype, not a claim of published algorithmic novelty.
+- Multimodal: `multimodal.html` runs browser-side CLIP inference for text/image retrieval experiments. The current 407-item catalogue uses deterministic local illustrations, so visual results should not be presented as product-photo retrieval.
+- Large-scale data: `data/dataset_manifest.json` records DeepFashion2 as an optional external benchmark and preserves provenance. The repository does not pretend that an external dataset has been downloaded or evaluated until that experiment is actually run.
