@@ -1,0 +1,20 @@
+{
+  "schema": "fashion-ai-dataset-manifest-v1",
+  "local_catalogue": {
+    "name": "Fashion AI Discovery Controlled Catalogue",
+    "items": 407,
+    "role": "deterministic engineering benchmark and demo catalogue"
+  },
+  "external_research_dataset": {
+    "name": "DeepFashion2",
+    "role": "optional large-scale vision/retrieval benchmark",
+    "reported_images": 491895,
+    "reported_clothing_items": 800732,
+    "reported_commercial_consumer_pairs": 873234,
+    "categories": 13,
+    "access": "download separately from the official project distribution; do not commit the dataset into this repository",
+    "official_project": "https://github.com/switchablenorms/DeepFashion2",
+    "citation": "Yuying Ge, Ruimao Zhang, Lingyun Wu, Xiaogang Wang, Xiaoou Tang, Ping Luo. A Versatile Benchmark for Detection, Pose Estimation, Segmentation and Re-Identification of Clothing Images. CVPR 2019."
+  },
+  "research_rule": "External dataset statistics are provenance metadata only until the dataset is actually downloaded, indexed and evaluated."
+}
