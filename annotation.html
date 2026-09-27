@@ -18,10 +18,10 @@ main{padding:54px 0}.eyebrow{font-size:10px;letter-spacing:.18em;color:#8c867d;f
 <main class="wrap">
 <p class="eyebrow">Human Relevance Lab</p>
 <h1>Turn retrieval into<br>human evidence.</h1>
-<p class="lead">This annotation studio creates a reproducible relevance dataset instead of inventing labels. A human annotator scores candidate products for each query. Labels stay in this browser until exported.</p>
+<p class="lead">This annotation studio creates a reproducible relevance dataset instead of inventing labels. A human annotator scores candidate products for each query. Labels stay in this browser until exported. Select an annotator ID so independent annotations can be kept separate for agreement analysis.</p>
 <div class="bar">
 <button id="prev">← Previous</button><button id="next" class="primary">Save & Next →</button>
-<button id="export">Export JSON</button><button id="reset">Reset</button>
+<label style="display:flex;align-items:center;gap:8px;font-size:11px;color:#716c64">Annotator <select id="annotator"><option value="A">A</option><option value="B">B</option></select></label><button id="export">Export JSON</button><button id="reset">Reset</button>
 <span id="progress" class="progress"></span>
 </div>
 <div id="task"></div>
@@ -31,6 +31,9 @@ main{padding:54px 0}.eyebrow{font-size:10px;letter-spacing:.18em;color:#8c867d;f
 <script type="module">
 const tasks = await fetch("./data/human_eval_tasks.json").then(r=>r.json());
 const catalogue = await fetch("./data/products.json?v=408").then(r=>r.json());
+const annotatorSelect = document.getElementById("annotator");
+annotatorSelect.value = localStorage.getItem(ANNOTATOR_KEY) || "A";
+annotatorSelect.onchange = () => { localStorage.setItem(ANNOTATOR_KEY, annotatorSelect.value); location.reload(); };
 const state = JSON.parse(localStorage.getItem("fashionAIHumanEval") || "{}");
 state.labels = state.labels || {};
 state.index = Number(state.index || 0);
