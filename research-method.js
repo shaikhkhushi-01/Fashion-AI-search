@@ -23,7 +23,7 @@ export function trainAGMR(rows, options = {}) {
   const l2 = Number(options.l2 || 0.001);
   const weights = { bias: -1, ...Object.fromEntries(AGMR_FEATURES.map(k => [k, 0])) };
 
-  const samples = (rows || []).filter(r => r && (r.label === 0 || r.label === 1));
+  const samples = (rows || []).filter(r => r && Number.isFinite(Number(r.label)) && Number(r.label) >= 0 && Number(r.label) <= 3).map(r => ({ ...r, label: Number(r.label) / 3 }));
   if (!samples.length) return { weights, samples: 0, trained: false };
 
   for (let epoch = 0; epoch < epochs; epoch++) {
