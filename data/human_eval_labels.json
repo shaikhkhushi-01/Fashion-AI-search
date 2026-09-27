@@ -7,6 +7,17 @@
     "2": "highly_relevant",
     "3": "exact_match"
   },
-  "annotator_count": 0,
-  "rows": []
-}\n
+  "annotator_count": 2,
+  "rows": [],
+  "protocol": {
+    "annotators": [
+      "A",
+      "B"
+    ],
+    "scale": "0=irrelevant, 1=partially relevant, 2=highly relevant, 3=exact match",
+    "independence": "independent labels on the same frozen tasks",
+    "agreement": "Cohen's kappa after both annotators finish",
+    "adjudication": "only after agreement is recorded",
+    "note": "No labels are prefilled; no fabricated human evidence."
+  }
+}
