@@ -222,11 +222,19 @@ function productMatchesText(product, parsed) {
   return parsed.text.split(/\s+/).some(word => word.length > 2 && !stop.has(word) && haystack.includes(word));
 }
 
+function canonicalLocalCategory(value) {
+  const v = String(value || "").toLowerCase().trim();
+  for (const [canonical, aliases] of Object.entries(getCategoryAliases())) {
+    if (aliases.includes(v)) return canonical;
+  }
+  return v;
+}
+
 function scoreLocalProduct(product, parsed) {
   let score = 0;
-  const category = getProductCategory(product).toLowerCase();
-  const color = getProductColor(product).toLowerCase();
-  if (parsed.category && (getCategoryAliases()[parsed.category] || []).some(a => category === a)) score += 100;
+  const category = canonicalLocalCategory(getProductCategory(product));
+  const color = getProductColor(product).toLowerCase().trim();
+  if (parsed.category && category === parsed.category) score += 100;
   if (parsed.color && color === parsed.color) score += 100;
   if (productMatchesText(product, parsed)) score += 10;
   return score;
@@ -358,10 +366,7 @@ async function searchFashion(query) {
   const budget = extractLocalBudget(clean);
   const exact = state.allProducts.filter(product => {
     if (parsed.color && getProductColor(product).toLowerCase() !== parsed.color) return false;
-    if (parsed.category) {
-      const aliases = getCategoryAliases()[parsed.category] || [];
-      if (!aliases.some(a => getProductCategory(product).toLowerCase() === a)) return false;
-    }
+    if (parsed.category && canonicalLocalCategory(getProductCategory(product)) !== parsed.category) return false;
     if (budget != null && getProductPrice(product) > budget) return false;
     return true;
   });
@@ -443,7 +448,7 @@ function fashionSvgData(product, model = false) {
   } else if (["hoodie","hoodies"].includes(category)) {
     garment = `<path d="M205 215 Q250 165 295 215 L350 255 L315 330 L295 305 V610 H205 V305 L185 330 L150 255 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/><path d="M220 215 Q250 250 280 215" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="5"/><path d="M225 425 H275" stroke="#fff" stroke-opacity=".25" stroke-width="10"/>`;
   } else if (["sneaker","sneakers","shoe","shoes"].includes(category)) {
-    garment = `<path d="M150 430 Q205 410 250 465 L315 520 Q345 545 350 585 H145 Q125 555 150 430 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/><path d="M175 535 H320" stroke="#fff" stroke-opacity=".65" stroke-width="10"/><path d="M205 455 L245 515" stroke="#fff" stroke-opacity=".45" stroke-width="6"/>`;
+    garment = `<g><path d="M120 500 C155 492 190 470 214 438 L247 392 C257 378 273 376 286 388 L320 421 L382 467 C414 491 431 514 431 536 C431 554 417 566 394 568 H118 C94 568 81 553 86 533 C89 518 101 507 120 500 Z" fill="${fill}" stroke="#24242a" stroke-width="7" stroke-linejoin="round"/><path d="M214 438 L247 392 C257 378 273 376 286 388 L320 421 L295 446 L265 426 L238 458 Z" fill="#f7f4ee" stroke="#24242a" stroke-width="5"/><path d="M241 458 L265 426 M265 426 L295 446 M250 445 L282 461 M263 424 L293 440" fill="none" stroke="#24242a" stroke-width="4" stroke-linecap="round"/><path d="M88 529 C150 543 220 546 290 540 C350 535 398 535 430 536 L430 548 C424 560 410 568 394 568 H118 C94 568 81 553 86 533 Z" fill="#f7f4ee" stroke="#24242a" stroke-width="5"/><path d="M105 546 H418" stroke="#24242a" stroke-width="5"/></g>`;
   } else {
     const shirt = {
       regular: '<path d="M205 185 L235 215 L250 285 L265 215 L295 185 L350 245 L315 300 L300 610 H200 L185 300 L150 245 Z" fill="' + fill + '" stroke="#24242a" stroke-width="6"/><path d="M220 220 Q250 245 280 220" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="5"/>',
