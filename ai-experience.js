@@ -78,7 +78,14 @@ function aiFashionSvgData(product, model = false) {
   } else if (["hoodie","hoodies"].includes(category)) {
     garment=`<path d="M205 215 Q250 165 295 215 L350 255 L315 330 L295 305 V610 H205 V305 L185 330 L150 255 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/>`;
   } else if (["sneaker","sneakers"].includes(category)) {
-    garment=`<g><path d="M145 500 Q175 470 210 455 L260 405 Q275 392 292 408 L322 442 L365 492 Q382 512 375 548 L365 575 H142 Q125 555 145 500 Z" fill="${fill}" stroke="#24242a" stroke-width="7" stroke-linejoin="round"/><path d="M260 405 L292 408 L322 442 L300 468 L270 450 L238 478 L210 455 Z" fill="#f5f1e9" opacity=".72" stroke="#24242a" stroke-width="5"/><path d="M210 455 L238 478 M238 478 L270 450 M270 450 L300 468" fill="none" stroke="#24242a" stroke-width="5"/><path d="M145 548 H365" stroke="#fff" stroke-opacity=".75" stroke-width="12"/><path d="M155 565 Q250 578 365 565" fill="none" stroke="#24242a" stroke-width="6"/><path d="M185 505 L220 520 M210 490 L245 510 M285 485 L320 510" stroke="#fff" stroke-opacity=".5" stroke-width="5"/></g>`;
+    garment=`<g>
+      <path d="M105 500 C145 485 185 458 215 420 L250 365 C263 345 282 340 300 355 L337 392 L385 440 C410 465 430 495 430 525 C430 552 412 568 382 570 H125 C98 570 82 548 90 525 C93 514 98 506 105 500 Z" fill="${fill}" stroke="#24242a" stroke-width="7" stroke-linejoin="round"/>
+      <path d="M215 420 L250 365 C263 345 282 340 300 355 L337 392 L305 430 L270 408 L238 450 Z" fill="#f7f4ee" stroke="#24242a" stroke-width="5"/>
+      <path d="M238 450 L270 408 M270 408 L305 430 M255 425 L290 445 M270 405 L305 425" fill="none" stroke="#24242a" stroke-width="5" stroke-linecap="round"/>
+      <path d="M105 500 C160 515 235 522 305 515 C355 510 395 510 430 525 L430 545 C420 562 400 570 382 570 H125 C98 570 82 548 90 525 Z" fill="#f7f4ee" stroke="#24242a" stroke-width="6"/>
+      <path d="M105 540 H418" stroke="#24242a" stroke-width="5"/>
+      <path d="M150 485 Q190 500 220 492 M330 465 L370 500" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="7"/>
+    </g>`;
   } else {
     const shapes = {
       regular:`<path d="M205 185 L235 215 L250 285 L265 215 L295 185 L350 245 L315 300 L300 610 H200 L185 300 L150 245 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/><path d="M220 220 Q250 245 280 220" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="5"/>`,
