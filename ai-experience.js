@@ -78,14 +78,7 @@ function aiFashionSvgData(product, model = false) {
   } else if (["hoodie","hoodies"].includes(category)) {
     garment=`<path d="M205 215 Q250 165 295 215 L350 255 L315 330 L295 305 V610 H205 V305 L185 330 L150 255 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/>`;
   } else if (["sneaker","sneakers","shoe","shoes"].includes(category)) {
-    garment=`<g>
-      <path d="M105 500 C145 485 185 458 215 420 L250 365 C263 345 282 340 300 355 L337 392 L385 440 C410 465 430 495 430 525 C430 552 412 568 382 570 H125 C98 570 82 548 90 525 C93 514 98 506 105 500 Z" fill="${fill}" stroke="#24242a" stroke-width="7" stroke-linejoin="round"/>
-      <path d="M215 420 L250 365 C263 345 282 340 300 355 L337 392 L305 430 L270 408 L238 450 Z" fill="#f7f4ee" stroke="#24242a" stroke-width="5"/>
-      <path d="M238 450 L270 408 M270 408 L305 430 M255 425 L290 445 M270 405 L305 425" fill="none" stroke="#24242a" stroke-width="5" stroke-linecap="round"/>
-      <path d="M105 500 C160 515 235 522 305 515 C355 510 395 510 430 525 L430 545 C420 562 400 570 382 570 H125 C98 570 82 548 90 525 Z" fill="#f7f4ee" stroke="#24242a" stroke-width="6"/>
-      <path d="M105 540 H418" stroke="#24242a" stroke-width="5"/>
-      <path d="M150 485 Q190 500 220 492 M330 465 L370 500" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="7"/>
-    </g>`;
+    garment=`<g><path d="M120 500 C155 492 190 470 214 438 L247 392 C257 378 273 376 286 388 L320 421 L382 467 C414 491 431 514 431 536 C431 554 417 566 394 568 H118 C94 568 81 553 86 533 C89 518 101 507 120 500 Z" fill="${fill}" stroke="#24242a" stroke-width="7"/><path d="M214 438 L247 392 C257 378 273 376 286 388 L320 421 L295 446 L265 426 L238 458 Z" fill="#f7f4ee" stroke="#24242a" stroke-width="5"/><path d="M241 458 L265 426 M265 426 L295 446 M250 445 L282 461 M263 424 L293 440" fill="none" stroke="#24242a" stroke-width="4" stroke-linecap="round"/><path d="M88 529 C150 543 220 546 290 540 C350 535 398 535 430 536 L430 548 C424 560 410 568 394 568 H118 C94 568 81 553 86 533 Z" fill="#f7f4ee" stroke="#24242a" stroke-width="5"/><path d="M105 546 H418" stroke="#24242a" stroke-width="5"/></g>`;
   } else {
     const shapes = {
       regular:`<path d="M205 185 L235 215 L250 285 L265 215 L295 185 L350 245 L315 300 L300 610 H200 L185 300 L150 245 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/><path d="M220 220 Q250 245 280 220" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="5"/>`,
