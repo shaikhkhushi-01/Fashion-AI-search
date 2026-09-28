@@ -78,7 +78,7 @@ function aiFashionSvgData(product, model = false) {
   } else if (["hoodie","hoodies"].includes(category)) {
     garment=`<path d="M205 215 Q250 165 295 215 L350 255 L315 330 L295 305 V610 H205 V305 L185 330 L150 255 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/>`;
   } else if (["sneaker","sneakers"].includes(category)) {
-    garment=`<path d="M150 430 Q205 410 250 465 L315 520 Q345 545 350 585 H145 Q125 555 150 430 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/>`;
+    garment=`<g><path d="M145 500 Q175 470 210 455 L260 405 Q275 392 292 408 L322 442 L365 492 Q382 512 375 548 L365 575 H142 Q125 555 145 500 Z" fill="${fill}" stroke="#24242a" stroke-width="7" stroke-linejoin="round"/><path d="M260 405 L292 408 L322 442 L300 468 L270 450 L238 478 L210 455 Z" fill="#f5f1e9" opacity=".72" stroke="#24242a" stroke-width="5"/><path d="M210 455 L238 478 M238 478 L270 450 M270 450 L300 468" fill="none" stroke="#24242a" stroke-width="5"/><path d="M145 548 H365" stroke="#fff" stroke-opacity=".75" stroke-width="12"/><path d="M155 565 Q250 578 365 565" fill="none" stroke="#24242a" stroke-width="6"/><path d="M185 505 L220 520 M210 490 L245 510 M285 485 L320 510" stroke="#fff" stroke-opacity=".5" stroke-width="5"/></g>`;
   } else {
     const shapes = {
       regular:`<path d="M205 185 L235 215 L250 285 L265 215 L295 185 L350 245 L315 300 L300 610 H200 L185 300 L150 245 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/><path d="M220 220 Q250 245 280 220" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="5"/>`,
