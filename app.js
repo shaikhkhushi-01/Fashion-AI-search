@@ -179,7 +179,7 @@ function getCategoryAliases() {
     dress: ["dress", "dresses"],
     jeans: ["jean", "jeans"],
     trousers: ["trouser", "trousers", "pant", "pants"],
-    sneaker: ["sneaker", "sneakers", "shoe", "shoes"],
+    sneaker: ["sneaker", "sneakers", "shoe", "shoes", "footwear", "footwears"],
     jacket: ["jacket", "jackets", "blazer", "blazers"],
     hoodie: ["hoodie", "hoodies"],
     skirt: ["skirt", "skirts"]
@@ -442,7 +442,7 @@ function fashionSvgData(product, model = false) {
     garment = `<path d="M205 180 L235 210 L250 300 L265 210 L295 180 L350 245 L315 300 L300 610 H200 L185 300 L150 245 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/><path d="M235 210 L250 300 L265 210" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="5"/>`;
   } else if (["hoodie","hoodies"].includes(category)) {
     garment = `<path d="M205 215 Q250 165 295 215 L350 255 L315 330 L295 305 V610 H205 V305 L185 330 L150 255 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/><path d="M220 215 Q250 250 280 215" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="5"/><path d="M225 425 H275" stroke="#fff" stroke-opacity=".25" stroke-width="10"/>`;
-  } else if (["sneaker","sneakers"].includes(category)) {
+  } else if (["sneaker","sneakers","shoe","shoes"].includes(category)) {
     garment = `<path d="M150 430 Q205 410 250 465 L315 520 Q345 545 350 585 H145 Q125 555 150 430 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/><path d="M175 535 H320" stroke="#fff" stroke-opacity=".65" stroke-width="10"/><path d="M205 455 L245 515" stroke="#fff" stroke-opacity=".45" stroke-width="6"/>`;
   } else {
     const shirt = {
