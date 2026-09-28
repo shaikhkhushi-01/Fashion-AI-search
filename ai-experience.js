@@ -77,7 +77,7 @@ function aiFashionSvgData(product, model = false) {
     garment=`<path d="M205 180 L235 210 L250 300 L265 210 L295 180 L350 245 L315 300 L300 610 H200 L185 300 L150 245 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/>`;
   } else if (["hoodie","hoodies"].includes(category)) {
     garment=`<path d="M205 215 Q250 165 295 215 L350 255 L315 330 L295 305 V610 H205 V305 L185 330 L150 255 Z" fill="${fill}" stroke="#24242a" stroke-width="6"/>`;
-  } else if (["sneaker","sneakers"].includes(category)) {
+  } else if (["sneaker","sneakers","shoe","shoes"].includes(category)) {
     garment=`<g>
       <path d="M105 500 C145 485 185 458 215 420 L250 365 C263 345 282 340 300 355 L337 392 L385 440 C410 465 430 495 430 525 C430 552 412 568 382 570 H125 C98 570 82 548 90 525 C93 514 98 506 105 500 Z" fill="${fill}" stroke="#24242a" stroke-width="7" stroke-linejoin="round"/>
       <path d="M215 420 L250 365 C263 345 282 340 300 355 L337 392 L305 430 L270 408 L238 450 Z" fill="#f7f4ee" stroke="#24242a" stroke-width="5"/>
