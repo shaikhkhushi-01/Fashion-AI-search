@@ -1,0 +1,9 @@
+{
+  "version":"v1",
+  "status":"ready-for-human-annotation",
+  "sampling":{"targetQueries":100,"annotatorsPerPair":3,"judgmentScale":"0-4","candidatesPerQuery":10,"selection":"deterministic top-10 candidates from benchmark systems; merge by product id"},
+  "blinding":{"systemIdentityHidden":true,"productOrderRandomized":true,"annotatorIdsPseudonymous":true},
+  "privacy":{"collectNamesEmailsOrOtherPII":false},
+  "storage":{"rawFormat":"jsonl","requiredFields":["queryId","query","productId","relevance","annotatorId"]},
+  "statusFields":{"humanJudgments":"pending","agreement":"pending","aggregatedLabels":"pending"}
+}

@@ -1,0 +1,9 @@
+{
+  "benchmarkId":"fashion-ai-benchmark-v1",
+  "status":"canonical",
+  "catalogue":{"source":"repository current catalogue","version":"main-2026-09-28","expectedProducts":407},
+  "evaluation":{"expectedQueries":250,"validationQueries":200,"heldOutTestQueries":50,"k":5},
+  "labels":{"current":"synthetic-curated","humanJudgedVersion":"pending"},
+  "protocol":{"pairedQueries":true,"deterministicDatasetGeneration":true,"bootstrapIterations":2000,"confidenceLevel":0.95},
+  "policy":{"doNotMixHistorical10x41Results":true,"doNotPresentSyntheticLabelsAsHumanJudgments":true,"doNotPromoteValidationTuningWithoutHeldOutGain":true}
+}

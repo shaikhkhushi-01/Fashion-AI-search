@@ -1,0 +1,11 @@
+{
+  "benchmarkId": "fashion-ai-benchmark-v1",
+  "split": {
+    "strategy": "deterministic-order",
+    "validation": {"count": 200, "selection": "evaluationCases[0:200]"},
+    "heldOutTest": {"count": 50, "selection": "evaluationCases[200:250]"},
+    "k": 5
+  },
+  "labelStatus": "synthetic-curated",
+  "humanJudgmentsRequiredForFinalClaims": true
+}

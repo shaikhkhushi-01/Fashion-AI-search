@@ -1,0 +1,43 @@
+name: Research Validation
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/mbzuai-upgrade
+
+jobs:
+  phase4-and-human-task:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package.json
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Phase 4 final experiments
+        run: node tests/phase4-final-experiments.js
+
+      - name: Build blinded human annotation task
+        run: node tests/build-human-annotation-task.js
+
+      - name: Upload research artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: fashion-ai-research-validation
+          path: |
+            evaluation-results/phase4-final-experiments.json
+            research/human-evaluation/annotation-task-v1.json
+            research/human-evaluation/annotation-task-v1.jsonl

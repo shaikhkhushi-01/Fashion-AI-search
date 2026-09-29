@@ -549,3 +549,18 @@ The repository now includes dedicated research tooling:
 - AGMR: `research-method.js` is a trainable Attribute-Gated Multimodal Ranker prototype. It now accepts the four-level human relevance scale by normalizing 0–3 labels to 0–1 during training. This is a project hypothesis/prototype, not a claim of published algorithmic novelty.
 - Multimodal: `multimodal.html` runs browser-side CLIP inference for text/image retrieval experiments. The current 407-item catalogue uses deterministic local illustrations, so visual results should not be presented as product-photo retrieval.
 - Large-scale data: `data/dataset_manifest.json` records DeepFashion2 as an optional external benchmark and preserves provenance. The repository does not pretend that an external dataset has been downloaded or evaluated until that experiment is actually run.
+
+
+## Research-Grade Benchmark Protocol
+
+The canonical research contract is defined in `research/RESEARCH_PROTOCOL.md` and `research/benchmark-v1.json`.
+
+The benchmark now includes a BM25 baseline (`backend/services/bm25.js`) so lexical retrieval is compared against a standard information-retrieval baseline rather than only custom lexical scoring.
+
+Human relevance evaluation is specified separately under `research/human-evaluation/`. Human labels are intentionally **not fabricated**; the current benchmark remains synthetic-curated until real annotations are collected. The protocol uses 0–4 graded relevance and at least three independent annotators, with inter-rater agreement computed before aggregation.
+
+An executable CLIP-style multimodal path is provided in `backend/services/multimodalRetrieval.js`, using `Xenova/clip-vit-base-patch32` through Transformers.js for text-to-image similarity. Multimodal results must be evaluated on the same query/catalogue snapshot as text baselines.
+
+The project also separates validation tuning from held-out evaluation and records reproducibility metadata. The concise evidence status is maintained in `research/RESULTS_CARD.md`.
+
+**Research claim discipline:** current results are observations on a controlled synthetic benchmark. They should not be presented as evidence of general real-world superiority until human-judged, larger and more diverse evaluation data are available.
