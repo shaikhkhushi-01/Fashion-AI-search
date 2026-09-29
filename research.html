@@ -28,7 +28,89 @@
     .twocol{display:grid;grid-template-columns:1fr 1fr;gap:18px}.list{margin:0;padding-left:18px;color:var(--muted);font-size:12px}.list li{margin:8px 0}
     footer{padding:40px 0 70px;border-top:1px solid var(--line);color:#77716a;font-size:11px}
     @media(max-width:800px){.grid,.twocol{grid-template-columns:1fr}.pipeline{grid-template-columns:repeat(2,1fr)}.hero{padding-top:65px}}
-  </style>
+  
+/* =========================================================
+   MBZUAI RESEARCH EDITION — DARK UI OVERRIDE
+   Visual-only layer. Existing interactions and features unchanged.
+   ========================================================= */
+:root{
+  --bg:#050607;--surface:#0d0f11;--surface-soft:#121518;--surface-dark:#050607;
+  --text:#f3f5f7;--muted:#8e969f;--muted-dark:#626b75;--line:rgba(255,255,255,.10);
+  --accent:#f5f7fa;--accent-soft:#1a1e22;--success:#53e39a;
+  --shadow:0 30px 100px rgba(0,0,0,.42);--radius:24px;
+}
+html,body{background:#050607!important;color:var(--text)!important}
+body{background:
+ radial-gradient(circle at 12% 0%,rgba(103,123,145,.13),transparent 28%),
+ radial-gradient(circle at 88% 8%,rgba(76,116,104,.10),transparent 24%),
+ #050607!important}
+body:before{opacity:.16!important;background-image:radial-gradient(rgba(255,255,255,.18) .5px,transparent .5px)!important;background-size:5px 5px!important}
+.header{background:rgba(5,6,7,.78)!important;border-bottom:1px solid rgba(255,255,255,.09)!important;box-shadow:0 14px 50px rgba(0,0,0,.28)!important}
+.brand-mark{background:#f4f6f8!important;color:#08090a!important;box-shadow:0 0 35px rgba(255,255,255,.08)!important}
+.brand-copy small,.status,.main-nav button{color:#8f98a1!important}
+.main-nav{background:rgba(255,255,255,.035)!important;border-color:rgba(255,255,255,.10)!important}
+.main-nav button:hover{background:#f4f6f8!important;color:#08090a!important}
+.status{background:rgba(255,255,255,.035)!important;border-color:rgba(255,255,255,.10)!important}
+.header-wishlist{background:rgba(255,255,255,.035)!important;border-color:rgba(255,255,255,.10)!important}
+.header-wishlist:hover{background:#171a1d!important}
+.hero{background:
+ radial-gradient(circle at 82% 24%,rgba(113,133,151,.18),transparent 30%),
+ radial-gradient(circle at 12% 72%,rgba(72,109,94,.13),transparent 31%),
+ linear-gradient(180deg,#080a0c,#050607)!important;border-bottom-color:rgba(255,255,255,.08)!important}
+.hero h1,.section-intro h2,.catalogue-heading h2,.section-header h2,.stylist-intro h2,.product-title{color:#f5f7f9!important}
+.hero h1 span{color:#7f8993!important}
+.eyebrow{color:#77818b!important}
+.hero-description,.section-intro p,.catalogue-heading p,.section-header p,.product-description{color:#8d969f!important}
+.search-shell{background:#0f1215!important;border-color:rgba(255,255,255,.16)!important;box-shadow:0 28px 90px rgba(0,0,0,.38)!important}
+.search-shell input{color:#f3f5f7!important}.search-shell input::placeholder{color:#68717a!important}
+.search-leading{color:#8b949d!important}
+.search-button,.primary-button{background:#f3f5f7!important;color:#08090a!important}
+.search-button:hover,.primary-button:hover{background:#fff!important}
+.search-hints button,.search-suggestions button{background:#0e1113!important;color:#89929b!important;border-color:rgba(255,255,255,.10)!important}
+.search-hints button:hover{background:#f3f5f7!important;color:#08090a!important}
+.hero-proof{border-top-color:rgba(255,255,255,.09)!important}
+.proof-card{background:rgba(255,255,255,.025)!important;border:1px solid rgba(255,255,255,.08)!important;border-radius:18px!important}
+.proof-icon{background:#111418!important;border-color:rgba(255,255,255,.10)!important;color:#e8edf1!important}
+.proof-card strong{color:#dce1e5!important}.proof-card small{color:#747e88!important}
+.preferences-panel,.ai-studio-shell,.product-card,.filter-sidebar,.no-results,.empty-state,.result-count,.discovery-pagination button{
+ background:#0c0f11!important;border-color:rgba(255,255,255,.09)!important;box-shadow:0 22px 70px rgba(0,0,0,.25)!important}
+.preference-group,.filter-ai-card{background:#101316!important;border-color:rgba(255,255,255,.08)!important}
+.preference-group>label:first-child,.filter-group>label{color:#a8b0b8!important}
+.preference-input,.filter-group select,.filter-group input,.filter-group textarea,.stylist-description textarea{
+ background:#080a0c!important;color:#edf1f4!important;border-color:rgba(255,255,255,.10)!important}
+.preference-options label{background:#0e1113!important;color:#9aa3ac!important;border-color:rgba(255,255,255,.10)!important}
+.preference-options label:hover{background:#f3f5f7!important;color:#08090a!important;border-color:#f3f5f7!important}
+.secondary-button,.mobile-filter-button{background:#0f1215!important;color:#d9dfe4!important;border-color:rgba(255,255,255,.10)!important}
+.catalogue-section{background:#080a0c!important;border-color:rgba(255,255,255,.08)!important}
+.product-card{background:#0d1012!important}
+.product-media,.product-visual,.ai-v3-source-visual,.ai-v3-model-visual{background:#111417!important}
+.product-visual{background:radial-gradient(circle at 35% 25%,rgba(255,255,255,.08),transparent 25%),linear-gradient(145deg,#111417,#080a0c)!important}
+.product-category-badge,.product-tag,.product-reason{background:#15191d!important;color:#9da6af!important;border-color:rgba(255,255,255,.08)!important}
+.product-price{color:#f2f4f6!important}.view-button{color:#aab2ba!important}
+.match-score-bar{background:#252a2f!important}.match-score-fill{background:#e8edf1!important}
+.stylist-card,.ai-v3-hero-preview{background:#0a0c0e!important;box-shadow:0 35px 100px rgba(0,0,0,.5)!important}
+.ai-studio-section{background:#050607!important}
+.ai-system-readout,.ai-studio-console{background:#0c0f11!important}
+.ai-studio-visual{background:#111417!important}
+.ai-capability-row,.ai-v3-command-bar{border-color:rgba(255,255,255,.09)!important}
+.ai-v3-insight{background:linear-gradient(135deg,#0d1012,#090b0d)!important;border-color:rgba(255,255,255,.09)!important;color:#fff!important}
+.ai-v3-command-bar{background:#0d1012!important}.ai-v3-command-bar input{color:#edf1f4!important}
+.ai-v3-command-bar button{background:#f3f5f7!important;color:#08090a!important}
+.ai-v3-results-heading h3,.ai-v3-product-body h3{color:#f3f5f7!important}
+.ai-v3-product-card{background:#0d1012!important;border-color:rgba(255,255,255,.09)!important;box-shadow:0 18px 55px rgba(0,0,0,.28)!important}
+.ai-v3-model-visual{border-left-color:rgba(255,255,255,.08)!important}
+.ai-v3-product-body{background:#0d1012!important}
+.ai-v3-tags span{background:#171b1f!important;color:#8f99a3!important}
+.ai-v3-reasons span{color:#8d969f!important}
+.ai-v3-footer strong{color:#f3f5f7!important}.ai-v3-footer button{color:#aab2ba!important}
+.ai-v3-primary{background:#f3f5f7!important;color:#08090a!important}.ai-v3-secondary{background:transparent!important;color:#fff!important;border-color:rgba(255,255,255,.16)!important}
+.ai-v3-hero-copy{background:#0a0c0e!important}.ai-v3-hero-visual{background:#111417!important}
+.ai-v3-modal-card{background:#0d1012!important;color:#fff!important}.ai-v3-modal-image-wrap{background:#111417!important}.ai-v3-modal-copy p{color:#8f98a1!important}
+footer{background:#050607!important;color:#68717a!important;border-color:rgba(255,255,255,.08)!important}
+a{color:#d8dde2}
+@media(max-width:720px){.hero-proof{grid-template-columns:1fr!important}}
+
+</style>
 </head>
 <body>
 <header><div class="wrap nav"><a class="brand" href="./index.html">FASHION AI<small>Intelligent Discovery</small></a><a href="./index.html">← Back to product</a></div></header>
