@@ -2775,3 +2775,168 @@ body:before{opacity:.16!important;background-image:radial-gradient(rgba(255,255,
 footer{background:#050607!important;color:#68717a!important;border-color:rgba(255,255,255,.08)!important}
 a{color:#d8dde2}
 @media(max-width:720px){.hero-proof{grid-template-columns:1fr!important}}
+
+
+/* =========================================================
+   RESEARCH LAB UI V3 — visual redesign only
+   Keeps existing JS hooks, IDs and feature behavior intact.
+   ========================================================= */
+:root{
+  --bg:#07090b;
+  --surface:#0d1115;
+  --surface-soft:#11161b;
+  --surface-dark:#050607;
+  --text:#f5f7f9;
+  --muted:#8b949e;
+  --line:rgba(255,255,255,.09);
+  --line-strong:rgba(255,255,255,.16);
+  --accent:#d9ff63;
+  --accent-soft:rgba(217,255,99,.10);
+  --success:#8ee8b4;
+  --shadow:0 30px 100px rgba(0,0,0,.38);
+  --radius:26px;
+}
+html{background:#07090b!important;color-scheme:dark}
+body{background:
+  radial-gradient(circle at 78% -8%,rgba(217,255,99,.07),transparent 24rem),
+  radial-gradient(circle at 0% 42%,rgba(87,125,255,.055),transparent 28rem),
+  #07090b!important;color:#f5f7f9!important}
+.container{width:min(1320px,calc(100% - 56px))}
+.header{
+  margin:14px auto 0;
+  width:min(1320px,calc(100% - 32px));
+  border:1px solid var(--line)!important;
+  border-radius:20px;
+  background:rgba(8,10,12,.76)!important;
+  box-shadow:0 18px 60px rgba(0,0,0,.25);
+}
+.header-inner{min-height:68px;padding:0 8px}
+.brand-mark{background:var(--accent)!important;color:#07090b!important;border-radius:10px;box-shadow:none}
+.brand-copy strong{color:#fff}
+.brand-copy small,.status,.main-nav button{color:#77818b!important}
+.main-nav button:hover{color:#fff!important;background:rgba(255,255,255,.06)!important}
+.header-wishlist{border-color:var(--line)!important;background:rgba(255,255,255,.035)!important;color:#fff}
+.header-wishlist:hover{background:rgba(255,255,255,.08)!important}
+.hero{
+  min-height:auto!important;
+  border:0!important;
+  background:transparent!important;
+  padding:86px 0 46px;
+}
+.hero-inner{padding:0!important}
+.hero-inner:before{
+  content:"RESEARCH PROTOTYPE  /  FASHION RETRIEVAL";
+  display:block;width:max-content;margin-bottom:22px;
+  padding:7px 11px;border:1px solid var(--line-strong);border-radius:999px;
+  color:#9ba4ad;font-size:9px;font-weight:800;letter-spacing:.18em;
+  background:rgba(255,255,255,.025);
+}
+.hero-grid{
+  display:grid!important;
+  grid-template-columns:minmax(0,1.45fr) minmax(300px,.55fr);
+  gap:56px;align-items:end;
+}
+.hero h1{
+  max-width:980px!important;
+  font-family:"DM Sans",Inter,Arial,sans-serif!important;
+  font-size:clamp(58px,8.6vw,132px)!important;
+  font-weight:600!important;
+  letter-spacing:-.085em!important;
+  line-height:.86!important;
+}
+.hero h1 span{
+  color:#6f7882!important;
+  font-style:normal!important;
+}
+.hero-description{max-width:650px;margin:30px 0 34px;color:#9ba4ad!important;font-size:15px;line-height:1.8}
+.search-shell{
+  width:min(900px,100%)!important;min-height:78px!important;
+  padding:8px 9px 8px 22px!important;
+  border:1px solid rgba(255,255,255,.16)!important;
+  border-radius:20px!important;
+  background:#0d1115!important;
+  box-shadow:0 22px 80px rgba(0,0,0,.32)!important;
+}
+.search-shell:focus-within{border-color:rgba(217,255,99,.5)!important;box-shadow:0 0 0 5px rgba(217,255,99,.06),0 28px 90px rgba(0,0,0,.42)!important}
+.search-shell input{color:#fff!important}
+.search-shell input::placeholder{color:#65707a!important}
+.search-button{background:var(--accent)!important;color:#07090b!important;border-radius:14px!important;min-height:60px!important}
+.search-button:hover{background:#e4ff88!important}
+.search-leading{color:#a4adb6}
+.search-hints button{border-color:var(--line)!important;background:rgba(255,255,255,.025)!important;color:#89939c!important}
+.search-hints button:hover{border-color:var(--accent)!important;background:var(--accent-soft)!important;color:#eaffba!important}
+.hero-proof{
+  display:grid!important;grid-template-columns:1fr!important;gap:10px;
+  max-width:none!important;margin:0!important;border:0!important;
+}
+.proof-card{
+  min-height:92px;padding:18px!important;border:1px solid var(--line);
+  border-radius:18px;background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.018));
+}
+.proof-icon{border-color:var(--line-strong)!important;background:rgba(217,255,99,.07)!important;color:var(--accent)!important}
+.proof-card strong{color:#f2f4f6}.proof-card small{color:#69737c}
+.hero-orbit{border-color:rgba(217,255,99,.07)!important}
+.ai-studio-section,.preferences-section,.catalogue-section,.stylist-section{background:transparent!important}
+.ai-studio-section{padding:42px 0!important}
+.ai-studio-shell,.preferences-panel{
+  border:1px solid var(--line)!important;border-radius:30px!important;
+  background:linear-gradient(145deg,#0e1318,#090c0f)!important;
+  box-shadow:var(--shadow)!important;
+}
+.ai-studio-shell{overflow:hidden}
+.ai-studio-header{padding:42px!important;border-bottom:1px solid var(--line)}
+.ai-studio-kicker{color:var(--accent)!important}
+.ai-studio-header h2,.section-intro h2,.catalogue-heading h2,.section-header h2{color:#fff!important;letter-spacing:-.055em}
+.ai-system-readout,.ai-console-top,.ai-capability-row{border-color:var(--line)!important}
+.ai-studio-visual,.ai-studio-console{background:#090c0f!important;border-color:var(--line)!important}
+.ai-pipeline-step{border-color:var(--line)!important;background:rgba(255,255,255,.025)!important}
+.ai-pipeline-step.active{border-color:rgba(217,255,99,.2)!important}
+.ai-pipeline-step i{color:var(--accent)!important}
+.ai-studio-prompt{border-color:var(--line)!important;background:rgba(255,255,255,.025)!important}
+.ai-studio-launch{background:var(--accent)!important;color:#07090b!important}
+.preferences-section{padding:30px 0!important}
+.preferences-panel{box-shadow:none!important}
+.catalogue-section{padding:70px 0!important}
+.catalogue-heading{align-items:end!important}
+.catalogue-heading h2{font-size:clamp(38px,5vw,72px)!important}
+.product-grid{gap:16px!important}
+.product-card{
+  border:1px solid var(--line)!important;border-radius:20px!important;
+  background:#0d1115!important;box-shadow:none!important;
+  transition:transform .28s ease,border-color .28s ease,box-shadow .28s ease!important;
+}
+.product-card:hover{
+  transform:translateY(-6px)!important;
+  border-color:rgba(217,255,99,.32)!important;
+  box-shadow:0 24px 70px rgba(0,0,0,.3)!important;
+}
+.product-card img{background:#151a1f!important}
+.product-card h3,.product-card strong{color:#f4f6f8!important}
+.product-card p,.product-card small{color:#7e8892!important}
+.product-card .price{color:var(--accent)!important}
+.stylist-section{padding:70px 0!important}
+.stylist-section .container>*,.catalogue-section .container>*{position:relative}
+.footer{
+  margin-top:40px!important;border-top:1px solid var(--line)!important;
+  background:#050607!important;
+}
+@media(max-width:900px){
+  .container{width:min(100% - 30px,1320px)}
+  .header{width:calc(100% - 18px);margin-top:9px}
+  .main-nav{display:none}
+  .hero{padding:62px 0 30px}
+  .hero-grid{grid-template-columns:1fr;gap:28px}
+  .hero h1{font-size:clamp(52px,16vw,88px)!important}
+  .hero-proof{grid-template-columns:repeat(3,1fr)!important}
+  .proof-card{min-height:110px;display:block}
+  .proof-icon{margin-bottom:10px}
+}
+@media(max-width:620px){
+  .hero-proof{grid-template-columns:1fr!important}
+  .proof-card{min-height:0;display:flex}
+  .search-shell{min-height:64px!important}
+  .search-button{min-height:48px!important;padding:0 14px!important}
+  .search-button span:first-child{font-size:0}
+  .search-button span:first-child:after{content:"Go";font-size:12px}
+  .ai-studio-header{padding:26px!important}
+}
