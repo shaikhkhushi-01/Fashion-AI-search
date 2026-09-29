@@ -10,7 +10,7 @@ import { evaluationCases } from "./evaluation-cases.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const repoRoot = path.join(__dirname, "..");
+const repoRoot = path.join(__dirname, "..", "..");
 const products = JSON.parse(fs.readFileSync(path.join(repoRoot, "data", "products.json"), "utf8"));
 
 const K = 5;
