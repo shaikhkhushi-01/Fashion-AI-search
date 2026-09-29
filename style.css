@@ -2940,3 +2940,123 @@ body{background:
   .search-button span:first-child:after{content:"Go";font-size:12px}
   .ai-studio-header{padding:26px!important}
 }
+
+
+/* =========================================================
+   PRODUCT GRID CLEANUP V4
+   Keep catalogue focused on the actual product visual.
+   The generated model preview remains available elsewhere,
+   but is intentionally not stacked under every catalogue card.
+   ========================================================= */
+.catalogue-section .product-grid,
+.for-you-section .product-grid{
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:18px!important;
+}
+
+.catalogue-section .product-card,
+.for-you-section .product-card{
+  border-radius:22px!important;
+  overflow:hidden!important;
+  background:#0d1115!important;
+  border:1px solid rgba(255,255,255,.09)!important;
+}
+
+.catalogue-section .product-media,
+.for-you-section .product-media{
+  height:auto!important;
+  aspect-ratio:4 / 5!important;
+  min-height:0!important;
+  background:#11161b!important;
+}
+
+.catalogue-section .product-model-preview,
+.for-you-section .product-model-preview{
+  display:none!important;
+}
+
+.catalogue-section .product-content,
+.for-you-section .product-content{
+  padding:18px!important;
+}
+
+.catalogue-section .product-title,
+.for-you-section .product-title{
+  font-size:20px!important;
+  line-height:1.12!important;
+  margin:8px 0 7px!important;
+}
+
+.catalogue-section .product-description,
+.for-you-section .product-description{
+  display:-webkit-box!important;
+  -webkit-line-clamp:2!important;
+  -webkit-box-orient:vertical!important;
+  overflow:hidden!important;
+  min-height:36px;
+  margin:0 0 12px!important;
+  font-size:11px!important;
+  line-height:1.6!important;
+}
+
+.catalogue-section .product-tags,
+.for-you-section .product-tags{
+  gap:6px!important;
+  margin-bottom:14px!important;
+}
+
+.catalogue-section .product-tag,
+.for-you-section .product-tag{
+  padding:5px 7px!important;
+  font-size:8px!important;
+  border-radius:999px!important;
+}
+
+.catalogue-section .product-footer,
+.for-you-section .product-footer{
+  padding-top:13px!important;
+  border-top:1px solid rgba(255,255,255,.07)!important;
+}
+
+.catalogue-section .product-price,
+.for-you-section .product-price{
+  font-size:17px!important;
+  color:#d9ff63!important;
+}
+
+.catalogue-section .view-button,
+.for-you-section .view-button{
+  border:1px solid rgba(255,255,255,.12)!important;
+  border-radius:999px!important;
+  padding:8px 11px!important;
+  background:rgba(255,255,255,.04)!important;
+  color:#dbe1e6!important;
+}
+
+.catalogue-section .view-button:hover,
+.for-you-section .view-button:hover{
+  background:#d9ff63!important;
+  color:#07090b!important;
+  border-color:#d9ff63!important;
+}
+
+@media(max-width:1050px){
+  .catalogue-section .product-grid,
+  .for-you-section .product-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+}
+
+@media(max-width:780px){
+  .catalogue-section .product-grid,
+  .for-you-section .product-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+}
+
+@media(max-width:540px){
+  .catalogue-section .product-grid,
+  .for-you-section .product-grid{
+    grid-template-columns:1fr!important;
+  }
+}
