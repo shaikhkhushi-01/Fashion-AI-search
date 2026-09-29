@@ -6,10 +6,11 @@ import { lexicalScore, hybridRetrieve } from "../services/hybridRetrieval.js";
 import { getSemanticScoreMap, getModelName } from "../services/semanticSearch.js";
 import { evaluateQuery } from "../services/evaluation.js";
 import { evaluationCases } from "./evaluation-cases.js";
+import { validateHumanJudgments, summarizeHumanLabels } from "../services/humanEvaluation.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const repoRoot = path.join(__dirname, "..");
+const repoRoot = path.join(__dirname, "..", "..");
 const products = JSON.parse(fs.readFileSync(path.join(repoRoot, "data", "products.json"), "utf8"));
 
 const K = 5;
@@ -187,7 +188,14 @@ async function loadHumanEvidence() {
   if (lines.length !== expected) {
     return { status: "pending", reason: `expected ${expected} judgments, found ${lines.length}` };
   }
-  return { status: "available", annotationCount: lines.length, source: "real-human-judgments-file" };
+  try {
+    const records = lines.map(line => JSON.parse(line));
+    const validation = validateHumanJudgments(records, { minAnnotationsPerPair: 3, exactAnnotationsPerPair: 3 });
+    const summary = summarizeHumanLabels(records);
+    return { status: "available", annotationCount: lines.length, source: "real-human-judgments-file", validation, summary };
+  } catch (error) {
+    return { status: "pending", reason: "judgments failed strict validation", validationError: error.message };
+  }
 }
 
 async function main() {
@@ -196,7 +204,7 @@ async function main() {
 
   const validationCases = evaluationCases.slice(0, VALIDATION_COUNT);
   const heldOutCases = evaluationCases.slice(VALIDATION_COUNT, VALIDATION_COUNT + TEST_COUNT);
-  const challengePath = path.join(repoRoot, "..", "research", "difficult-queries-v1.json");
+  const challengePath = path.join(repoRoot, "research", "difficult-queries-v1.json");
   const challengeCases = fs.existsSync(challengePath) ? JSON.parse(fs.readFileSync(challengePath, "utf8")).queries ?? [] : [];
 
   const semanticCache = await buildSemanticScores([...validationCases, ...heldOutCases, ...challengeCases]);
